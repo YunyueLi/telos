@@ -34,3 +34,10 @@ pnpm-debug.log*
 
 # high-res source art (optimized copies are committed under landing/ and web/public/)
 .source-assets/
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
