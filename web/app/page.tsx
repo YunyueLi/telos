@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
 
 const EXAMPLES = [
   "看懂并复现一篇 Transformer 论文",
@@ -92,7 +93,7 @@ export default function GoalPage() {
                 </svg>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <span className="pcirc">
-                  <img src="/portraits/present.png" alt="Telos 老师" />
+                  <img src={asset("/portraits/present.png")} alt="Telos 老师" />
                 </span>
               </div>
             </div>

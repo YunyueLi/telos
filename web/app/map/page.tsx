@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
 import { DEMO_GRAPH as G } from "@/lib/graph";
 
 export default function MapPage() {
@@ -34,7 +35,7 @@ export default function MapPage() {
             <div className="mtop">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <span className="pmini">
-                <img src="/portraits/avatar.png" alt="" />
+                <img src={asset("/portraits/avatar.png")} alt="" />
               </span>
               <span className="hi">
                 继续，Alex

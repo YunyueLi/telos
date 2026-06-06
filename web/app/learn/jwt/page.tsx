@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
 
 const DASH = 163; // 2π·26, the gauge circle circumference
 
@@ -36,7 +37,7 @@ export default function LessonPage() {
               </svg>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <span className="pcirc">
-                <img src="/portraits/teach.png" alt="Telos 老师" />
+                <img src={asset("/portraits/teach.png")} alt="Telos 老师" />
               </span>
               <div>
                 <div className="m">学习前沿 · 为你定制 · 第 3 / 4 步</div>
@@ -57,7 +58,7 @@ export default function LessonPage() {
                 <div className="analogy">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <span className="pmini">
-                    <img src="/portraits/think.png" alt="" />
+                    <img src={asset("/portraits/think.png")} alt="" />
                   </span>
                   <div>
                     <div className="l">用你已会的来理解</div>
