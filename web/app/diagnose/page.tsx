@@ -110,7 +110,7 @@ export default function DiagnosePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
 
-  const masteredJudged = SEED_GRAPH.ids().filter((id) => diag.belief[id] >= 0.8).length;
+  const masteredJudged = SEED_GRAPH.ids().filter((id) => diag.belief[id] >= 0.6).length;
   const suggest = (() => {
     const st = emptyState();
     for (const id of SEED_GRAPH.ids()) st.mastery[id] = diag.belief[id];

@@ -14,9 +14,9 @@ class TelosEngine:
         self.graph = graph
 
     def diagnose(
-        self, oracle: Callable[[str], bool], budget: int = 25, seed_threshold: float = 0.5
+        self, oracle: Callable[[str], bool], budget: int = 25, known_threshold: float = 0.6
     ) -> LearnerState:
-        """Run adaptive diagnosis using `oracle(point_id) -> bool`."""
+        """Run adaptive (BKT + information-gain) diagnosis using `oracle(point_id) -> bool`."""
         d = Diagnosis(self.graph, budget=budget)
         n = 0
         while True:
@@ -26,9 +26,10 @@ class TelosEngine:
             d.answer(q, bool(oracle(q)))
             n += 1
         state = LearnerState()
-        state.mastery.update(d.beliefs())
-        # seed FSRS cards for points already known, so they enter the review cycle
-        for pid in d.mastered(seed_threshold):
+        for pid, b in d.beliefs().items():
+            # crisp KST knowledge state: a point judged known enters the state as mastered
+            state.mastery[pid] = 0.9 if b >= known_threshold else b
+        for pid in d.mastered(known_threshold):
             state.cards[pid] = review(Card(), GOOD, day=0)
         state.record({"event": "diagnosis", "questions": n})
         return state

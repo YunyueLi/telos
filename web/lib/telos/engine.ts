@@ -237,48 +237,69 @@ function propagate(
   }
 }
 
-// ============ diagnosis (adaptive) ============
-const SLIP = 0.1, GUESS = 0.2;
+// ============ bkt (Bayesian Knowledge Tracing) ============
+export const BKT = { pL0: 0.25, pT: 0.15, pS: 0.1, pG: 0.2 };
+export function bktPosterior(p: number, correct: boolean): number {
+  let num: number, den: number;
+  if (correct) {
+    num = p * (1 - BKT.pS);
+    den = num + (1 - p) * BKT.pG;
+  } else {
+    num = p * BKT.pS;
+    den = num + (1 - p) * (1 - BKT.pG);
+  }
+  return den > 0 ? num / den : p;
+}
+export function bktUpdate(p: number, correct: boolean): number {
+  const post = bktPosterior(p, correct);
+  return post + (1 - post) * BKT.pT;
+}
+export function bktPredict(p: number): number {
+  return p * (1 - BKT.pS) + (1 - p) * BKT.pG;
+}
+export function binaryEntropy(p: number): number {
+  if (p <= 0 || p >= 1) return 0;
+  return -(p * Math.log2(p) + (1 - p) * Math.log2(1 - p));
+}
+
+// ============ diagnosis (BKT belief + information-gain selection) ============
 export class Diagnosis {
   belief: Record<string, number> = {};
   asked = new Set<string>();
   answers: Record<string, boolean> = {};
-  constructor(public g: KnowledgeGraph, public budget = 25, prior = 0.5) {
-    for (const id of g.ids()) this.belief[id] = prior;
+  constructor(public g: KnowledgeGraph, public budget = 25) {
+    for (const id of g.ids()) this.belief[id] = BKT.pL0;
   }
-  private bayes(b: number, correct: boolean): number {
-    let num: number, den: number;
-    if (correct) {
-      num = (1 - SLIP) * b;
-      den = num + GUESS * (1 - b);
-    } else {
-      num = SLIP * b;
-      den = num + (1 - GUESS) * (1 - b);
-    }
-    return den > 0 ? num / den : b;
+  private infoGain(id: string): number {
+    const b = this.belief[id];
+    const pc = bktPredict(b);
+    return (
+      binaryEntropy(b) -
+      (pc * binaryEntropy(bktPosterior(b, true)) + (1 - pc) * binaryEntropy(bktPosterior(b, false)))
+    );
   }
   nextQuestion(): string | null {
     let best: string | null = null;
-    let bestU = 1;
+    let bestIg = -1;
     for (const id of this.g.ids()) {
       if (this.asked.has(id)) continue;
-      const u = Math.abs(this.belief[id] - 0.5);
-      if (u < bestU) {
+      const ig = this.infoGain(id);
+      if (ig > bestIg) {
         best = id;
-        bestU = u;
+        bestIg = ig;
       }
     }
-    if (best === null || this.asked.size >= this.budget || bestU > 0.45) return null;
+    if (best === null || this.asked.size >= this.budget || bestIg < 1e-3) return null;
     return best;
   }
   answer(id: string, correct: boolean): void {
     this.asked.add(id);
     this.answers[id] = correct;
-    this.belief[id] = this.bayes(this.belief[id], correct);
+    this.belief[id] = bktUpdate(this.belief[id], correct);
     if (correct) {
-      for (const a of this.g.ancestors(id)) this.belief[a] = Math.max(this.belief[a], this.bayes(this.belief[a], true));
+      for (const a of this.g.ancestors(id)) this.belief[a] = Math.max(this.belief[a], bktPosterior(this.belief[a], true));
     } else {
-      for (const d of this.g.descendants(id)) this.belief[d] = Math.min(this.belief[d], this.bayes(this.belief[d], false));
+      for (const d of this.g.descendants(id)) this.belief[d] = Math.min(this.belief[d], bktPosterior(this.belief[d], false));
     }
   }
   isDone(): boolean {
@@ -323,7 +344,7 @@ export function diagnose(
   g: KnowledgeGraph,
   oracle: (id: string) => boolean,
   budget = 25,
-  seedThreshold = 0.5,
+  knownThreshold = 0.6,
 ): LearnerState {
   const d = new Diagnosis(g, budget);
   for (;;) {
@@ -332,8 +353,9 @@ export function diagnose(
     d.answer(q, oracle(q));
   }
   const state = emptyState();
-  for (const id of g.ids()) state.mastery[id] = d.belief[id];
-  for (const id of g.ids()) if (d.belief[id] >= seedThreshold) state.cards[id] = review(newCard(), GOOD, 0);
+  // crisp KST knowledge state: a point judged known enters as mastered
+  for (const id of g.ids()) state.mastery[id] = d.belief[id] >= knownThreshold ? 0.9 : d.belief[id];
+  for (const id of g.ids()) if (d.belief[id] >= knownThreshold) state.cards[id] = review(newCard(), GOOD, 0);
   state.version += 1;
   return state;
 }

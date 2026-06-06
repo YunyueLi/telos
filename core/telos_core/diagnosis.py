@@ -1,59 +1,57 @@
-"""Adaptive diagnosis — locate the learner's knowledge state efficiently.
+"""Adaptive diagnosis — BKT belief tracking + information-gain question selection.
 
-Each step asks the *most uncertain* point (belief closest to 0.5). Every answer
-updates that belief (a guess/slip Bayesian model) and propagates through the
-prerequisite structure: a correct answer raises belief in prerequisites; a wrong
-answer lowers belief in dependents. Stops when confident or out of budget —
-inspired by ALEKS-style Markovian assessment.
+Each skill carries a BKT belief P(known). At every step we ask the skill whose
+answer is expected to reduce uncertainty the most (maximum expected Shannon
+information gain). Answers Bayes-update the belief and propagate through the
+prerequisite structure (a correct answer implies prerequisites; a wrong one
+implies dependents are not yet reachable). Inspired by ALEKS-style assessment.
 """
 from __future__ import annotations
 
+from .bkt import BKTParams, binary_entropy, posterior, predict_correct, update_belief
 from .models import KnowledgeGraph
-
-SLIP = 0.1   # P(wrong | mastered)
-GUESS = 0.2  # P(correct | not mastered)
 
 
 class Diagnosis:
-    def __init__(self, graph: KnowledgeGraph, budget: int = 25, prior: float = 0.5):
+    def __init__(self, graph: KnowledgeGraph, budget: int = 25, params: BKTParams | None = None):
         self.g = graph
         self.budget = budget
-        self.belief: dict[str, float] = {pid: prior for pid in graph.ids()}
+        self.prm = params or BKTParams()
+        self.belief: dict[str, float] = {pid: self.prm.p_l0 for pid in graph.ids()}
         self.asked: set[str] = set()
         self.answers: dict[str, bool] = {}
 
-    @staticmethod
-    def _bayes(b: float, correct: bool) -> float:
-        if correct:
-            num = (1 - SLIP) * b
-            den = num + GUESS * (1 - b)
-        else:
-            num = SLIP * b
-            den = num + (1 - GUESS) * (1 - b)
-        return num / den if den > 0 else b
+    def _info_gain(self, pid: str) -> float:
+        """Expected reduction in Bernoulli entropy from asking `pid`."""
+        b = self.belief[pid]
+        pc = predict_correct(b, self.prm)
+        h_now = binary_entropy(b)
+        h_correct = binary_entropy(posterior(b, True, self.prm))
+        h_wrong = binary_entropy(posterior(b, False, self.prm))
+        return h_now - (pc * h_correct + (1 - pc) * h_wrong)
 
     def next_question(self) -> str | None:
-        best, best_u = None, 1.0
+        best, best_ig = None, -1.0
         for pid in self.g.ids():
             if pid in self.asked:
                 continue
-            u = abs(self.belief[pid] - 0.5)
-            if u < best_u:
-                best, best_u = pid, u
-        if best is None or len(self.asked) >= self.budget or best_u > 0.45:
+            ig = self._info_gain(pid)
+            if ig > best_ig:
+                best, best_ig = pid, ig
+        if best is None or len(self.asked) >= self.budget or best_ig < 1e-3:
             return None
         return best
 
     def answer(self, pid: str, correct: bool) -> None:
         self.asked.add(pid)
         self.answers[pid] = bool(correct)
-        self.belief[pid] = self._bayes(self.belief[pid], correct)
+        self.belief[pid] = update_belief(self.belief[pid], correct, self.prm)
         if correct:
             for a in self.g.ancestors(pid):
-                self.belief[a] = max(self.belief[a], self._bayes(self.belief[a], True))
+                self.belief[a] = max(self.belief[a], posterior(self.belief[a], True, self.prm))
         else:
             for d in self.g.descendants(pid):
-                self.belief[d] = min(self.belief[d], self._bayes(self.belief[d], False))
+                self.belief[d] = min(self.belief[d], posterior(self.belief[d], False, self.prm))
 
     def is_done(self) -> bool:
         return self.next_question() is None
@@ -61,5 +59,5 @@ class Diagnosis:
     def beliefs(self) -> dict[str, float]:
         return dict(self.belief)
 
-    def mastered(self, threshold: float = 0.5) -> set[str]:
+    def mastered(self, threshold: float = 0.6) -> set[str]:
         return {pid for pid, b in self.belief.items() if b >= threshold}

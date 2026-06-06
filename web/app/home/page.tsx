@@ -9,8 +9,9 @@ import { useLearner } from "@/lib/telos/store";
 
 const QUICK = [
   { href: "/map", icon: "map", label: "学习地图", sub: "前置依赖图" },
-  { href: "/diagnose", icon: "target", label: "诊断测评", sub: "重新校准起点" },
+  { href: "/review", icon: "refresh", label: "复习", sub: "间隔重复" },
   { href: "/profile", icon: "user", label: "个人中心", sub: "进度与成就" },
+  { href: "/account", icon: "user", label: "账号 · 备份", sub: "档案 / 云同步" },
 ] as const;
 
 export default function HomePage() {

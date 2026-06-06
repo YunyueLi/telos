@@ -17,8 +17,7 @@ import {
   review,
   statusOf,
 } from "./engine";
-
-const STORAGE_KEY = "telos:learner:v1";
+import { currentStateKey } from "./account";
 
 // Default (pre-diagnosis) state — Python/类型/HTTP 已掌握，REST 学习中。
 export function defaultState(): LearnerState {
@@ -28,6 +27,7 @@ export function defaultState(): LearnerState {
     s.cards[id] = review(newCard(), GOOD, 0);
   }
   s.mastery["rest"] = 0.62;
+  s.day = 5; // 几天后——已掌握的点进入「待复习」
   s.version = 1;
   return s;
 }
@@ -35,7 +35,7 @@ export function defaultState(): LearnerState {
 export function load(): LearnerState | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(currentStateKey());
     return raw ? (JSON.parse(raw) as LearnerState) : null;
   } catch {
     return null;
@@ -45,7 +45,7 @@ export function load(): LearnerState | null {
 export function save(state: LearnerState): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(currentStateKey(), JSON.stringify(state));
   } catch {
     /* ignore quota/availability errors */
   }
@@ -118,6 +118,7 @@ export function buildView(g: KnowledgeGraph, state: LearnerState): LearnerView {
 export interface LearnerApi extends LearnerView {
   graph: KnowledgeGraph;
   record: (id: string, correct: boolean, grade?: number) => void;
+  reviewCard: (id: string, grade: number) => void;
   applyDiagnosis: (answers: Record<string, boolean>) => void;
   reset: () => void;
 }
@@ -146,6 +147,17 @@ export function useLearner(): LearnerApi {
     setState(next);
   }, []);
 
+  const reviewCard = useCallback((id: string, grade: number) => {
+    setState((prev) => {
+      const next: LearnerState = JSON.parse(JSON.stringify(prev));
+      const c = next.cards[id] ?? newCard();
+      next.cards[id] = review(c, grade, next.day); // 纯 FSRS 重排，不动掌握度
+      next.version += 1;
+      save(next);
+      return next;
+    });
+  }, []);
+
   const reset = useCallback(() => {
     const s = defaultState();
     save(s);
@@ -153,5 +165,5 @@ export function useLearner(): LearnerApi {
   }, []);
 
   const view = useMemo(() => buildView(SEED_GRAPH, state), [state]);
-  return { ...view, graph: SEED_GRAPH, record, applyDiagnosis, reset };
+  return { ...view, graph: SEED_GRAPH, record, reviewCard, applyDiagnosis, reset };
 }
