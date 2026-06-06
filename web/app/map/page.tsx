@@ -5,9 +5,12 @@ import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { DEMO_GRAPH as G } from "@/lib/graph";
+import { useLearner } from "@/lib/telos/store";
 
 export default function MapPage() {
   const router = useRouter();
+  const L = useLearner();
+  const nowNode = G.nodes.find((n) => L.visual[n.id] === "now");
 
   return (
     <>
@@ -40,7 +43,7 @@ export default function MapPage() {
               <span className="hi">
                 继续，Alex
                 <span>
-                  {G.goal} · 倒推出 {G.derivedCount} 个知识点
+                  {G.goal} · 倒推出 {L.total} 个知识点
                 </span>
               </span>
               <div className="leg">
@@ -72,71 +75,75 @@ export default function MapPage() {
                     {G.arrows.map((a, i) => (
                       <path key={`a${i}`} className={a.cls} d={a.d} />
                     ))}
-                    <ellipse className="ring" cx={300} cy={214} rx={84} ry={42} />
+                    {nowNode && (
+                      <ellipse className="ring" cx={nowNode.x} cy={nowNode.y} rx={84} ry={42} />
+                    )}
                   </svg>
                   {G.nodes.map((n) => (
                     <div
                       key={n.id}
-                      className={`n ${n.status}`}
+                      className={`n ${L.visual[n.id]}`}
                       style={{ left: n.x, top: n.y }}
                     >
                       {n.label}
-                      <s>{n.sub}</s>
+                      <s>{L.sub[n.id]}</s>
                     </div>
                   ))}
-                  <div className="nowtag" style={{ left: 352, top: 148 }}>
-                    ↙ 你的学习前沿
-                  </div>
+                  {nowNode && (
+                    <div className="nowtag" style={{ left: nowNode.x + 52, top: nowNode.y - 66 }}>
+                      ↙ 你的学习前沿
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="aside">
                 <h4>你的进度</h4>
                 <div className="big">
-                  {G.masteredCount}
-                  <sup> / {G.totalCount}</sup>
+                  {L.mastered}
+                  <sup> / {L.total}</sup>
                 </div>
                 <div className="bar2">
-                  <i />
+                  <i style={{ width: `${L.pct}%` }} />
                 </div>
                 <div
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: "10.5px",
-                    color: "var(--ink-3)",
-                  }}
+                  style={{ fontFamily: "var(--mono)", fontSize: "10.5px", color: "var(--ink-3)" }}
                 >
-                  按当前节奏 · 预计 {G.etaDays} 天达成
+                  按当前节奏 · 预计 {L.etaDays} 天达成
                 </div>
-                <div className="dark nextc">
-                  <svg
-                    className="contour skL"
-                    viewBox="0 0 300 180"
-                    preserveAspectRatio="none"
-                  >
-                    <g stroke="currentColor" fill="none" strokeWidth="1.4" opacity="0.13">
-                      <path d="M-10 40C80 20 160 60 310 30" />
-                      <path d="M-10 90C80 70 160 110 310 80" />
-                      <path d="M-10 140C80 120 160 160 310 130" />
-                    </g>
-                  </svg>
-                  <div className="l">推荐下一步</div>
-                  <div className="t">{G.next.title}</div>
-                  <div className="d">{G.next.desc}</div>
-                  <button
-                    className="btn btn-light"
-                    style={{ width: "100%", justifyContent: "center", marginTop: 13 }}
-                    onClick={() => router.push(`/learn/${G.next.id}`)}
-                  >
-                    开始学习 <Icon name="arrow" />
-                  </button>
-                </div>
+                {L.next && (
+                  <div className="dark nextc">
+                    <svg className="contour skL" viewBox="0 0 300 180" preserveAspectRatio="none">
+                      <g stroke="currentColor" fill="none" strokeWidth="1.4" opacity="0.13">
+                        <path d="M-10 40C80 20 160 60 310 30" />
+                        <path d="M-10 90C80 70 160 110 310 80" />
+                        <path d="M-10 140C80 120 160 160 310 130" />
+                      </g>
+                    </svg>
+                    <div className="l">推荐下一步</div>
+                    <div className="t">{L.next.name}</div>
+                    <div className="d">前置已全部掌握，正处你的学习前沿。约 {L.next.minutes} 分钟。</div>
+                    <button
+                      className="btn btn-light"
+                      style={{ width: "100%", justifyContent: "center", marginTop: 13 }}
+                      onClick={() => router.push(`/learn/${L.next!.id}`)}
+                    >
+                      开始学习 <Icon name="arrow" />
+                    </button>
+                  </div>
+                )}
                 <div className="due">
                   <h4>今日待复习</h4>
-                  {G.due.map((d) => (
-                    <div key={d.label} className="r">
+                  {L.due.length === 0 && (
+                    <div className="r" style={{ color: "var(--ink-3)" }}>
+                      <Icon name="check" />
+                      <span>今日无待复习</span>
+                    </div>
+                  )}
+                  {L.due.map((d) => (
+                    <div key={d.id} className="r">
                       <Icon name="refresh" />
-                      <b>{d.label}</b>
-                      <span className="t">{d.note}</span>
+                      <b>{d.name}</b>
+                      <span className="t">该复习</span>
                     </div>
                   ))}
                 </div>

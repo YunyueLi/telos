@@ -1,0 +1,49 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install web deps
+        run: npm ci --legacy-peer-deps
+        working-directory: web
+
+      - name: Build static export
+        run: npm run build
+        working-directory: web
+
+      - name: Assemble site (landing at /, demo at /app)
+        run: |
+          rm -rf deploy
+          mkdir -p deploy/app
+          cp -R landing/. deploy/
+          cp -R web/out/. deploy/app/
+          touch deploy/.nojekyll
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          publish_branch: gh-pages
+          user_name: YunyueLi
+          user_email: 44204222+YunyueLi@users.noreply.github.com
+          commit_message: "deploy: ${{ github.event.head_commit.message }}"

@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { DEMO_GRAPH as G } from "@/lib/graph";
+import { useLearner } from "@/lib/telos/store";
 
 const QUICK = [
   { href: "/map", icon: "map", label: "学习地图", sub: "前置依赖图" },
@@ -13,6 +14,8 @@ const QUICK = [
 ] as const;
 
 export default function HomePage() {
+  const L = useLearner();
+
   return (
     <>
       <SiteHeader />
@@ -47,45 +50,64 @@ export default function HomePage() {
                   <path d="M-20 180C160 150 320 210 620 170" />
                 </g>
               </svg>
-              <div className="l mono">推荐下一步 · 你的学习前沿</div>
-              <h3 className="ht">JWT 原理</h3>
-              <div className="hmeta mono">
-                <span>
-                  <Icon name="play" /> 现在学
-                </span>
-                <span>
-                  <Icon name="clock" /> 约 25 分钟
-                </span>
-                <span>前置已全部掌握</span>
-              </div>
-              <p className="hd">
-                还记得你掌握的 HTTP 基础里的 Cookie 吗？JWT 就像一张「自带防伪钢印的 Cookie」——
-                学完它，FastAPI 路由 与 鉴权中间件 会解锁。
-              </p>
-              <Link
-                className="btn btn-light"
-                href="/learn/jwt"
-                style={{ justifyContent: "center", width: "100%" }}
-              >
-                开始学习 <Icon name="arrow" />
-              </Link>
+              {L.next ? (
+                <>
+                  <div className="l mono">推荐下一步 · 你的学习前沿</div>
+                  <h3 className="ht">{L.next.name}</h3>
+                  <div className="hmeta mono">
+                    <span>
+                      <Icon name="play" /> 现在学
+                    </span>
+                    <span>
+                      <Icon name="clock" /> 约 {L.next.minutes} 分钟
+                    </span>
+                    <span>前置已全部掌握</span>
+                  </div>
+                  <p className="hd">
+                    {L.next.id === "jwt"
+                      ? "还记得你掌握的 HTTP 基础里的 Cookie 吗？JWT 就像一张「自带防伪钢印的 Cookie」——学完它，FastAPI 路由 与 鉴权中间件 会解锁。"
+                      : "它的前置你都已掌握，正处在你的学习前沿——学完会解锁后续的知识点。"}
+                  </p>
+                  <Link
+                    className="btn btn-light"
+                    href={`/learn/${L.next.id}`}
+                    style={{ justifyContent: "center", width: "100%" }}
+                  >
+                    开始学习 <Icon name="arrow" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="l mono">目标达成</div>
+                  <h3 className="ht">你已抵达目标</h3>
+                  <p className="hd">所有前沿知识点都已掌握。接下来保持间隔复习，巩固长期记忆。</p>
+                  <Link
+                    className="btn btn-light"
+                    href="/map"
+                    style={{ justifyContent: "center", width: "100%" }}
+                  >
+                    查看地图 <Icon name="arrow" />
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="hcol">
               <div className="hcard">
                 <div className="hch">
                   <h4 className="mono">今日待复习</h4>
-                  <span className="hcn mono">{G.due.length} 项</span>
+                  <span className="hcn mono">{L.due.length} 项</span>
                 </div>
                 <div className="hdue">
-                  {G.due.map((d) => (
-                    <button key={d.label} className="hr">
+                  {L.due.length === 0 && <p className="hhint mono">今日无待复习 · 保持节奏</p>}
+                  {L.due.map((d) => (
+                    <Link key={d.id} className="hr" href={`/learn/${d.id}`}>
                       <span className="hricon">
                         <Icon name="refresh" />
                       </span>
-                      <b>{d.label}</b>
-                      <span className="t mono">{d.note}</span>
-                    </button>
+                      <b>{d.name}</b>
+                      <span className="t mono">该复习</span>
+                    </Link>
                   ))}
                 </div>
                 <p className="hhint mono">间隔重复 · 在遗忘前轻触一遍</p>
@@ -98,8 +120,8 @@ export default function HomePage() {
                 </div>
                 <div className="hprog">
                   <div className="big">
-                    {G.masteredCount}
-                    <sup> / {G.totalCount}</sup>
+                    {L.mastered}
+                    <sup> / {L.total}</sup>
                   </div>
                   <div className="hpgoal">
                     个知识点已掌握
@@ -107,9 +129,9 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="bar2">
-                  <i />
+                  <i style={{ width: `${L.pct}%` }} />
                 </div>
-                <div className="hpeta mono">按当前节奏 · 预计 {G.etaDays} 天达成</div>
+                <div className="hpeta mono">按当前节奏 · 预计 {L.etaDays} 天达成</div>
               </div>
             </div>
           </div>
