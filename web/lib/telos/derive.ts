@@ -3,7 +3,10 @@
 //（这样用户不用重新构建，直接在页面里粘贴本地地址就能体验）。
 "use client";
 
+import type { DomainClass } from "./engine";
+
 const LS_KEY = "telos:derive-url";
+const DOMAINS = new Set(["A", "B", "C", "D", "E", "F"]);
 
 export function envDeriveUrl(): string {
   return (process.env.NEXT_PUBLIC_TELOS_DERIVE_URL ?? "").trim();
@@ -34,6 +37,7 @@ export interface DerivedPoint {
   prereqs: string[];
   isGoal?: boolean;
   minutes?: number;
+  domain?: DomainClass;
 }
 
 export interface DerivedGraph {
@@ -46,12 +50,14 @@ function normalize(points: unknown[]): DerivedPoint[] {
   return points.map((raw) => {
     const p = raw as Record<string, unknown>;
     const prereqs = (p.prereqs ?? p.prerequisites ?? []) as unknown[];
+    const dom = String(p.domain ?? p.domainClass ?? "B").trim().toUpperCase();
     return {
       id: String(p.id),
       name: String(p.name ?? p.id),
       prereqs: prereqs.map(String),
       isGoal: Boolean(p.isGoal ?? p.is_goal ?? false),
       minutes: Number(p.minutes ?? 25) || 25,
+      domain: (DOMAINS.has(dom) ? dom : "B") as DomainClass,
     };
   });
 }

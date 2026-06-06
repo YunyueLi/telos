@@ -16,6 +16,34 @@ class Status(str, Enum):
     MASTERED = "mastered"
 
 
+class DomainClass(str, Enum):
+    """How a skill is learned — decides diagnosis/复习 strategy. See docs/STRATEGY.md §1."""
+    DECLARATIVE = "A"  # 陈述性知识体（词汇/术语/法条）—— BKT+FSRS 最适用
+    PROCEDURAL = "B"   # 良构程序性/算法（数学/编程）—— 强 DAG，默认
+    CREATIVE = "C"     # 病构/创造性（写作/设计）—— BKT 降级为前置探测
+    MOTOR = "D"        # 闭环动作（乐器/书法）—— 表现性评估，不用 FSRS
+    PERFORMANCE = "E"  # 开放/对抗性表现（电竞/辩论）
+    AFFECTIVE = "F"    # 情感/社会/习惯 —— 打卡而非遗忘曲线
+
+
+def coerce_domain(x) -> "DomainClass":
+    if isinstance(x, DomainClass):
+        return x
+    try:
+        return DomainClass(str(x).strip().upper())
+    except ValueError:
+        return DomainClass.PROCEDURAL
+
+
+# 哪些大类适合用 FSRS 间隔复习（A 事实主场；B 概念/公式；C 脚手架；E 知识层）。
+# D 动作 / F 习惯不走遗忘曲线（应换成练习 session 调度 / 打卡，后续阶段实现）。
+_FSRS_DOMAINS = {DomainClass.DECLARATIVE, DomainClass.PROCEDURAL, DomainClass.CREATIVE, DomainClass.PERFORMANCE}
+
+
+def uses_fsrs(domain: "DomainClass") -> bool:
+    return coerce_domain(domain) in _FSRS_DOMAINS
+
+
 @dataclass(frozen=True)
 class KnowledgePoint:
     id: str
@@ -24,6 +52,7 @@ class KnowledgePoint:
     is_goal: bool = False
     tags: tuple[str, ...] = ()
     minutes: int = 25  # estimated time-to-learn
+    domain: DomainClass = DomainClass.PROCEDURAL  # 学习机制大类，决定诊断/复习策略
 
 
 @dataclass(frozen=True)
@@ -51,13 +80,14 @@ class KnowledgeGraph:
 
     @classmethod
     def from_spec(cls, rows: Iterable[tuple]) -> "KnowledgeGraph":
-        """rows: (id, name, prerequisites[, is_goal[, minutes]])"""
+        """rows: (id, name, prerequisites[, is_goal[, minutes[, domain]]])"""
         pts: dict[str, KnowledgePoint] = {}
         for row in rows:
             pid, name, prereqs = row[0], row[1], tuple(row[2])
             is_goal = bool(row[3]) if len(row) > 3 else False
             minutes = int(row[4]) if len(row) > 4 else 25
-            pts[pid] = KnowledgePoint(pid, name, prereqs, is_goal, minutes=minutes)
+            domain = coerce_domain(row[5]) if len(row) > 5 else DomainClass.PROCEDURAL
+            pts[pid] = KnowledgePoint(pid, name, prereqs, is_goal, minutes=minutes, domain=domain)
         return cls(pts)
 
     def __contains__(self, pid: str) -> bool:

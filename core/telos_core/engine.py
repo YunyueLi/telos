@@ -6,7 +6,7 @@ from typing import Callable
 from . import fire, frontier, kst
 from .diagnosis import Diagnosis
 from .fsrs import GOOD, Card, review
-from .models import KnowledgeGraph, LearnerState, Status
+from .models import KnowledgeGraph, LearnerState, Status, uses_fsrs
 
 
 class TelosEngine:
@@ -30,7 +30,8 @@ class TelosEngine:
             # crisp KST knowledge state: a point judged known enters the state as mastered
             state.mastery[pid] = 0.9 if b >= known_threshold else b
         for pid in d.mastered(known_threshold):
-            state.cards[pid] = review(Card(), GOOD, day=0)
+            if uses_fsrs(self.graph[pid].domain):  # 动作/习惯类不走遗忘曲线
+                state.cards[pid] = review(Card(), GOOD, day=0)
         state.record({"event": "diagnosis", "questions": n})
         return state
 
@@ -53,8 +54,9 @@ class TelosEngine:
     ) -> LearnerState:
         """Record a teach/verify outcome: FIRe propagation + FSRS scheduling."""
         fire.apply_evidence(state, self.graph, pid, correct)
-        card = state.cards.get(pid, Card())
-        state.cards[pid] = review(card, grade if correct else 1, day=state.day)
+        if uses_fsrs(self.graph[pid].domain):  # 动作/习惯类不走遗忘曲线
+            card = state.cards.get(pid, Card())
+            state.cards[pid] = review(card, grade if correct else 1, day=state.day)
         return state
 
     def progress(self, state: LearnerState, threshold: float = 0.8) -> dict:
