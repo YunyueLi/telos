@@ -5,12 +5,15 @@
 // ============ models ============
 export type Status = "locked" | "learnable" | "learning" | "mastered";
 
+export type DomainClass = "A" | "B" | "C" | "D" | "E" | "F"; // 见 docs/STRATEGY.md §1
+
 export interface KnowledgePoint {
   id: string;
   name: string;
   prereqs: string[];
   isGoal?: boolean;
   minutes?: number;
+  domain?: DomainClass; // 学习机制大类，决定诊断/复习策略；缺省按 B（良构程序）
 }
 
 export interface Card {
@@ -238,24 +241,61 @@ function propagate(
 }
 
 // ============ bkt (Bayesian Knowledge Tracing) ============
-export const BKT = { pL0: 0.25, pT: 0.15, pS: 0.1, pG: 0.2 };
-export function bktPosterior(p: number, correct: boolean): number {
+export interface BktParams {
+  pL0: number;
+  pT: number;
+  pS: number;
+  pG: number;
+}
+export const BKT: BktParams = { pL0: 0.25, pT: 0.15, pS: 0.1, pG: 0.2 };
+
+// 按学习机制大类预设的 BKT 参数（与 core/telos_core/bkt.py 的 DOMAIN_BKT 对齐）。
+export const DOMAIN_BKT: Record<DomainClass, BktParams> = {
+  A: { pL0: 0.2, pT: 0.2, pS: 0.08, pG: 0.25 },
+  B: { pL0: 0.25, pT: 0.12, pS: 0.05, pG: 0.2 },
+  C: { pL0: 0.3, pT: 0.1, pS: 0.15, pG: 0.2 },
+  D: { pL0: 0.15, pT: 0.12, pS: 0.1, pG: 0.02 },
+  E: { pL0: 0.2, pT: 0.1, pS: 0.15, pG: 0.05 },
+  F: { pL0: 0.3, pT: 0.1, pS: 0.1, pG: 0.1 },
+};
+export const DOMAIN_LABEL: Record<DomainClass, string> = {
+  A: "记忆",
+  B: "程序",
+  C: "创造",
+  D: "动作",
+  E: "对抗",
+  F: "习惯",
+};
+export function domainLabel(domain?: string): string {
+  const k = (domain ?? "B").toString().toUpperCase();
+  return (DOMAIN_LABEL as Record<string, string>)[k] ?? "程序";
+}
+export function paramsFor(domain?: string): BktParams {
+  const k = (domain ?? "").toString().toUpperCase();
+  return (DOMAIN_BKT as Record<string, BktParams>)[k] ?? BKT;
+}
+const FSRS_DOMAINS = new Set(["A", "B", "C", "E"]);
+export function usesFsrs(domain?: string): boolean {
+  return FSRS_DOMAINS.has((domain ?? "B").toString().toUpperCase());
+}
+
+export function bktPosterior(p: number, correct: boolean, prm: BktParams = BKT): number {
   let num: number, den: number;
   if (correct) {
-    num = p * (1 - BKT.pS);
-    den = num + (1 - p) * BKT.pG;
+    num = p * (1 - prm.pS);
+    den = num + (1 - p) * prm.pG;
   } else {
-    num = p * BKT.pS;
-    den = num + (1 - p) * (1 - BKT.pG);
+    num = p * prm.pS;
+    den = num + (1 - p) * (1 - prm.pG);
   }
   return den > 0 ? num / den : p;
 }
-export function bktUpdate(p: number, correct: boolean): number {
-  const post = bktPosterior(p, correct);
-  return post + (1 - post) * BKT.pT;
+export function bktUpdate(p: number, correct: boolean, prm: BktParams = BKT): number {
+  const post = bktPosterior(p, correct, prm);
+  return post + (1 - post) * prm.pT;
 }
-export function bktPredict(p: number): number {
-  return p * (1 - BKT.pS) + (1 - p) * BKT.pG;
+export function bktPredict(p: number, prm: BktParams = BKT): number {
+  return p * (1 - prm.pS) + (1 - p) * prm.pG;
 }
 export function binaryEntropy(p: number): number {
   if (p <= 0 || p >= 1) return 0;
@@ -267,15 +307,21 @@ export class Diagnosis {
   belief: Record<string, number> = {};
   asked = new Set<string>();
   answers: Record<string, boolean> = {};
-  constructor(public g: KnowledgeGraph, public budget = 25) {
-    for (const id of g.ids()) this.belief[id] = BKT.pL0;
+  private prmOf: Record<string, BktParams> = {};
+  constructor(public g: KnowledgeGraph, public budget = 25, params?: BktParams) {
+    for (const id of g.ids()) {
+      this.prmOf[id] = params ?? paramsFor(g.get(id).domain);
+      this.belief[id] = this.prmOf[id].pL0;
+    }
   }
   private infoGain(id: string): number {
+    const prm = this.prmOf[id];
     const b = this.belief[id];
-    const pc = bktPredict(b);
+    const pc = bktPredict(b, prm);
     return (
       binaryEntropy(b) -
-      (pc * binaryEntropy(bktPosterior(b, true)) + (1 - pc) * binaryEntropy(bktPosterior(b, false)))
+      (pc * binaryEntropy(bktPosterior(b, true, prm)) +
+        (1 - pc) * binaryEntropy(bktPosterior(b, false, prm)))
     );
   }
   nextQuestion(): string | null {
@@ -295,11 +341,13 @@ export class Diagnosis {
   answer(id: string, correct: boolean): void {
     this.asked.add(id);
     this.answers[id] = correct;
-    this.belief[id] = bktUpdate(this.belief[id], correct);
+    this.belief[id] = bktUpdate(this.belief[id], correct, this.prmOf[id]);
     if (correct) {
-      for (const a of this.g.ancestors(id)) this.belief[a] = Math.max(this.belief[a], bktPosterior(this.belief[a], true));
+      for (const a of this.g.ancestors(id))
+        this.belief[a] = Math.max(this.belief[a], bktPosterior(this.belief[a], true, this.prmOf[a]));
     } else {
-      for (const d of this.g.descendants(id)) this.belief[d] = Math.min(this.belief[d], bktPosterior(this.belief[d], false));
+      for (const d of this.g.descendants(id))
+        this.belief[d] = Math.min(this.belief[d], bktPosterior(this.belief[d], false, this.prmOf[d]));
     }
   }
   isDone(): boolean {
@@ -355,7 +403,9 @@ export function diagnose(
   const state = emptyState();
   // crisp KST knowledge state: a point judged known enters as mastered
   for (const id of g.ids()) state.mastery[id] = d.belief[id] >= knownThreshold ? 0.9 : d.belief[id];
-  for (const id of g.ids()) if (d.belief[id] >= knownThreshold) state.cards[id] = review(newCard(), GOOD, 0);
+  for (const id of g.ids())
+    if (d.belief[id] >= knownThreshold && usesFsrs(g.get(id).domain))
+      state.cards[id] = review(newCard(), GOOD, 0); // 动作/习惯类不走遗忘曲线
   state.version += 1;
   return state;
 }
@@ -367,8 +417,11 @@ export function recordResult(
   grade: number = GOOD,
 ): LearnerState {
   applyEvidence(state, g, id, correct);
-  const card = state.cards[id] ?? newCard();
-  state.cards[id] = review(card, correct ? grade : AGAIN, state.day);
+  if (usesFsrs(g.get(id).domain)) {
+    // 动作/习惯类不走遗忘曲线
+    const card = state.cards[id] ?? newCard();
+    state.cards[id] = review(card, correct ? grade : AGAIN, state.day);
+  }
   return state;
 }
 export function progress(g: KnowledgeGraph, state: LearnerState, threshold = 0.8) {

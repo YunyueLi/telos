@@ -35,6 +35,7 @@ def _graph_to_json(goal: str, g) -> dict:
                 "prereqs": list(g[pid].prerequisites),
                 "isGoal": bool(g[pid].is_goal),
                 "minutes": int(g[pid].minutes),
+                "domain": g[pid].domain.value,
             }
             for pid in g.topological_order()
         ],

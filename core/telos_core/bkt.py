@@ -19,6 +19,25 @@ class BKTParams:
     p_g: float = 0.20   # P(guess | not known)
 
 
+# 按学习机制大类(DomainClass A–F)预设 BKT 参数。依据见 docs/STRATEGY.md §1：
+# A 事实：转移快、按题型猜对率高；B 程序：程序化后失误低；
+# C 创造/E 表现：观测噪声大(BKT 在此降级为前置探测)；D 动作：几乎不可能"猜对"。
+DOMAIN_BKT: dict[str, BKTParams] = {
+    "A": BKTParams(p_l0=0.20, p_t=0.20, p_s=0.08, p_g=0.25),
+    "B": BKTParams(p_l0=0.25, p_t=0.12, p_s=0.05, p_g=0.20),
+    "C": BKTParams(p_l0=0.30, p_t=0.10, p_s=0.15, p_g=0.20),
+    "D": BKTParams(p_l0=0.15, p_t=0.12, p_s=0.10, p_g=0.02),
+    "E": BKTParams(p_l0=0.20, p_t=0.10, p_s=0.15, p_g=0.05),
+    "F": BKTParams(p_l0=0.30, p_t=0.10, p_s=0.10, p_g=0.10),
+}
+
+
+def params_for(domain) -> BKTParams:
+    """取某大类的 BKT 参数。domain 可为 DomainClass 或其字符串值('A'..'F')。"""
+    key = getattr(domain, "value", domain)
+    return DOMAIN_BKT.get(str(key).strip().upper(), BKTParams())
+
+
 def posterior(p_known: float, correct: bool, prm: BKTParams = BKTParams()) -> float:
     """P(known | observation), by Bayes' rule."""
     if correct:

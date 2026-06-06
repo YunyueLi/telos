@@ -8,7 +8,7 @@ implies dependents are not yet reachable). Inspired by ALEKS-style assessment.
 """
 from __future__ import annotations
 
-from .bkt import BKTParams, binary_entropy, posterior, predict_correct, update_belief
+from .bkt import BKTParams, binary_entropy, params_for, posterior, predict_correct, update_belief
 from .models import KnowledgeGraph
 
 
@@ -16,18 +16,22 @@ class Diagnosis:
     def __init__(self, graph: KnowledgeGraph, budget: int = 25, params: BKTParams | None = None):
         self.g = graph
         self.budget = budget
-        self.prm = params or BKTParams()
-        self.belief: dict[str, float] = {pid: self.prm.p_l0 for pid in graph.ids()}
+        # 每个知识点按其 domain 选 BKT 参数；显式传 params 则全局覆盖（向后兼容）。
+        self.prm_of: dict[str, BKTParams] = {
+            pid: (params if params is not None else params_for(graph[pid].domain)) for pid in graph.ids()
+        }
+        self.belief: dict[str, float] = {pid: self.prm_of[pid].p_l0 for pid in graph.ids()}
         self.asked: set[str] = set()
         self.answers: dict[str, bool] = {}
 
     def _info_gain(self, pid: str) -> float:
         """Expected reduction in Bernoulli entropy from asking `pid`."""
+        prm = self.prm_of[pid]
         b = self.belief[pid]
-        pc = predict_correct(b, self.prm)
+        pc = predict_correct(b, prm)
         h_now = binary_entropy(b)
-        h_correct = binary_entropy(posterior(b, True, self.prm))
-        h_wrong = binary_entropy(posterior(b, False, self.prm))
+        h_correct = binary_entropy(posterior(b, True, prm))
+        h_wrong = binary_entropy(posterior(b, False, prm))
         return h_now - (pc * h_correct + (1 - pc) * h_wrong)
 
     def next_question(self) -> str | None:
@@ -45,13 +49,13 @@ class Diagnosis:
     def answer(self, pid: str, correct: bool) -> None:
         self.asked.add(pid)
         self.answers[pid] = bool(correct)
-        self.belief[pid] = update_belief(self.belief[pid], correct, self.prm)
+        self.belief[pid] = update_belief(self.belief[pid], correct, self.prm_of[pid])
         if correct:
             for a in self.g.ancestors(pid):
-                self.belief[a] = max(self.belief[a], posterior(self.belief[a], True, self.prm))
+                self.belief[a] = max(self.belief[a], posterior(self.belief[a], True, self.prm_of[a]))
         else:
             for d in self.g.descendants(pid):
-                self.belief[d] = min(self.belief[d], posterior(self.belief[d], False, self.prm))
+                self.belief[d] = min(self.belief[d], posterior(self.belief[d], False, self.prm_of[d]))
 
     def is_done(self) -> bool:
         return self.next_question() is None

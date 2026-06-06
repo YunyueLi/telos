@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
 import styles from "./derive.module.css";
@@ -9,9 +10,11 @@ import {
   GOOD,
   KnowledgeGraph,
   type LearnerState,
+  domainLabel,
   emptyState,
   newCard,
   review,
+  usesFsrs,
 } from "@/lib/telos/engine";
 import { buildView } from "@/lib/telos/store";
 import { layeredLayout } from "@/lib/telos/layout";
@@ -25,12 +28,33 @@ const EXAMPLES = [
   "从零学会古典吉他弹唱",
 ];
 
+// 画布走 React Flow，必须只在客户端加载（静态导出 + DOM 测量）。
+const DeriveCanvas = dynamic(() => import("./canvas"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className={styles.rfWrap}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--ink-3)",
+        fontFamily: "var(--mono)",
+        fontSize: 13,
+      }}
+    >
+      加载画布…
+    </div>
+  ),
+});
+
 // 用交互诊断累积的 BKT 信念构造学习状态（与 engine.diagnose 的状态构造一致，
 // 但只反映用户真实答过的题，未答的不强行置否）。
 function stateFromDiagnosis(d: Diagnosis, g: KnowledgeGraph): LearnerState {
   const s = emptyState();
   for (const id of g.ids()) s.mastery[id] = d.belief[id] >= 0.6 ? 0.9 : d.belief[id];
-  for (const id of g.ids()) if (d.belief[id] >= 0.6) s.cards[id] = review(newCard(), GOOD, 0);
+  for (const id of g.ids())
+    if (d.belief[id] >= 0.6 && usesFsrs(g.get(id).domain)) s.cards[id] = review(newCard(), GOOD, 0);
   s.version += 1;
   return s;
 }
@@ -54,10 +78,6 @@ export default function DerivePage() {
   const [dxQ, setDxQ] = useState<string | null>(null);
   const [dxCount, setDxCount] = useState(0);
 
-  // 画布缩放适配
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-
   useEffect(() => {
     setMounted(true);
     const u = getDeriveUrl();
@@ -67,20 +87,6 @@ export default function DerivePage() {
 
   const view = graph ? buildView(graph, state) : null;
   const layout = graph ? layeredLayout(graph) : null;
-
-  useEffect(() => {
-    if (!layout) return;
-    const el = wrapRef.current;
-    if (!el) return;
-    const compute = () => {
-      const avail = el.clientWidth - 36;
-      setScale(Math.max(0.5, Math.min(1, avail / layout.width)));
-    };
-    compute();
-    const ro = new ResizeObserver(compute);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [layout?.width, phase, diagnosing]);
 
   const run = useCallback(async (g: string) => {
     const goalText = g.trim();
@@ -348,50 +354,8 @@ export default function DerivePage() {
 
   function renderCanvas() {
     return (
-      <div className={styles.viewport} ref={wrapRef}>
-        <div
-          className={styles.scale}
-          style={{ width: layout!.width * scale, height: layout!.height * scale }}
-        >
-          <div
-            className={styles.canvas}
-            style={{
-              width: layout!.width,
-              height: layout!.height,
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            }}
-          >
-            <svg className={styles.edges} viewBox={`0 0 ${layout!.width} ${layout!.height}`}>
-              {layout!.edges.map((e, i) => {
-                const locked = view!.visual[e.to] === "lock";
-                const strong = e.to === view!.next?.id || e.from === view!.next?.id;
-                return (
-                  <path
-                    key={i}
-                    className={`${styles.edge} ${locked ? styles.lock : strong ? styles.strong : ""}`}
-                    d={e.d}
-                  />
-                );
-              })}
-            </svg>
-            {Object.values(layout!.nodes).map((n) => {
-              const v = view!.visual[n.id];
-              const kp = graph!.get(n.id);
-              return (
-                <div
-                  key={n.id}
-                  className={`${styles.node} ${styles[v]}`}
-                  style={{ left: n.x, top: n.y, width: layout!.nodeW }}
-                >
-                  {kp.isGoal && <span className={styles.star}>★</span>}
-                  {kp.name}
-                  <s>{view!.sub[n.id]}</s>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className={styles.canvasCell}>
+        <DeriveCanvas graph={graph!} view={view!} />
       </div>
     );
   }
@@ -439,6 +403,7 @@ export default function DerivePage() {
             <div key={id} className={styles.step}>
               <span className={styles.si}>{String(i + 1).padStart(2, "0")}</span>
               <b>{graph!.get(id).name}</b>
+              <span className={styles.stepDomain}>{domainLabel(graph!.get(id).domain)}</span>
               <span className="sm">{view!.sub[id]}</span>
             </div>
           ))}

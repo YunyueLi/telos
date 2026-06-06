@@ -8,13 +8,14 @@ sys.path.insert(0, ".")
 from tests import (  # noqa: E402
     test_bkt,
     test_diagnosis,
+    test_domain,
     test_engine,
     test_fire,
     test_fsrs,
     test_kst,
 )
 
-MODULES = [test_kst, test_fsrs, test_bkt, test_fire, test_diagnosis, test_engine]
+MODULES = [test_kst, test_fsrs, test_bkt, test_fire, test_diagnosis, test_engine, test_domain]
 
 
 def main() -> int:
