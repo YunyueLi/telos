@@ -1,0 +1,180 @@
+/* ============ review session ============ */
+/* Reuses global tokens (--ink, --paper, --line, --line-soft, --mono, --serif). */
+
+/* progress strip under the .ptop chrome */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.barn {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+.track i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: width 0.35s ease;
+}
+.barloc {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* the recall card */
+.card {
+  padding: 48px 44px 44px;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-2);
+  margin-bottom: 18px;
+}
+.name {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 38px;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+.prompt {
+  font-size: 15.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+/* reveal action (before flip) — parent .card is text-align:center, so this
+   inline-flex button centers naturally. */
+.revealbtn {
+  margin-top: 4px;
+}
+
+/* hint shown after reveal — dark panel for emphasis */
+.hint {
+  border-radius: 14px;
+  padding: 20px 22px;
+  text-align: left;
+  margin-bottom: 26px;
+}
+.hintl {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(240, 238, 233, 0.6);
+  margin-bottom: 7px;
+}
+.hintkey {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.hintd {
+  font-size: 13px;
+  color: rgba(240, 238, 233, 0.82);
+  line-height: 1.55;
+}
+
+/* grade row */
+.gradelab {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin-bottom: 13px;
+}
+.grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.grades :global(.btn) {
+  width: 100%;
+  justify-content: center;
+  padding: 13px 10px;
+}
+
+/* empty / completion state */
+.done {
+  padding: 54px 44px 58px;
+  text-align: center;
+  max-width: 540px;
+  margin: 0 auto;
+}
+.doneart {
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 22px;
+}
+.done :global(.eye) {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+.done h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+  margin: 10px 0 16px;
+  line-height: 1.05;
+}
+.done p {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+.cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .card,
+  .done {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .name {
+    font-size: 31px;
+  }
+  .grades {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

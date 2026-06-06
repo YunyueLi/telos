@@ -12,9 +12,9 @@ export function SiteHeader() {
         </Link>
         <nav className="nav">
           <Link href="/home">首页</Link>
-          <Link href="/">目标</Link>
           <Link href="/diagnose">诊断</Link>
           <Link href="/map">地图</Link>
+          <Link href="/review">复习</Link>
           <Link href="/profile">我</Link>
         </nav>
         <div className="meta">
