@@ -8,9 +8,20 @@
 
 `开源` · `Apache-2.0` · `Work in Progress`
 
+**在线访问** · [落地页](https://yunyueli.github.io/telos/) · [交互 Demo](https://yunyueli.github.io/telos/app/)
+
 </div>
 
 ---
+
+## 在线访问
+
+| | 链接 |
+| --- | --- |
+| 落地页 | https://yunyueli.github.io/telos/ |
+| 交互 Demo（目标 → 地图 → 学习） | https://yunyueli.github.io/telos/app/ |
+
+> Demo 用预置的「FastAPI + JWT」示例图谱演示完整流程；接入真实 LLM 对任意目标倒推是下一步。
 
 ## 这是什么
 
