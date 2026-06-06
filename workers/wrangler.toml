@@ -1,0 +1,10 @@
+name = "telos-derive"
+main = "derive.js"
+compatibility_date = "2024-11-01"
+
+# 非敏感默认值（可改）。API key 不放这里——用 `wrangler secret put TELOS_LLM_API_KEY` 设置。
+[vars]
+TELOS_LLM_BASE_URL = "https://api.deepseek.com"
+TELOS_LLM_MODEL = "deepseek-chat"
+# 可选：把跨域来源收紧到你的站点，降低被盗刷。默认 "*"。
+# ALLOW_ORIGIN = "https://yunyueli.github.io"
