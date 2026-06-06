@@ -5,13 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { DEMO_GRAPH as G } from "@/lib/graph";
-
-const STATS = [
-  { num: `${G.masteredCount}/${G.totalCount}`, lab: "已掌握" },
-  { num: "6", lab: "连续天数" },
-  { num: "14", lab: "学习时长 (h)" },
-  { num: "23", lab: "通过测试" },
-] as const;
+import { useLearner } from "@/lib/telos/store";
 
 const ACHIEVEMENTS = [
   { face: "cheer", title: "首次倒推", sub: "说出目标，生成第一张地图" },
@@ -25,7 +19,6 @@ const SETTINGS = [
   { icon: "gauge", label: "外观", val: "纸张 · 浅色" },
 ] as const;
 
-// 按状态分组，沿用地图的同 8 个知识点
 const GROUPS = [
   { key: "done", title: "已掌握", cls: "done" },
   { key: "now", title: "现在学", cls: "now" },
@@ -34,6 +27,14 @@ const GROUPS = [
 ] as const;
 
 export default function ProfilePage() {
+  const L = useLearner();
+  const stats = [
+    { num: `${L.mastered}/${L.total}`, lab: "已掌握" },
+    { num: "6", lab: "连续天数" },
+    { num: "14", lab: "学习时长 (h)" },
+    { num: "23", lab: "通过测试" },
+  ];
+
   return (
     <>
       <SiteHeader />
@@ -68,14 +69,14 @@ export default function ProfilePage() {
                 <div className="eye mono">Telos 学员 · 自 2026</div>
                 <h2>Alex</h2>
                 <p className="pgoal">
-                  目标：{G.goal} · 倒推出 {G.derivedCount} 个知识点
+                  目标：{G.goal} · 倒推出 {L.total} 个知识点
                 </p>
                 <div className="ptags">
                   <span className="chip">
                     <Icon name="spark" /> 连续 6 天
                   </span>
                   <span className="chip">
-                    <Icon name="target" /> 进度 {G.masteredCount}/{G.totalCount}
+                    <Icon name="target" /> 进度 {L.mastered}/{L.total}
                   </span>
                 </div>
               </div>
@@ -85,7 +86,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="pstats">
-              {STATS.map((s) => (
+              {stats.map((s) => (
                 <div key={s.lab} className="pstat">
                   <span className="num">{s.num}</span>
                   <span className="lab mono">{s.lab}</span>
@@ -102,21 +103,21 @@ export default function ProfilePage() {
                   在地图查看 <Icon name="arrow" />
                 </Link>
               </div>
-              {GROUPS.map((g) => {
-                const items = G.nodes.filter((n) => n.status === g.key);
+              {GROUPS.map((grp) => {
+                const items = G.nodes.filter((n) => L.visual[n.id] === grp.key);
                 if (items.length === 0) return null;
                 return (
-                  <div key={g.key} className="pgrp">
+                  <div key={grp.key} className="pgrp">
                     <div className="pglab mono">
-                      <span className={`stt ${g.cls}`} />
-                      {g.title}
+                      <span className={`stt ${grp.cls}`} />
+                      {grp.title}
                       <span className="pgc">{items.length}</span>
                     </div>
                     <div className="pnodes">
                       {items.map((n) => (
-                        <div key={n.id} className={`n ${n.status}`}>
+                        <div key={n.id} className={`n ${L.visual[n.id]}`}>
                           {n.label}
-                          <s>{n.sub}</s>
+                          <s>{L.sub[n.id]}</s>
                         </div>
                       ))}
                     </div>
