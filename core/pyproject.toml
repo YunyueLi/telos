@@ -1,0 +1,25 @@
+[project]
+name = "telos-core"
+version = "0.1.0"
+description = "Backward-design learning engine: knowledge graph, adaptive diagnosis, learning frontier (KST/ZPD), FIRe credit propagation, FSRS spaced repetition."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+keywords = ["education", "learning", "knowledge-space-theory", "fsrs", "spaced-repetition", "agent"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+telos-demo = "demo:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["telos_core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

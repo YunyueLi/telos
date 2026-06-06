@@ -11,9 +11,11 @@ export function SiteHeader() {
           Telos
         </Link>
         <nav className="nav">
+          <Link href="/home">首页</Link>
           <Link href="/">目标</Link>
-          <Link href="/map">学习地图</Link>
-          <Link href="/learn/jwt">学习中</Link>
+          <Link href="/diagnose">诊断</Link>
+          <Link href="/map">地图</Link>
+          <Link href="/profile">我</Link>
         </nav>
         <div className="meta">
           从结果倒推
