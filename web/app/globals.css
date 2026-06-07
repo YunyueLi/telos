@@ -97,6 +97,68 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .appgear:hover{color:var(--ink);border-color:var(--ink)}
 .appgear.on{color:var(--ink);border-color:var(--ink);background:var(--paper)}
 .appgear .ic{width:14px;height:14px}
+/* ===== 学习项目切换器（顶栏「目标」处下拉 / 移动底部抽屉） ===== */
+.psw{position:relative;display:flex;min-width:0;flex:0 1 auto}
+.psw-chip{display:inline-flex;align-items:center;gap:8px;min-width:0;max-width:46ch;font-size:13px;color:var(--ink-2);background:none;border:0;border-radius:10px;padding:5px 9px 5px 7px;cursor:pointer;white-space:nowrap}
+.psw-chip:hover,.psw-chip.on{background:rgba(20,19,16,.05);color:var(--ink)}
+.psw-chip-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.psw-cv{width:14px;height:14px;color:var(--ink-3);flex:none;transition:transform .18s}
+.psw-chip.on .psw-cv{transform:rotate(180deg);color:var(--ink)}
+.psw-backdrop{position:fixed;inset:0;z-index:200}
+.psw-panel{position:fixed;z-index:201;width:min(92vw,392px);background:var(--card);border:1px solid var(--line-soft);border-radius:18px;box-shadow:0 18px 50px -12px rgba(20,19,16,.3),0 4px 14px -8px rgba(20,19,16,.22);display:flex;flex-direction:column;max-height:min(72vh,560px);overflow:hidden;animation:pswPop .16s ease}
+@keyframes pswPop{from{opacity:0;transform:translateY(-6px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes pswSheet{from{transform:translateY(100%)}to{transform:none}}
+.psw-grab{display:none}
+.psw-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;font-family:var(--serif);font-size:16px;font-weight:600;color:var(--ink)}
+.psw-x{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border:0;background:none;border-radius:8px;color:var(--ink-3);cursor:pointer}
+.psw-x:hover{background:rgba(20,19,16,.06);color:var(--ink)}
+.psw-x .ic{width:16px;height:16px}
+.psw-search{position:relative;display:flex;align-items:center;margin:0 16px}
+.psw-search .psw-si{position:absolute;left:12px;width:15px;height:15px;color:var(--ink-3);pointer-events:none}
+.psw-search input{width:100%;font:500 13.5px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line-soft);border-radius:11px;padding:9px 34px;outline:none}
+.psw-search input:focus{border-color:var(--ink)}
+.psw-search input::placeholder{color:var(--ink-3)}
+.psw-clear{position:absolute;right:8px;display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border:0;background:none;border-radius:6px;color:var(--ink-3);cursor:pointer}
+.psw-clear:hover{background:rgba(20,19,16,.08);color:var(--ink)}
+.psw-clear .ic{width:13px;height:13px}
+.psw-controls{display:flex;align-items:center;gap:8px;padding:10px 16px 6px;flex-wrap:wrap}
+.psw-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
+.psw-fchip{display:inline-flex;align-items:center;gap:5px;font:600 11.5px var(--sans);color:var(--ink-2);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 10px;cursor:pointer;transition:.12s}
+.psw-fchip:hover{border-color:var(--ink-3)}
+.psw-fchip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.psw-fchip i{font-style:normal;font-family:var(--mono);font-size:10px;opacity:.7}
+.psw-sort{position:relative;display:inline-flex;align-items:center;gap:6px;flex:none}
+.psw-sort > span{font:600 10px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+.psw-sort select{appearance:none;font:600 11.5px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 25px 5px 11px;cursor:pointer}
+.psw-sortcv{position:absolute;right:8px;width:12px;height:12px;color:var(--ink-3);pointer-events:none}
+.psw-list{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 8px}
+.psw-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-radius:12px;padding:10px 12px;cursor:pointer}
+.psw-opt.active{background:rgba(20,19,16,.05)}
+.psw-opt.on{background:rgba(20,19,16,.04)}
+.psw-opt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.psw-opt-title{display:flex;align-items:center;gap:7px;min-width:0}
+.psw-opt-name{font:600 13.5px var(--sans);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.psw-hl{background:rgba(20,19,16,.13);color:var(--ink);border-radius:3px;padding:0 1px}
+.psw-cur{font-style:normal;font:600 9px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--paper);background:var(--ink);border-radius:5px;padding:2px 6px;flex:none}
+.psw-okic{width:14px;height:14px;color:var(--ink);flex:none}
+.psw-opt-meta{display:flex;align-items:center;gap:6px;font:500 11px var(--mono);color:var(--ink-3)}
+.psw-mdot{font-style:normal}
+.psw-bar{display:block;height:3px;border-radius:999px;background:var(--hatch);overflow:hidden}
+.psw-bar i{display:block;height:100%;background:var(--ink);border-radius:999px}
+.psw-opt-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.psw-due{display:inline-flex;align-items:center;gap:3px;font:600 10px var(--mono);color:var(--paper);background:var(--ink);border-radius:999px;padding:2px 7px}
+.psw-due .ic{width:10px;height:10px}
+.psw-pct{font:600 11px var(--mono);color:var(--ink-3)}
+.psw-empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:34px 24px;color:var(--ink-3)}
+.psw-empty .ic{width:26px;height:26px;color:var(--hatch)}
+.psw-empty p{font-size:13px;line-height:1.5;margin:0}
+.psw-foot{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line-soft)}
+.psw-new{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:600 13px var(--sans);color:var(--paper);background:var(--ink);border:0;border-radius:11px;padding:10px;cursor:pointer}
+.psw-new:hover{background:#000}
+.psw-new .ic{width:14px;height:14px}
+.psw-manage{display:inline-flex;align-items:center;gap:5px;font:600 12px var(--sans);color:var(--ink-2);text-decoration:none;padding:9px 11px;border-radius:9px;white-space:nowrap}
+.psw-manage:hover{color:var(--ink);background:rgba(20,19,16,.05)}
+.psw-manage .ic{width:13px;height:13px}
 /* 欢迎页：未配置端点时的轻提示（取代内嵌配置面板） */
 .ob-cfglink{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;text-decoration:none;background:var(--card)}
 .ob-cfglink:hover{border-color:var(--ink);color:var(--ink)}
@@ -121,10 +183,16 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .appnew{padding:8px}
   .appgear-t{display:none}
   .appgear{padding:7px}
-  /* 移动端：分组竖线收起，语言切换移交设置页（齿轮可达），顶栏只留进度/新建/设置/头像 */
+  /* 移动端：分组竖线/语言收起，进度药丸让位给项目切换器；顶栏 = 项目 · 新建 · 设置 · 头像 */
   /* .langsw 基础规则在文件后方，需用更高特异性覆盖才能在移动端隐藏 */
   .appdiv{display:none}
   .appstats .langsw{display:none}
+  .appprog{display:none}
+  .psw-chip{max-width:44vw;padding:5px 7px}
+  .psw-chip .appgoal-l{display:none}
+  .psw-backdrop{background:rgba(20,19,16,.36)}
+  .psw-panel.sheet{left:0;right:0;bottom:0;top:auto;width:100%;max-height:86vh;border-radius:20px 20px 0 0;animation:pswSheet .24s ease}
+  .psw-grab{display:block;width:38px;height:4px;border-radius:999px;background:var(--hatch);margin:9px auto 0}
   .appstats{gap:8px}
   .appbar-in{padding:0 16px;gap:10px}
   .appmain{padding-bottom:64px}
