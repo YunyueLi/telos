@@ -168,7 +168,7 @@ export default function DeriveCanvas({
         proOptions={{ hideAttribution: true }}
         onInit={(inst) => {
           // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用可读比例尺(看不全可拖)
-          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 0.8, duration: 0 });
+          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 0.95, duration: 0 });
           else inst.fitView({ padding: 0.18, maxZoom: 1 });
         }}
       >
