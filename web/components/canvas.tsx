@@ -20,6 +20,7 @@ import styles from "./app.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
 import { layeredLayout, type Direction } from "@/lib/telos/layout";
+import { useT } from "@/lib/telos/i18n";
 
 type NodeStatus = "done" | "now" | "learn" | "lock";
 
@@ -29,6 +30,7 @@ interface TelosData {
   status: NodeStatus;
   isGoal: boolean;
   domainLabel: string;
+  typeTitle: string;
   dir: Direction;
   onOpen: () => void;
   [key: string]: unknown;
@@ -58,7 +60,7 @@ function TelosNode({ data }: NodeProps) {
         className={styles.handle}
         isConnectable={false}
       />
-      <span className={styles.rfBadge} title={`学习类型：${d.domainLabel}`}>
+      <span className={styles.rfBadge} title={d.typeTitle}>
         {d.domainLabel}
       </span>
       <div className={styles.rfName}>
@@ -91,6 +93,7 @@ export default function DeriveCanvas({
   view: LearnerView;
   onOpenNode?: (id: string) => void;
 }) {
+  const { t } = useT();
   const [dir, setDir] = useState<Direction>(detectDir);
   const [pinned, setPinned] = useState(false); // 用户手动切过则不再自动跟随
 
@@ -120,7 +123,8 @@ export default function DeriveCanvas({
         sub: view.sub[n.id],
         status: view.visual[n.id],
         isGoal: !!graph.get(n.id).isGoal,
-        domainLabel: domainLabel(graph.get(n.id).domain),
+        domainLabel: domainLabel(graph.get(n.id).domain, t),
+        typeTitle: t("canvas.typeTitle", { domain: domainLabel(graph.get(n.id).domain, t) }),
         dir,
         onOpen: () => onOpenNode?.(n.id),
       } satisfies TelosData,
@@ -153,7 +157,7 @@ export default function DeriveCanvas({
       y: pts.reduce((s, n) => s + n.y, 0) / pts.length,
     };
     return { nodes: ns, edges: es, focus };
-  }, [graph, view, dir, onOpenNode]);
+  }, [graph, view, dir, onOpenNode, t]);
 
   return (
     <div className={styles.rfWrap}>
@@ -180,8 +184,8 @@ export default function DeriveCanvas({
         <Background gap={24} size={1} color="#e2dfd7" />
         <Controls showInteractive={false} />
         <Panel position="top-right">
-          <button className={styles.dirToggle} onClick={toggle} title="切换横向 / 纵向">
-            {dir === "TB" ? "横向 ⇄" : "纵向 ⇄"}
+          <button className={styles.dirToggle} onClick={toggle} title={t("canvas.toggleTitle")}>
+            {dir === "TB" ? t("canvas.toHorizontal") : t("canvas.toVertical")}
           </button>
         </Panel>
       </ReactFlow>

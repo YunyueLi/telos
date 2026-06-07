@@ -8,6 +8,7 @@ import styles from "./app.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
 import { layeredLayout } from "@/lib/telos/layout";
+import { useT } from "@/lib/telos/i18n";
 
 export default function PathView({
   graph,
@@ -18,6 +19,7 @@ export default function PathView({
   view: LearnerView;
   onOpenNode: (id: string) => void;
 }) {
+  const { t } = useT();
   const layout = layeredLayout(graph, "TB");
   const ordered = Object.values(layout.nodes)
     .sort((a, b) => a.y - b.y || a.x - b.x)
@@ -34,12 +36,12 @@ export default function PathView({
       <div className={styles.pathSticky}>
         {view.next ? (
           <button onClick={() => onOpenNode(view.next!.id)}>
-            下一步 · {view.next.name} →
+            {t("path.next", { name: view.next.name })}
           </button>
         ) : (
           <span className={styles.pathDone}>
             <Icon name="flag" style={{ width: 15, height: 15, verticalAlign: -2, marginRight: 5 }} />
-            目标已达成
+            {t("path.goalReached")}
           </span>
         )}
         <span className={styles.pathCount}>
@@ -68,7 +70,7 @@ export default function PathView({
                 {kp.name}
               </span>
               <span className={styles.pathCardSub}>
-                {domainLabel(kp.domain)} · {view.sub[id]}
+                {domainLabel(kp.domain, t)} · {view.sub[id]}
               </span>
             </button>
           );

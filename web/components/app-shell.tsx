@@ -8,13 +8,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { useProject } from "@/lib/telos/use-project";
+import { useT } from "@/lib/telos/i18n";
+import { LangSwitch } from "@/components/lang-switch";
 
 type Tab = "map" | "review" | "me";
 
-const TABS: { key: Tab; href: string; icon: IconName; label: string }[] = [
-  { key: "map", href: "/", icon: "map", label: "地图" },
-  { key: "review", href: "/review", icon: "refresh", label: "复习" },
-  { key: "me", href: "/me", icon: "user", label: "我" },
+const TABS: { key: Tab; href: string; icon: IconName; labelKey: string }[] = [
+  { key: "map", href: "/", icon: "map", labelKey: "nav.map" },
+  { key: "review", href: "/review", icon: "refresh", labelKey: "nav.review" },
+  { key: "me", href: "/me", icon: "user", labelKey: "nav.me" },
 ];
 
 export function AppShell({
@@ -26,6 +28,7 @@ export function AppShell({
 }) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
+  const { t } = useT();
   const { project, view, xp, streak, startNew } = useProject();
   const newLearning = () => {
     startNew();
@@ -52,35 +55,36 @@ export function AppShell({
           </Link>
 
           {project && (
-            <Link className="appgoal" href="/me" title="点击管理 / 换目标">
-              <span className="appgoal-l">目标</span>
+            <Link className="appgoal" href="/me" title={t("shell.goalTitle")}>
+              <span className="appgoal-l">{t("shell.goalLabel")}</span>
               {project.goal}
             </Link>
           )}
 
           <nav className="appnav">
-            {TABS.map((t) => (
-              <Link key={t.key} href={t.href} className={tab === t.key ? "on" : ""}>
-                <Icon name={t.icon} />
-                {t.label}
-                {t.key === "review" && due > 0 && <i className="appnav-badge">{due}</i>}
+            {TABS.map((tb) => (
+              <Link key={tb.key} href={tb.href} className={tab === tb.key ? "on" : ""}>
+                <Icon name={tb.icon} />
+                {t(tb.labelKey)}
+                {tb.key === "review" && due > 0 && <i className="appnav-badge">{due}</i>}
               </Link>
             ))}
           </nav>
 
           <div className="appstats">
-            <button className="appnew" onClick={newLearning} title="开始一个新的学习目标（保留现有项目）">
-              <Icon name="plus" /> <span className="appnew-t">新学习</span>
+            <LangSwitch />
+            <button className="appnew" onClick={newLearning} title={t("shell.newTitle")}>
+              <Icon name="plus" /> <span className="appnew-t">{t("shell.new")}</span>
             </button>
             {streak > 0 && (
-              <span className="appstat" title="连续学习天数">
+              <span className="appstat" title={t("shell.streakTitle")}>
                 <Icon name="spark" /> {streak}
               </span>
             )}
-            <span className="appstat" title="经验值（来自真实学习信号）">
+            <span className="appstat" title={t("shell.xpTitle")}>
               {xp} XP
             </span>
-            <Link href="/me" className={`appavatar ${tab === "me" ? "on" : ""}`} aria-label="我">
+            <Link href="/me" className={`appavatar ${tab === "me" ? "on" : ""}`} aria-label={t("nav.me")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={asset("/portraits/avatar.png")} alt="" />
             </Link>
@@ -91,13 +95,13 @@ export function AppShell({
       <main className="appmain">{children}</main>
 
       <nav className="apptabs">
-        {TABS.map((t) => (
-          <Link key={t.key} href={t.href} className={tab === t.key ? "on" : ""}>
+        {TABS.map((tb) => (
+          <Link key={tb.key} href={tb.href} className={tab === tb.key ? "on" : ""}>
             <span className="apptab-ic">
-              <Icon name={t.icon} />
-              {t.key === "review" && due > 0 && <i className="apptab-badge">{due}</i>}
+              <Icon name={tb.icon} />
+              {tb.key === "review" && due > 0 && <i className="apptab-badge">{due}</i>}
             </span>
-            <span>{t.label}</span>
+            <span>{t(tb.labelKey)}</span>
           </Link>
         ))}
       </nav>

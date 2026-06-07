@@ -269,9 +269,12 @@ export const DOMAIN_LABEL: Record<DomainClass, string> = {
   E: "对抗",
   F: "习惯",
 };
-export function domainLabel(domain?: string): string {
-  const k = (domain ?? "B").toString().toUpperCase();
-  return (DOMAIN_LABEL as Record<string, string>)[k] ?? "程序";
+// t?：可选 i18n 翻译器（t("domain.B")）；不传则回退内置中文标签（向后兼容 / 非组件场景）。
+export function domainLabel(domain?: string, t?: (k: string) => string): string {
+  const raw = (domain ?? "B").toString().toUpperCase();
+  const k = (["A", "B", "C", "D", "E", "F"].includes(raw) ? raw : "B") as DomainClass;
+  if (t) return t("domain." + k);
+  return DOMAIN_LABEL[k];
 }
 export function paramsFor(domain?: string): BktParams {
   const k = (domain ?? "").toString().toUpperCase();

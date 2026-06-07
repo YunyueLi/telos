@@ -97,7 +97,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(400, {"error": "goal 不能为空"})
                 return
             try:
-                g = llm.derive_graph(goal)
+                g = llm.derive_graph(goal, lang=str(data.get("lang", "")))
             except Exception as e:  # noqa: BLE001
                 self._json(502, {"error": str(e)})
                 return
@@ -109,7 +109,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             prereqs = [str(p) for p in (data.get("prereqs") or [])]
             try:
-                out = llm.lesson(name, str(data.get("domain", "B")), prereqs, str(data.get("goal", "")))
+                out = llm.lesson(name, str(data.get("domain", "B")), prereqs, str(data.get("goal", "")), lang=str(data.get("lang", "")))
             except Exception as e:  # noqa: BLE001
                 self._json(502, {"error": str(e)})
                 return
@@ -120,7 +120,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(400, {"error": "points 不能为空"})
                 return
             try:
-                out = llm.probes(points, str(data.get("goal", "")))
+                out = llm.probes(points, str(data.get("goal", "")), lang=str(data.get("lang", "")))
             except Exception as e:  # noqa: BLE001
                 self._json(502, {"error": str(e)})
                 return

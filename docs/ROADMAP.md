@@ -81,7 +81,7 @@ cd web  && npm run dev               # :3000
 - ~~**#10 简化 API 配置**~~ ✅ 已完成：新建共用组件 `components/endpoint-config.tsx`（onboarding 与「我」共用）——预设 chip（本地 serve.py / 线上 Worker / 自定义）一键填 + 单字段 + **「测试连接」**（打 `/health` 即时 ✓ 已连接·模型·key 就绪 / ✗ 原因）+ 保存。`derive.ts` 加 `LOCAL_ENDPOINT` + `getDeriveUrl()` 在 localhost 零配置默认指向本地 serve.py + `getHealthUrl()`/`testEndpoint()`。已实测：本地自动绿、chip 切换预填、假地址红。key 仍只在服务端。
 - **#6 一屏 + 移动端**（task #31）：核心已完成 —— 移动端地图主页用 `.mh-rail{display:contents}` + `order` 重排为**「推荐下一步 + 开始学习」置顶可立即行动 → 路径全展开（不再 62vh 裁切隐藏后半截）→ 进度/诊断/复习/连胜**。已实测 375×812：CTA 在首屏内(y≈153)、`.apptabs` 固定底栏、/review 空态正好一屏。桌面本就一屏(`.mh max-height`)。**剩余可选打磨**：onboarding/诊断窄屏细调；/me 是设置中枢（2020px，滚动可接受，如要更紧可折叠分区）。
 - ~~**#8 学习页去浮层**~~ ✅ 已完成：微课不再是暗色蒙版上浮起的圆角卡片，改为**纯纸感全页接管**——`.lessonFull` 背景 `var(--paper)`(无蒙版)、`.lessonPlate` 去圆角/去外框、改为 920px 居中阅读列(两侧细线界定) + 满高，保留深色 hero 头与 ✕ 返回。已实测计算样式(bg=paper、radius=0、plate 920×viewport 居中)+ 视觉(读起来是「一页课」非弹窗，出处卡片正常)。
-- **#7 多语种 i18n**（task #32）：简中/繁中/英/法/日/韩/西/俄/德 共 9 种。两层：①UI 文案——引入轻量 i18n（建议 `next-intl` 或自建 dict + Context，静态导出友好）；②**LLM 输出语言**——倒推/微课/诊断的 prompt 里带 `output_language`，跟随用户所选。顶栏加语言切换；落 localStorage `telos:lang`。
+- ~~**#7 多语种 i18n**~~ ✅ 已完成：9 语言（简中/繁中/英/法/日/韩/西/俄/德）。自建轻量 i18n（`lib/telos/i18n.tsx` Provider + `useT()` + `tStatic()`；字典 `lib/telos/i18n-dict.ts` 约 150 键 ×9）。两层都通：①**UI 文案**——全部组件（外壳/引导/地图主页/路径/节点/微课/诊断/复习/我/端点配置/画布）+ domainLabel/subLabel（经 buildView 注入 t）+ derive 错误（tStatic）已接 `t()`；②**LLM 输出语言**——derive/lesson/probe 请求带 `lang`，serve.py+llm.py 与 worker 注入 `_lang_directive`/`langDirective`，JSON 键名/枚举保持英文。顶栏 `LangSwitch` 组件（原生 select 叠加），落 `telos:lang`，默认按浏览器语言。已实测：英文/日文 UI 全量切换、English 倒推产出英文节点名、21 引擎测试通过、build 通过。
 - **#17 云同步**（task #17，pending，阻塞）：Supabase 跨设备同步 `telos:projects`。等用户建 Supabase + 给 `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`（见 SUPABASE.md / `web/lib/telos/cloud.ts`）。当前 /me 已有**离线备份码**导出/导入兜底。
 
 ---
@@ -89,5 +89,5 @@ cd web  && npm run dev               # :3000
 ## 3. 注意事项
 - 用户用**自己的 DeepSeek key**（在 core/.env，已明确授权使用，别再提醒轮换）。搜索 key 同理放服务端。
 - 后台进程：serve.py(:8787)、`npm run dev`(:3000) 可能需在新会话重启。
-- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（方案 A，降级已实测、grounded 待 key）、**#10 配置简化**（预设+测试连接+本地零配置，已实测）、**#6 移动端主页重排**（CTA 置顶+路径全展开，已实测 375×812）、**#8 学习页去浮层**（纸感全页接管，已实测）。
+- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（方案 A，降级已实测、grounded 待 key）、**#10 配置简化**（预设+测试连接+本地零配置，已实测）、**#6 移动端主页重排**（CTA 置顶+路径全展开，已实测 375×812）、**#8 学习页去浮层**（纸感全页接管，已实测）、**#7 九语种 i18n**（UI 全量 + LLM 输出语言 + 语言切换，已实测）。
 - 全局工作偏好已写入 `~/.claude/CLAUDE.md`（在 ~/clauderoam，需 `clauderoam push` 同步）与项目 `CLAUDE.md`。

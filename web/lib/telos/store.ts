@@ -59,10 +59,19 @@ export function visualClass(s: Status): "done" | "now" | "learn" | "lock" {
   return "lock";
 }
 
-export function subLabel(g: KnowledgeGraph, state: LearnerState, id: string): string {
+type Translator = (key: string, vars?: Record<string, string | number>) => string;
+
+// t?：可选 i18n 翻译器；不传则回退内置中文（向后兼容）。
+export function subLabel(g: KnowledgeGraph, state: LearnerState, id: string, t?: Translator): string {
   const st = statusOf(g, state, id);
   const pct = Math.round((state.mastery[id] ?? 0) * 100);
   const goal = g.get(id).isGoal;
+  if (t) {
+    if (st === "mastered") return t("status.mastered");
+    if (st === "learning") return t("status.learning", { pct });
+    if (st === "learnable") return goal ? t("status.sprint") : t("status.now");
+    return goal ? t("status.goal") : t("status.locked");
+  }
   if (st === "mastered") return "已掌握";
   if (st === "learning") return `学习中 ${pct}%`;
   if (st === "learnable") return goal ? "可冲刺" : "现在学这个";
@@ -83,13 +92,13 @@ export interface LearnerView {
   due: { id: string; name: string; r: number }[];
 }
 
-export function buildView(g: KnowledgeGraph, state: LearnerState): LearnerView {
+export function buildView(g: KnowledgeGraph, state: LearnerState, t?: Translator): LearnerView {
   const ids = g.ids();
   const visual: Record<string, "done" | "now" | "learn" | "lock"> = {};
   const sub: Record<string, string> = {};
   for (const id of ids) {
     visual[id] = visualClass(statusOf(g, state, id));
-    sub[id] = subLabel(g, state, id);
+    sub[id] = subLabel(g, state, id, t);
   }
   const mastered = ids.filter((id) => (state.mastery[id] ?? 0) >= 0.8).length;
   const total = ids.length;

@@ -4,6 +4,12 @@
 "use client";
 
 import type { DomainClass } from "./engine";
+import { currentLang, llmName, tStatic } from "./i18n";
+
+// 当前界面语言对应的 LLM 输出语言名（注入后端 prompt，让倒推/微课/诊断都用该语言生成）。
+function outputLang(): string {
+  return llmName(currentLang());
+}
 
 const LS_KEY = "telos:derive-url";
 const DOMAINS = new Set(["A", "B", "C", "D", "E", "F"]);
@@ -54,14 +60,14 @@ export interface EndpointStatus {
 // 测试端点连通性 + key 是否就绪（打一次 /health，零成本，不调用 LLM）。
 export async function testEndpoint(url?: string): Promise<EndpointStatus> {
   const health = getHealthUrl(url);
-  if (!health) return { ok: false, error: "请先填写端点地址" };
+  if (!health) return { ok: false, error: tStatic("epc.needUrl") };
   let res: Response;
   try {
     res = await fetch(health, { method: "GET" });
   } catch {
-    return { ok: false, error: "连不上 —— 确认服务在运行、地址与端口正确" };
+    return { ok: false, error: tStatic("epc.cantConnect") };
   }
-  if (!res.ok) return { ok: false, error: `服务返回 HTTP ${res.status}` };
+  if (!res.ok) return { ok: false, error: tStatic("epc.httpErr", { code: res.status }) };
   const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   return { ok: true, model: d.model ? String(d.model) : undefined, available: d.available !== false };
 }
@@ -124,16 +130,16 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
     res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goal }),
+      body: JSON.stringify({ goal, lang: outputLang() }),
       signal,
     });
   } catch {
-    throw new Error("连不上倒推服务（确认 serve.py 在运行，或端点地址正确）");
+    throw new Error(tStatic("err.cantReachDerive"));
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
+  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
   const points = data.points;
-  if (!Array.isArray(points) || points.length === 0) throw new Error("返回数据里没有 points");
+  if (!Array.isArray(points) || points.length === 0) throw new Error(tStatic("err.noPoints"));
   return { goal: String(data.goal ?? goal), points: normalize(points) };
 }
 
@@ -189,16 +195,16 @@ export async function generateLesson(
     res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, lang: outputLang() }),
       signal,
     });
   } catch {
-    throw new Error("连不上微课服务（确认 serve.py 在运行，或端点正确）");
+    throw new Error(tStatic("err.cantReachLesson"));
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
+  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
   const steps = (Array.isArray(data.steps) ? data.steps : []) as LessonStep[];
-  if (!steps.length) throw new Error("微课返回不完整");
+  if (!steps.length) throw new Error(tStatic("err.lessonIncomplete"));
   // 去掉选项里 LLM 自带的 A./B、序号前缀，避免和角标重复
   for (const s of steps) {
     const opts = (s as { options?: unknown }).options;
@@ -248,16 +254,16 @@ export async function generateProbes(
     res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ points, goal }),
+      body: JSON.stringify({ points, goal, lang: outputLang() }),
       signal,
     });
   } catch {
-    throw new Error("连不上诊断服务（确认 serve.py 在运行，或端点正确）");
+    throw new Error(tStatic("err.cantReachProbe"));
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
+  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
   const probes = data.probes as Record<string, Probe> | undefined;
-  if (!probes || !Object.keys(probes).length) throw new Error("诊断题返回为空");
+  if (!probes || !Object.keys(probes).length) throw new Error(tStatic("err.probeEmpty"));
   for (const k of Object.keys(probes)) probes[k].options = (probes[k].options || []).map(stripOptionLabel);
   return probes;
 }

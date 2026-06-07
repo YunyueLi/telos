@@ -5,13 +5,15 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
 import { getDeriveUrl, setDeriveUrl, testEndpoint, LOCAL_ENDPOINT, type EndpointStatus } from "@/lib/telos/derive";
+import { useT } from "@/lib/telos/i18n";
 
 const PRESETS = [
-  { key: "local", label: "本地 serve.py", fill: LOCAL_ENDPOINT },
-  { key: "worker", label: "线上 Worker", fill: "https://你的子域.workers.dev/derive" },
+  { key: "local", labelKey: "epc.local", fill: LOCAL_ENDPOINT },
+  { key: "worker", labelKey: "epc.worker", fill: "https://你的子域.workers.dev/derive" },
 ];
 
 export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void }) {
+  const { t } = useT();
   const [draft, setDraft] = useState("");
   const [saved, setSaved] = useState("");
   const [status, setStatus] = useState<EndpointStatus | null>(null);
@@ -48,7 +50,7 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
       <div className="epc-chips">
         {PRESETS.map((p) => (
           <button key={p.key} className={`epc-chip ${active === p.key ? "on" : ""}`} onClick={() => setDraft(p.fill)}>
-            {p.label}
+            {t(p.labelKey)}
           </button>
         ))}
         <button
@@ -57,7 +59,7 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
             if (isPreset) setDraft("");
           }}
         >
-          自定义
+          {t("epc.custom")}
         </button>
       </div>
 
@@ -73,10 +75,10 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
           }}
         />
         <button className="btn btn-line epc-btn" onClick={() => runTest(draft)} disabled={testing || !trimmed}>
-          {testing ? "测试中…" : "测试连接"}
+          {testing ? t("epc.testing") : t("epc.test")}
         </button>
         <button className="btn btn-ink epc-btn" onClick={save} disabled={trimmed === saved.trim()}>
-          保存
+          {t("epc.save")}
         </button>
       </div>
 
@@ -84,9 +86,9 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
         <div className={`epc-status ${status.ok ? "ok" : "bad"}`}>
           {status.ok ? (
             <>
-              <span className="dot dot-ok" /> 已连接
-              {status.model ? ` · 模型 ${status.model}` : ""}
-              {status.available === false ? " · 服务端尚未配置 key" : " · key 已就绪"}
+              <span className="dot dot-ok" /> {t("epc.connected")}
+              {status.model ? t("epc.model", { model: status.model }) : ""}
+              {status.available === false ? t("epc.keyMissing") : t("epc.keyReady")}
             </>
           ) : (
             <>
@@ -98,7 +100,7 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
 
       <div className="epc-note">
         <Icon name="lock" style={{ width: 12, height: 12, verticalAlign: -2, marginRight: 5 }} />
-        Key 永远在服务端（serve.py 读 core/.env、Worker 用 secret），绝不进前端。本机跑 serve.py 默认零配置。详见 DERIVE.md。
+        {t("epc.note")}
       </div>
     </div>
   );

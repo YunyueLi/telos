@@ -20,6 +20,7 @@ import {
   review,
 } from "./engine";
 import { buildView, type LearnerView } from "./store";
+import { useT } from "./i18n";
 import {
   type Project,
   deleteProject as delProject,
@@ -58,6 +59,7 @@ const Ctx = createContext<ProjectContextValue | null>(null);
 const byRecent = (a: Project, b: Project) => (b.updatedAt || 0) - (a.updatedAt || 0);
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useT();
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActive] = useState<string | null>(null);
@@ -82,8 +84,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     [project],
   );
   const view = useMemo(
-    () => (graph && project ? buildView(graph, project.state) : null),
-    [graph, project],
+    () => (graph && project ? buildView(graph, project.state, t) : null),
+    [graph, project, t],
   );
   const xp = useMemo(
     () => (graph && project ? computeXp(graph, project.state) : 0),
