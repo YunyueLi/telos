@@ -72,7 +72,7 @@ cd web  && npm run dev               # :3000
 
 **怎么开启真实链接**（给用户）：在 `core/.env` 加 `TELOS_SEARCH_PROVIDER=tavily` + `TELOS_SEARCH_API_KEY=tvly-...`（[tavily.com](https://tavily.com) 注册，~1000 次/月免费），**重启 serve.py** 即生效。线上 Worker：`wrangler secret put TELOS_SEARCH_API_KEY` + `wrangler.toml [vars] TELOS_SEARCH_PROVIDER`。详见 `DERIVE.md`「联网检索」。
 
-> ✅ grounded 已用 Tavily key 端到端实测：web_search 命中真实来源 → 微课资源回填真实直达 URL（如 zh-hans.react.dev/reference/react/useMemo）→ 前端引用卡显示真实 favicon + 域名 + 直达链接。本地 key 在 `core/.env`（`TELOS_SEARCH_PROVIDER=tavily` + `TELOS_SEARCH_API_KEY`，已 gitignore）；线上 Worker：`wrangler.toml [vars] TELOS_SEARCH_PROVIDER="tavily"` 已就位，待用户跑 `wrangler secret put TELOS_SEARCH_API_KEY` + `wrangler deploy`。
+> ✅ Tavily 已装配并端到端实测。**资源改为混合制（关键）**：LLM **永远**推荐 2-3 个优质资源（强制≥1 视频公开课），保证**无 Tavily、仅 LLM 也有好体验（含视频课）**；Tavily（若配）在 `lesson()` 里**后置增强**——把真实直达链接前置到 LLM 建议之前，二者互补去重（`_search_resources`+`_merge_resources`，最多 4），而非替换。**倒推也接入检索**：`_derive_context()` 检索真实课程/大纲作背景注入 derive prompt，让能力图谱更贴合主流路径。两端（llm.py + worker）同步。实测：LoL 微课 = 2 真链卡(知乎/lol.qq.com) + 2 视频课(B站/YouTube)；马拉松倒推产出贴合真实训练法的 14 节点。本地 key 在 `core/.env`（gitignore）；线上 Worker：`wrangler.toml [vars] TELOS_SEARCH_PROVIDER="tavily"` 已就位，待用户 `wrangler secret put TELOS_SEARCH_API_KEY` + `wrangler deploy`。
 
 ---
 
