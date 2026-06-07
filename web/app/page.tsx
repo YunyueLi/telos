@@ -14,20 +14,16 @@ import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
 import { getDeriveUrl } from "@/lib/telos/derive";
 import { EndpointConfig } from "@/components/endpoint-config";
+import { useT, tStatic } from "@/lib/telos/i18n";
+import { LangSwitch } from "@/components/lang-switch";
 
-const EXAMPLES = [
-  "用 Rust 写一个高性能 HTTP 服务器",
-  "三个月内跑完半程马拉松",
-  "看懂一份上市公司财报，做价值投资判断",
-  "理解 Transformer 与注意力机制",
-  "从零学会古典吉他弹唱",
-];
+const EXAMPLE_KEYS = ["ob.eg1", "ob.eg2", "ob.eg3", "ob.eg4", "ob.eg5"];
 
 const DeriveCanvas = dynamic(() => import("@/components/canvas"), {
   ssr: false,
   loading: () => (
     <div className="loadrow" style={{ justifyContent: "center", height: "100%" }}>
-      <span className="spinner" /> 加载地图…
+      <span className="spinner" /> {tStatic("common.loadingMap")}
     </div>
   ),
 });
@@ -47,13 +43,14 @@ export default function HubPage() {
     cancelNew,
   } = useProject();
   const router = useRouter();
+  const { t } = useT();
   const [openNode, setOpenNode] = useState<string | null>(null);
 
   if (!ready) {
     return (
       <div className="appshell">
         <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
-          <span className="spinner" /> 载入中…
+          <span className="spinner" /> {t("common.loading")}
         </div>
       </div>
     );
@@ -107,6 +104,7 @@ function Onboarding({
   canCancel?: boolean;
   onCancel?: () => void;
 }) {
+  const { t } = useT();
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
@@ -135,30 +133,29 @@ function Onboarding({
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
             {canCancel && (
               <button className="appstat" style={{ cursor: "pointer" }} onClick={onCancel}>
-                <Icon name="arrow" style={{ width: 12, height: 12, transform: "rotate(180deg)" }} /> 返回学习
+                <Icon name="arrow" style={{ width: 12, height: 12, transform: "rotate(180deg)" }} /> {t("ob.backToLearn")}
               </button>
             )}
-            <span className="ob-hint" style={{ whiteSpace: "nowrap" }}>从结果倒推，学会任何事</span>
+            <LangSwitch />
+            <span className="ob-hint" style={{ whiteSpace: "nowrap" }}>{t("ob.tagline")}</span>
           </div>
         </div>
       </header>
 
       <div className="ob">
         <div>
-          <div className="eyebrow">从结果倒推</div>
+          <div className="eyebrow">{t("ob.eyebrow")}</div>
           <h1>
-            说出你想达成的，
+            {t("ob.h1line1")}
             <br />
-            看它拆成一张学习地图
+            {t("ob.h1line2")}
           </h1>
-          <p className="ob-lead">
-            写代码、跑马拉松、看财报、学乐器都行。引擎用逆向设计把目标拆成带前置依赖的能力图谱，诊断你的起点，只教你缺的，边教边验证。
-          </p>
+          <p className="ob-lead">{t("ob.lead")}</p>
 
           <div className="ob-box">
             <textarea
               rows={3}
-              placeholder="例如：用 FastAPI 写一个带 JWT 鉴权的 REST API 并部署上线"
+              placeholder={t("ob.placeholder")}
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               onKeyDown={(e) => {
@@ -166,21 +163,21 @@ function Onboarding({
               }}
             />
             <div className="ob-bar">
-              <span className="ob-hint">Cmd/Ctrl + Enter</span>
+              <span className="ob-hint">{t("ob.hintKbd")}</span>
               <button
                 className="btn btn-ink"
                 style={{ marginLeft: "auto" }}
                 onClick={() => run(goal)}
                 disabled={deriving || !goal.trim()}
               >
-                {deriving ? "倒推中…" : "倒推"} {!deriving && <Icon name="arrow" />}
+                {deriving ? t("ob.deriving") : t("ob.derive")} {!deriving && <Icon name="arrow" />}
               </button>
             </div>
           </div>
 
           {deriving && (
             <div className="loadrow">
-              <span className="spinner" /> 正在倒推「{goal}」…（首次约 10–20 秒）
+              <span className="spinner" /> {t("ob.derivingLine", { goal })}
             </div>
           )}
           {deriveError && (
@@ -190,27 +187,26 @@ function Onboarding({
           )}
 
           <div className="ob-egs">
-            <span className="lab">试试这些</span>
-            {EXAMPLES.map((e) => (
-              <button key={e} className="ob-eg" onClick={() => run(e)} disabled={deriving}>
-                <i />
-                {e}
-              </button>
-            ))}
+            <span className="lab">{t("ob.examplesLab")}</span>
+            {EXAMPLE_KEYS.map((k) => {
+              const eg = t(k);
+              return (
+                <button key={k} className="ob-eg" onClick={() => run(eg)} disabled={deriving}>
+                  <i />
+                  {eg}
+                </button>
+              );
+            })}
           </div>
 
           {mounted && (
             <details className="ob-cfg" open={!cfgUrl}>
               <summary>
                 <span className={`dot ${cfgUrl ? "dot-ok" : "dot-off"}`} />
-                {cfgUrl ? "已配置倒推服务" : "未配置倒推服务 —— 展开设置"}
+                {cfgUrl ? t("ob.cfgConfigured") : t("ob.cfgUnconfigured")}
               </summary>
               <div className="cfgbody">
-                {!cfgUrl && (
-                  <>
-                    本地两步：① <code>cd core</code> 后 <code>python3 serve.py</code> ② 选「本地 serve.py」点测试即可。线上用 Cloudflare Worker，见 DERIVE.md。
-                  </>
-                )}
+                {!cfgUrl && <>{t("ob.cfgHelp")}</>}
                 <EndpointConfig onSaved={setCfgUrl} />
               </div>
             </details>
@@ -243,6 +239,7 @@ function MapHome({
   onDiagnose: () => void;
 }) {
   const { project, graph, view, xp, streak } = useProject();
+  const { t } = useT();
   const [isPhone, setIsPhone] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
@@ -269,37 +266,41 @@ function MapHome({
       <aside className="mh-rail">
         {fresh && next && (
           <div className="mh-recap">
-            因为你想 <b>{project.goal}</b>，建议从 <b>{next.name}</b> 开始
-            {view.total > 1 ? `（共 ${view.total} 个能力点）` : ""}。
+            {t("home.recap", {
+              goal: project.goal,
+              next: next.name,
+              count: view.total > 1 ? t("home.recapCount", { total: view.total }) : "",
+            })}
           </div>
         )}
 
         {next ? (
           <div className="dark mh-cta">
-            <div className="l">{fresh ? "从这里开始" : "推荐下一步 · 你的学习前沿"}</div>
+            <div className="l">{fresh ? t("home.ctaStart") : t("home.ctaNext")}</div>
             <div className="t">{next.name}</div>
             <div className="d">
-              {fresh ? "它没有前置，是这张图的入口之一。" : "前置已全部掌握，正处你的学习前沿。"} 约 {next.minutes} 分钟。
+              {fresh ? t("home.ctaDescFresh") : t("home.ctaDescNext")} {t("home.minutes", { min: next.minutes })}
             </div>
             <button className="btn btn-light gobtn" onClick={() => onOpenNode(next.id)}>
-              <Icon name="play" /> 开始学习
+              <Icon name="play" /> {t("home.startLearn")}
             </button>
             <div className="meta">
-              <span>{domainLabel(graph.get(next.id).domain)}</span>
-              <span>{view.total - view.mastered} 个待学</span>
+              <span>{domainLabel(graph.get(next.id).domain, t)}</span>
+              <span>{t("home.toLearn", { n: view.total - view.mastered })}</span>
             </div>
           </div>
         ) : (
           <div className="dark mh-cta">
-            <div className="l">目标达成</div>
-            <div className="t">你已抵达目标</div>
-            <div className="d">所有能力点都已掌握。保持间隔复习，巩固长期记忆。</div>
+            <div className="l">{t("home.goalReachedL")}</div>
+            <div className="t">{t("home.goalReachedT")}</div>
+            <div className="d">{t("home.goalReachedD")}</div>
           </div>
         )}
 
         <div className="mh-card mh-card-paper">
           <h4>
-            你的进度<span className="mh-n">{view.pct}%</span>
+            {t("home.progress")}
+            <span className="mh-n">{view.pct}%</span>
           </h4>
           <div className="mh-prog-row">
             <div className="big">
@@ -307,49 +308,50 @@ function MapHome({
               <sup> / {view.total}</sup>
             </div>
             <div className="sub">
-              个能力点
+              {t("home.progUnit")}
               <br />
-              已掌握
+              {t("word.mastered")}
             </div>
           </div>
           <div className="mh-track">
             <i style={{ width: `${view.pct}%` }} />
           </div>
           <div className="mh-eta">
-            {view.goalsReached ? "目标已达成" : `按当前节奏 · 预计 ${view.etaDays} 天达成`}
+            {view.goalsReached ? t("home.etaReached") : t("home.eta", { days: view.etaDays })}
           </div>
           <div className="mh-legend" style={{ marginTop: 12 }}>
             <span>
               <i className="d" />
-              已掌握
+              {t("legend.mastered")}
             </span>
             <span>
               <i />
-              现在学
+              {t("legend.now")}
             </span>
             <span>
               <i className="k" />
-              未解锁
+              {t("legend.locked")}
             </span>
           </div>
         </div>
 
         <button className="btn btn-line mh-dxbtn" onClick={onDiagnose}>
-          <Icon name="spark" /> {fresh ? "先测一测起点（更准）" : "重新测一测起点"}
+          <Icon name="spark" /> {fresh ? t("home.diagnoseFirst") : t("home.diagnoseAgain")}
         </button>
 
         <div className="mh-card">
           <h4>
-            今日待复习<span className="mh-n">{view.due.length} 项</span>
+            {t("home.dueTitle")}
+            <span className="mh-n">{t("home.dueCount", { n: view.due.length })}</span>
           </h4>
           {view.due.length === 0 ? (
-            <div className="mh-eta">今日无待复习 · 保持节奏</div>
+            <div className="mh-eta">{t("home.dueEmpty")}</div>
           ) : (
             view.due.slice(0, 4).map((d) => (
               <button key={d.id} className="mh-due-row" onClick={() => onOpenNode(d.id)}>
                 <Icon name="refresh" />
                 <b>{d.name}</b>
-                <span className="t">该复习</span>
+                <span className="t">{t("home.dueReview")}</span>
               </button>
             ))
           )}
@@ -357,9 +359,9 @@ function MapHome({
 
         <div className="appstats" style={{ justifyContent: "center" }}>
           <span className="appstat">
-            <Icon name="spark" /> {streak} 天连胜
+            <Icon name="spark" /> {t("stat.streak", { n: streak })}
           </span>
-          <span className="appstat">{xp} XP</span>
+          <span className="appstat">{t("stat.xp", { n: xp })}</span>
         </div>
       </aside>
     </div>

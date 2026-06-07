@@ -23,6 +23,16 @@ const USER = (goal) =>
   "4) 按 domain 调整 drill/benchmark：E 对抗/D 动作→节点是带『动态对手/资源/时间压力』情境的可练技能，drill 用复盘(VOD)/陪练(scrim)/专项训练，benchmark 用表现数据；C 创造→作品 + rubric 维度；A/B→应用层能力(非死记)。对抗/创造类至少 1/3 高层节点考『新局面下的临场决策/迁移』。\n" +
   "5) id 为唯一英文 slug；prerequisites 只引用本列表 id 且不成环；由易到难分层；恰有一个 is_goal=true 的终点；minutes 为预计投入分钟数。只输出 JSON，不要解释。";
 
+// 输出语言指令（#7 i18n）：让生成的面向学习者文本用指定语言；JSON 键名保持英文。缺省不限定。
+function langDirective(lang) {
+  lang = String(lang || "").trim();
+  if (!lang) return "";
+  return (
+    `\n\n【输出语言】所有面向学习者的自然语言文本（名称 name / 描述 desc / 讲解 / 选项 / 题干 / ` +
+    `解析 / 资源名 等）必须用 ${lang} 书写；JSON 的字段名(key)与枚举值(如 domain、kind)保持英文不变。`
+  );
+}
+
 function corsHeaders(env) {
   return {
     "Access-Control-Allow-Origin": env.ALLOW_ORIGIN || "*",
@@ -79,7 +89,7 @@ function toGraph(spec, goal) {
   return { goal, points: norm };
 }
 
-async function derive(goal, env) {
+async function derive(goal, env, lang) {
   const key = env.TELOS_LLM_API_KEY;
   if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
@@ -91,7 +101,7 @@ async function derive(goal, env) {
       model,
       messages: [
         { role: "system", content: SYSTEM },
-        { role: "user", content: USER(goal) },
+        { role: "user", content: USER(goal) + langDirective(lang) },
       ],
       temperature: 0.2,
       stream: false,
@@ -322,7 +332,7 @@ async function lesson(body, env) {
       model,
       messages: [
         { role: "system", content: LESSON_SYSTEM },
-        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, goal, sources) },
+        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, goal, sources) + langDirective(body.lang) },
       ],
       temperature: 0.3,
       stream: false,
@@ -367,7 +377,7 @@ async function probes(body, env) {
       model,
       messages: [
         { role: "system", content: PROBES_SYSTEM },
-        { role: "user", content: PROBES_USER(items, String(body.goal || "")) },
+        { role: "user", content: PROBES_USER(items, String(body.goal || "")) + langDirective(body.lang) },
       ],
       temperature: 0.3,
       stream: false,
@@ -410,16 +420,18 @@ export default {
     }
     if (request.method === "POST" && path === "/derive") {
       let goal = "";
+      let lang = "";
       try {
         const body = await request.json();
         goal = String(body.goal || "").trim();
+        lang = String(body.lang || "");
       } catch {
         return json({ error: '请求体需为 JSON：{"goal": "..."}' }, 400, env);
       }
       if (!goal) return json({ error: "goal 不能为空" }, 400, env);
       if (goal.length > 200) return json({ error: "goal 过长" }, 400, env);
       try {
-        return json(await derive(goal, env), 200, env);
+        return json(await derive(goal, env, lang), 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }

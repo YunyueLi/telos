@@ -52,6 +52,17 @@ def available() -> bool:
     return bool(_config()[0])
 
 
+def _lang_directive(lang: str) -> str:
+    """输出语言指令（#7 i18n）：让生成的面向学习者文本用指定语言；JSON 键名保持英文。缺省不限定。"""
+    lang = (lang or "").strip()
+    if not lang:
+        return ""
+    return (
+        f"\n\n【输出语言】所有面向学习者的自然语言文本（名称 name / 描述 desc / 讲解 / 选项 / 题干 / "
+        f"解析 / 资源名 等）必须用 {lang} 书写；JSON 的字段名(key)与枚举值(如 domain、kind)保持英文不变。"
+    )
+
+
 # ---- 联网检索（agentic grounding）：拿真实来源喂给模型，杜绝模型编造 URL ----
 # 默认 provider=none（不联网，优雅降级回平台搜索链接）。配 TELOS_SEARCH_PROVIDER=tavily|youtube 启用。
 
@@ -159,7 +170,7 @@ _USER = (
 )
 
 
-def derive_graph(goal: str, timeout: float = 60.0) -> KnowledgeGraph:
+def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeGraph:
     """Call the LLM to reverse-derive a KnowledgeGraph from a free-text goal."""
     key, base, model = _config()
     if not key:
@@ -170,7 +181,7 @@ def derive_graph(goal: str, timeout: float = 60.0) -> KnowledgeGraph:
         "model": model,
         "messages": [
             {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": _USER.format(goal=goal)},
+            {"role": "user", "content": _USER.format(goal=goal) + _lang_directive(lang)},
         ],
         "temperature": 0.2,
         "stream": False,
@@ -371,7 +382,7 @@ def _validate_lesson(spec: dict, sources: list | None = None) -> dict:
     return {"concept": str(spec.get("concept", "")).strip(), "steps": out_steps, "resources": resources}
 
 
-def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: float = 110.0) -> dict:
+def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: float = 110.0, lang: str = "") -> dict:
     """生成一个知识点的按需微课（OpenAI 兼容；返回校验过的 dict）。"""
     key, base, model = _config()
     if not key:
@@ -383,7 +394,7 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
         "model": model,
         "messages": [
             {"role": "system", "content": _LESSON_SYSTEM},
-            {"role": "user", "content": _lesson_user(name, domain, prereqs, goal, sources)},
+            {"role": "user", "content": _lesson_user(name, domain, prereqs, goal, sources) + _lang_directive(lang)},
         ],
         "temperature": 0.3,
         "stream": False,
@@ -425,7 +436,7 @@ _PROBES_USER = (
 )
 
 
-def probes(points, goal: str = "", timeout: float = 90.0) -> dict:
+def probes(points, goal: str = "", timeout: float = 90.0, lang: str = "") -> dict:
     """一次性为一组知识点各生成一道诊断单选题。points: [{'id','name','domain'}, ...]。"""
     key, base, model = _config()
     if not key:
@@ -437,7 +448,7 @@ def probes(points, goal: str = "", timeout: float = 90.0) -> dict:
         "model": model,
         "messages": [
             {"role": "system", "content": _PROBES_SYSTEM},
-            {"role": "user", "content": _PROBES_USER.format(goal=goal, items=items)},
+            {"role": "user", "content": _PROBES_USER.format(goal=goal, items=items) + _lang_directive(lang)},
         ],
         "temperature": 0.3,
         "stream": False,

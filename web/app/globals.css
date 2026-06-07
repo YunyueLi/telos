@@ -149,6 +149,12 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .epc-status.bad{color:#a23b2d}
 .epc-note{font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.6;margin-top:11px}
 
+/* 语言切换（#7） */
+.langsw{position:relative;display:inline-flex;align-items:center;flex:none}
+.langsw-cur{font:600 11.5px var(--mono);color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:5px 11px;white-space:nowrap;transition:.15s}
+.langsw:hover .langsw-cur{border-color:var(--ink);color:var(--ink)}
+.langsw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0}
+
 /* —— 地图主页（map = home）—— */
 .mh{flex:1;min-height:0;max-height:calc(100dvh - 59px);display:grid;grid-template-columns:1fr 350px}
 .mh-map{position:relative;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}

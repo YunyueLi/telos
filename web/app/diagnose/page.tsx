@@ -18,17 +18,19 @@ import {
   usesFsrs,
 } from "@/lib/telos/engine";
 import { generateProbes, type Probe } from "@/lib/telos/derive";
+import { useT } from "@/lib/telos/i18n";
 
 type Phase = "intro" | "loading" | "asking" | "result";
 const CONF: ["low" | "mid" | "high", string][] = [
-  ["low", "不太"],
-  ["mid", "一般"],
-  ["high", "很有把握"],
+  ["low", "dx.confLow"],
+  ["mid", "dx.confMid"],
+  ["high", "dx.confHigh"],
 ];
 
 export default function DiagnosePage() {
   const router = useRouter();
   const { ready, project, graph, applyState } = useProject();
+  const { t } = useT();
 
   const dxRef = useRef<Diagnosis | null>(null);
   const probesRef = useRef<Record<string, Probe>>({});
@@ -50,7 +52,7 @@ export default function DiagnosePage() {
     return (
       <div className="dx">
         <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
-          <span className="spinner" /> 载入中…
+          <span className="spinner" /> {t("common.loading")}
         </div>
       </div>
     );
@@ -87,8 +89,8 @@ export default function DiagnosePage() {
       setQ(nextProbe(d));
       setPhase("asking");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "出题失败";
-      setErr(msg === "NO_ENDPOINT" ? "诊断需要端点（与倒推同源，到「我 · 设置」里配置）。" : msg);
+      const msg = e instanceof Error ? e.message : t("err.probeFailed");
+      setErr(msg === "NO_ENDPOINT" ? t("err.noEndpointDiagnose") : msg);
       setPhase("intro");
     }
   }
@@ -128,14 +130,14 @@ export default function DiagnosePage() {
   return (
     <div className="dx">
       <div className="dx-top">
-        <button className="close" onClick={() => router.push("/")} aria-label="关闭">
+        <button className="close" onClick={() => router.push("/")} aria-label={t("common.close")}>
           ✕
         </button>
         <div className="dx-track">
           <i style={{ width: `${pct}%` }} />
         </div>
         <span className="dx-n">
-          {phase === "asking" ? `已答 ${count}` : phase === "result" ? "完成" : "起点诊断"}
+          {phase === "asking" ? t("dx.answered", { n: count }) : phase === "result" ? t("dx.complete") : t("dx.title")}
         </span>
       </div>
 
@@ -146,18 +148,16 @@ export default function DiagnosePage() {
             <span className="pcirc">
               <img src={asset("/portraits/think.png")} alt="Telos 老师" />
             </span>
-            <h2>先找到你的起点</h2>
-            <p>
-              这不是考试。几道题帮我搞清楚你<b>已经会哪些</b>，好跳过会的、直接学不会的。答错完全没关系——错得越清楚，定位越准。
-            </p>
-            <p>每题答完再选一下「有多大把握」：自信地答错，比蒙对更说明问题（信心加权诊断 CBM）。</p>
+            <h2>{t("dx.introTitle")}</h2>
+            <p>{t("dx.introP1")}</p>
+            <p>{t("dx.introP2")}</p>
             {err && <div className="errbox" style={{ marginTop: 8 }}>{err}</div>}
             <div className="dx-cta" style={{ marginTop: 22 }}>
               <button className="btn btn-ink" onClick={begin}>
-                开始（{max} 题内） <Icon name="arrow" />
+                {t("dx.start", { max })} <Icon name="arrow" />
               </button>
               <button className="btn btn-line" onClick={() => router.push("/")}>
-                以后再说
+                {t("dx.later")}
               </button>
             </div>
           </div>
@@ -165,14 +165,14 @@ export default function DiagnosePage() {
 
         {phase === "loading" && (
           <div className="loadrow" style={{ justifyContent: "center", paddingTop: 60 }}>
-            <span className="spinner" /> 正在为「{project.goal}」出诊断题…（一次性，稍候）
+            <span className="spinner" /> {t("dx.loadingProbes", { goal: project.goal })}
           </div>
         )}
 
         {phase === "asking" && probe && q && (
           <>
             <div className="dx-topic">
-              <Icon name="target" /> 正在定位 · {graph.get(q).name}
+              <Icon name="target" /> {t("dx.locating", { name: graph.get(q).name })}
             </div>
             <h3 className="dx-q">{probe.q}</h3>
             <div className="dx-opts">
@@ -188,26 +188,26 @@ export default function DiagnosePage() {
               ))}
             </div>
             <div className="dx-conf">
-              <span className="lab">你多有把握？</span>
+              <span className="lab">{t("dx.confQ")}</span>
               {CONF.map(([v, l]) => (
                 <button
                   key={v}
                   className={`dx-cbtn ${conf === v ? "sel" : ""}`}
                   onClick={() => setConf(v)}
                 >
-                  {l}
+                  {t(l)}
                 </button>
               ))}
             </div>
             <div className="dx-actions">
               <button className="btn btn-ink" disabled={choice === null || !conf} onClick={submit}>
-                下一题
+                {t("dx.nextQ")}
               </button>
               <button
                 className="btn btn-line"
                 onClick={() => dxRef.current && finish(dxRef.current)}
               >
-                结束看结果
+                {t("dx.endSee")}
               </button>
             </div>
           </>
@@ -219,33 +219,31 @@ export default function DiagnosePage() {
             <span className="pcirc">
               <img src={asset("/portraits/point.png")} alt="Telos 老师" />
             </span>
-            <h2>已规划好你的起点</h2>
+            <h2>{t("dx.resultTitle")}</h2>
             <p>
-              因为你想 <b>{project.goal}</b>，我们会从 <b>{summary.start}</b> 开始
-              {summary.known > 0 ? (
-                <>
-                  ，跳过你已经掌握的 <b>{summary.known}</b> 个能力点
-                </>
-              ) : null}
-              。地图、复习、进度都已按这个结果更新。
+              {t("dx.resultP", {
+                goal: project.goal,
+                start: summary.start,
+                skip: summary.known > 0 ? t("dx.resultSkip", { n: summary.known }) : "",
+              })}
             </p>
             <div className="dx-sum">
               <div className="s">
                 <span className="num">{summary.located}</span>
-                <span className="lab">已定位</span>
+                <span className="lab">{t("dx.located")}</span>
               </div>
               <div className="s">
                 <span className="num">{summary.known}</span>
-                <span className="lab">判定已会</span>
+                <span className="lab">{t("dx.judgedKnown")}</span>
               </div>
               <div className="s">
                 <span className="num">{total - summary.known}</span>
-                <span className="lab">待学习</span>
+                <span className="lab">{t("dx.toLearn")}</span>
               </div>
             </div>
             <div className="dx-cta">
               <button className="btn btn-ink" onClick={() => router.push("/")}>
-                去地图开始 <Icon name="arrow" />
+                {t("dx.goMap")} <Icon name="arrow" />
               </button>
               <button
                 className="btn btn-line"
@@ -254,7 +252,7 @@ export default function DiagnosePage() {
                   setPhase("intro");
                 }}
               >
-                <Icon name="refresh" /> 重测
+                <Icon name="refresh" /> {t("dx.retest")}
               </button>
             </div>
           </div>

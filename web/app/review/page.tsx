@@ -8,17 +8,19 @@ import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import { useProject } from "@/lib/telos/use-project";
+import { useT } from "@/lib/telos/i18n";
 import { AGAIN, EASY, GOOD, HARD } from "@/lib/telos/engine";
 
 const GRADES = [
-  { grade: AGAIN, label: "忘了", ink: false },
-  { grade: HARD, label: "勉强", ink: false },
-  { grade: GOOD, label: "记得", ink: true },
-  { grade: EASY, label: "简单", ink: true },
+  { grade: AGAIN, labelKey: "rv.gradeAgain", ink: false },
+  { grade: HARD, labelKey: "rv.gradeHard", ink: false },
+  { grade: GOOD, labelKey: "rv.gradeGood", ink: true },
+  { grade: EASY, labelKey: "rv.gradeEasy", ink: true },
 ] as const;
 
 export default function ReviewPage() {
   const { ready, project, view, reviewCard } = useProject();
+  const { t } = useT();
   const [reviewed, setReviewed] = useState(0);
   const [revealed, setRevealed] = useState(false);
 
@@ -38,7 +40,7 @@ export default function ReviewPage() {
     return (
       <AppShell active="review">
         <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
-          <span className="spinner" /> 载入中…
+          <span className="spinner" /> {t("common.loading")}
         </div>
       </AppShell>
     );
@@ -54,11 +56,11 @@ export default function ReviewPage() {
             <span className="pcirc">
               <img src={asset("/portraits/empty.png")} alt="Telos 老师" />
             </span>
-            <h2>还没有要复习的</h2>
-            <p>先说一个目标，倒推出学习地图、学几个能力点，它们就会进入这里的间隔复习。</p>
+            <h2>{t("rv.emptyTitle")}</h2>
+            <p>{t("rv.emptyP")}</p>
             <div className="rv-cta">
               <Link className="btn btn-ink" href="/">
-                去定个目标 <Icon name="arrow" />
+                {t("rv.emptyCta")} <Icon name="arrow" />
               </Link>
             </div>
           </div>
@@ -78,15 +80,11 @@ export default function ReviewPage() {
             <span className="pcirc">
               <img src={asset(didSome ? "/portraits/cheer.png" : "/portraits/empty.png")} alt="Telos 老师" />
             </span>
-            <h2>{didSome ? "复习完成" : "今日已清空"}</h2>
-            <p>
-              {didSome
-                ? `你复习了 ${reviewed} 个能力点，记忆又被推远了一点。`
-                : "没有到期的卡片——保持节奏就好。学完新的能力点会按 FSRS 安排回这里。"}
-            </p>
+            <h2>{didSome ? t("rv.doneTitle") : t("rv.clearedTitle")}</h2>
+            <p>{didSome ? t("rv.doneP", { n: reviewed }) : t("rv.clearedP")}</p>
             <div className="rv-cta">
               <Link className="btn btn-ink" href="/">
-                <Icon name="map" /> 回地图
+                <Icon name="map" /> {t("rv.backMap")}
               </Link>
             </div>
           </div>
@@ -107,42 +105,40 @@ export default function ReviewPage() {
             <div className="lt">
               <span className="big">{due.length}</span>
               <span className="sub" style={{ display: "inline", marginLeft: 8 }}>
-                项到期
+                {t("rv.dueUnit")}
               </span>
-              <div className="sub">间隔重复 · {project.goal}</div>
+              <div className="sub">{t("rv.intervalGoal", { goal: project.goal })}</div>
             </div>
           </div>
 
           {reviewed > 0 && (
             <div className="rv-bar">
-              <span className="n">已复习 {reviewed}</span>
+              <span className="n">{t("rv.reviewed", { n: reviewed })}</span>
               <div className="rv-track">
                 <i style={{ width: `${pct}%` }} />
               </div>
-              <span className="n">剩 {due.length}</span>
+              <span className="n">{t("rv.remain", { n: due.length })}</span>
             </div>
           )}
 
           {card && (
             <div className="rv-card">
               <div className="rv-topic">
-                <Icon name="refresh" /> 趁还没忘，回想一下
+                <Icon name="refresh" /> {t("rv.recallTopic")}
               </div>
               <h3 className="rv-name">{card.name}</h3>
 
               {!revealed ? (
                 <>
-                  <p className="rv-prompt">先在心里回想「{card.name}」的要点，再翻面如实评估。</p>
+                  <p className="rv-prompt">{t("rv.recallPrompt", { name: card.name })}</p>
                   <button className="btn btn-line" onClick={() => setRevealed(true)}>
-                    <Icon name="spark" /> 我想好了，翻面
+                    <Icon name="spark" /> {t("rv.flip")}
                   </button>
                 </>
               ) : (
                 <>
-                  <p className="rv-prompt">
-                    对照你的记忆，如实评估掌握程度——评得越准，下次复习的时机越合适。
-                  </p>
-                  <div className="rv-gradelab">你记得多牢？</div>
+                  <p className="rv-prompt">{t("rv.assessPrompt")}</p>
+                  <div className="rv-gradelab">{t("rv.howWell")}</div>
                   <div className="rv-grades">
                     {GRADES.map((g) => (
                       <button
@@ -151,7 +147,7 @@ export default function ReviewPage() {
                         style={{ justifyContent: "center" }}
                         onClick={() => grade(g.grade)}
                       >
-                        {g.label}
+                        {t(g.labelKey)}
                       </button>
                     ))}
                   </div>

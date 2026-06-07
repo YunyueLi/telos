@@ -8,15 +8,7 @@ import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import styles from "./app.module.css";
 import type { Lesson, LessonResource, LessonStep } from "@/lib/telos/derive";
-
-const KIND_LABEL: Record<string, string> = {
-  predict: "预测",
-  explain: "讲解",
-  worked: "跟着做",
-  self_explain: "自查",
-  faded: "补全",
-  retrieve: "检验",
-};
+import { useT } from "@/lib/telos/i18n";
 
 // 降级（无真实 url）时按平台拼一个搜索链接，仍是真实可点的页面、不编造具体视频地址。
 function resourceUrl(name: string, platform: string): string {
@@ -54,12 +46,13 @@ function platformDomain(platform: string): string {
 
 // 引用卡片：真实来源(联网检索)→favicon + 标题 + 域名，直达；降级→平台搜索链接，标注「搜索」。
 function ResourceCard({ r }: { r: LessonResource }) {
+  const { t } = useT();
   const [favOk, setFavOk] = useState(true);
   const real = !!r.url;
   const href = r.url || resourceUrl(r.name, r.platform || "");
   const domain = r.domain || (r.url ? domainOf(r.url) : "");
   const favDomain = domain || platformDomain(r.platform || "");
-  const meta = (domain || r.platform || "来源") + (real ? "" : " · 搜索");
+  const meta = (domain || r.platform || t("res.source")) + (real ? "" : ` · ${t("res.search")}`);
   return (
     <a className={styles.resCard} href={href} target="_blank" rel="noopener noreferrer" title={r.snippet || r.name}>
       {favDomain && favOk ? (
@@ -118,6 +111,7 @@ export default function LessonRunner({
   onGrade: (correct: boolean) => void;
   onClose: () => void;
 }) {
+  const { t } = useT();
   const steps = lesson.steps;
   const [idx, setIdx] = useState(0);
   const [graded, setGraded] = useState(false);
@@ -169,17 +163,17 @@ export default function LessonRunner({
             <img src={asset("/portraits/teach.png")} alt="Telos 老师" />
           </span>
           <div className={styles.lheadText}>
-            <div className={styles.lm}>学习前沿 · 为你定制 · {domainText}</div>
+            <div className={styles.lm}>{t("lr.headEyebrow", { domain: domainText })}</div>
             <h2>{nodeName}</h2>
             <div className={styles.pills}>
               {steps.map((s, i) => (
                 <span key={i} className={`${styles.pill} ${i === idx ? styles.pillOn : ""}`}>
-                  {KIND_LABEL[s.kind] ?? s.kind}
+                  {t("kind." + s.kind)}
                 </span>
               ))}
             </div>
           </div>
-          <button className={styles.lessonClose} onClick={onClose} aria-label="关闭">
+          <button className={styles.lessonClose} onClick={onClose} aria-label={t("common.close")}>
             ✕
           </button>
         </div>
@@ -207,20 +201,19 @@ export default function LessonRunner({
 
           <div className={styles.lside}>
             <div className={styles.lsideSec}>
-              <h4>为什么学这个</h4>
+              <h4>{t("lr.whyTitle")}</h4>
               <div className={styles.lwhy}>
-                {unlocks.length ? (
-                  <>
-                    你的目标 <b>{goal}</b> 依赖它；学完会解锁 <b>{unlocks.slice(0, 3).join("、")}</b>
-                    {unlocks.length > 3 ? " 等" : ""}。
-                  </>
-                ) : (
-                  "这是你这条路径的终点目标。"
-                )}
+                {unlocks.length
+                  ? t("lr.why", {
+                      goal,
+                      unlocks: unlocks.slice(0, 3).join(", "),
+                      more: unlocks.length > 3 ? t("np.listMore") : "",
+                    })
+                  : t("lr.whyEnd")}
               </div>
             </div>
             <div className={styles.lsideSec}>
-              <h4>当前掌握度</h4>
+              <h4>{t("lr.masteryTitle")}</h4>
               <div className={styles.gauge}>
                 <div className={styles.gaugeG}>
                   <svg viewBox="0 0 64 64">
@@ -236,24 +229,24 @@ export default function LessonRunner({
                   </svg>
                   <span className={styles.gaugeV}>{masteryPct}%</span>
                 </div>
-                <div className={styles.lwhy}>{masteryPct >= 80 ? "已掌握" : "通过最后的检验即标记掌握"}</div>
+                <div className={styles.lwhy}>{masteryPct >= 80 ? t("word.mastered") : t("lr.gateHint")}</div>
               </div>
             </div>
             {drill && (
               <div className={styles.lsideSec}>
-                <h4>怎么练</h4>
+                <h4>{t("np.howToPractice")}</h4>
                 <div className={styles.lwhy}>{drill}</div>
               </div>
             )}
             {benchmark && (
               <div className={styles.lsideSec}>
-                <h4>达标线</h4>
+                <h4>{t("np.benchmark")}</h4>
                 <div className={styles.lwhy}>{benchmark}</div>
               </div>
             )}
             {lesson.resources && lesson.resources.length > 0 && (
               <div className={styles.lsideSec}>
-                <h4>延伸学习 · 真实来源</h4>
+                <h4>{t("lr.resources")}</h4>
                 <div className={styles.resCards}>
                   {lesson.resources.map((r, i) => (
                     <ResourceCard key={r.url || r.name + i} r={r} />
@@ -269,9 +262,10 @@ export default function LessonRunner({
 }
 
 function ContinueBtn({ nav }: { nav: Nav }) {
+  const { t } = useT();
   return (
     <button className={`btn btn-ink ${styles.lessonBtn}`} onClick={nav.last ? nav.onFinish : nav.onAdvance}>
-      {nav.last ? "完成" : "继续"} <Icon name="arrow" />
+      {nav.last ? t("lr.finish") : t("lr.continue")} <Icon name="arrow" />
     </button>
   );
 }
@@ -289,10 +283,11 @@ function StepBody({
   onResolveGate: (correct: boolean) => void;
   gain: { startPct: number; masteryPct: number; unlocks: string[] };
 }) {
+  const { t } = useT();
   if (step.kind === "explain") {
     return (
       <>
-        <div className={styles.lstepLabel}>一句话讲清</div>
+        <div className={styles.lstepLabel}>{t("lr.explainLabel")}</div>
         <p className={styles.lstepLead}>{step.text}</p>
         {step.analogy && (
           <div className={styles.analogy}>
@@ -301,7 +296,7 @@ function StepBody({
               <img src={asset("/portraits/think.png")} alt="" />
             </span>
             <div>
-              <div className={styles.analogyL}>用你已会的来理解</div>
+              <div className={styles.analogyL}>{t("lr.analogyLabel")}</div>
               <p>{step.analogy}</p>
             </div>
           </div>
@@ -319,11 +314,12 @@ function StepBody({
 }
 
 function WorkedStep({ step, nav }: { step: Extract<LessonStep, { kind: "worked" }>; nav: Nav }) {
+  const { t } = useT();
   const [shown, setShown] = useState(1); // 已揭示步数（分步揭示，降低认知负荷）
   const all = shown >= step.steps.length;
   return (
     <>
-      <div className={styles.lstepLabel}>跟着做一遍</div>
+      <div className={styles.lstepLabel}>{t("lr.workedLabel")}</div>
       {step.problem && <p className={styles.workedProblem}>{step.problem}</p>}
       <ol className={styles.workedSteps}>
         {step.steps.slice(0, shown).map((s, i) => (
@@ -336,7 +332,7 @@ function WorkedStep({ step, nav }: { step: Extract<LessonStep, { kind: "worked" 
       <div className={styles.lessonActions}>
         {!all ? (
           <button className={`btn btn-ink ${styles.lessonBtn}`} onClick={() => setShown((n) => n + 1)}>
-            下一步 <Icon name="arrow" />
+            {t("lr.nextStep")} <Icon name="arrow" />
           </button>
         ) : (
           <ContinueBtn nav={nav} />
@@ -359,6 +355,7 @@ function McqStep({
   onResolveGate: (correct: boolean) => void;
   gain: { startPct: number; masteryPct: number; unlocks: string[] };
 }) {
+  const { t } = useT();
   const isPredict = step.kind === "predict";
   const hints = ("hints" in step && step.hints) || [];
   const rationale = "rationale" in step ? step.rationale : "";
@@ -400,12 +397,12 @@ function McqStep({
 
   const label =
     step.kind === "self_explain"
-      ? "想一想 —— 为什么"
+      ? t("lr.labelSelfExplain")
       : step.kind === "faded"
-        ? "补全最后一步"
+        ? t("lr.labelFaded")
         : step.kind === "retrieve"
-          ? "检验 —— 答对即掌握"
-          : "先猜一猜（不计分）";
+          ? t("lr.labelRetrieve")
+          : t("lr.labelPredict");
 
   return (
     <>
@@ -445,7 +442,7 @@ function McqStep({
         <div className={styles.lhints}>
           {hints.slice(0, hintsShown).map((h, i) => (
             <div key={i} className={styles.lhint}>
-              <b>提示 {i + 1}</b> {h}
+              <b>{t("lr.hintN", { n: i + 1 })}</b> {h}
             </div>
           ))}
         </div>
@@ -458,24 +455,24 @@ function McqStep({
             disabled={choice === null}
             onClick={submit}
           >
-            {wrongs > 0 ? "看提示，再试一次" : isPredict ? "提交我的猜测" : "提交"}
+            {wrongs > 0 ? t("lr.submitRetry") : isPredict ? t("lr.submitGuess") : t("np.submit")}
           </button>
         </div>
       ) : (
         <>
           {isPredict ? (
             <div className={styles.outcomeNo}>
-              正确答案是 <b>{String.fromCharCode(65 + step.answer)}</b>。{reveal}
+              {t("lr.predictAnswer", { letter: String.fromCharCode(65 + step.answer), reveal: reveal ?? "" })}
             </div>
           ) : (
             <div className={correct ? styles.outcomeOk : styles.outcomeNo}>
               {correct ? (
                 <>
                   <Icon name="check" style={{ width: 14, height: 14, verticalAlign: -2, marginRight: 4 }} />
-                  答对了！
+                  {t("lr.correct")}
                 </>
               ) : (
-                "看正确答案："
+                t("lr.seeAnswer")
               )}
               {rationale && <span> {rationale}</span>}
             </div>
@@ -484,11 +481,10 @@ function McqStep({
             <div className={styles.lgain}>
               <Icon name="up" style={{ width: 15, height: 15 }} />
               <span>
-                掌握度 <b>{gain.startPct}%</b> <span className={styles.lgainArrow}>→</span>{" "}
-                <b>{gain.masteryPct}%</b>
+                <b>{gain.startPct}%</b> <span className={styles.lgainArrow}>→</span> <b>{gain.masteryPct}%</b>
               </span>
               {gain.unlocks.length > 0 && gain.masteryPct >= 80 && (
-                <span className={styles.lgainArrow}>· 解锁 {gain.unlocks.slice(0, 2).join("、")}</span>
+                <span className={styles.lgainArrow}>{t("lr.gainUnlock", { list: gain.unlocks.slice(0, 2).join(", ") })}</span>
               )}
             </div>
           )}
