@@ -4,7 +4,7 @@
 // 与移动端底部 Tab（地图 / 复习 / 我）。无 section 编号、无假浏览器框、无 Demo footer。
 // 依据头部学习应用调研：单一目标 → 地图即主页；连胜/进度常驻顶栏；移动底部三 Tab。
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { useProject } from "@/lib/telos/use-project";
@@ -25,7 +25,12 @@ export function AppShell({
   active?: Tab;
 }) {
   const pathname = usePathname() ?? "/";
-  const { project, view, xp, streak } = useProject();
+  const router = useRouter();
+  const { project, view, xp, streak, startNew } = useProject();
+  const newLearning = () => {
+    startNew();
+    router.push("/");
+  };
   const tab: Tab =
     active ??
     (pathname.startsWith("/review")
@@ -64,6 +69,9 @@ export function AppShell({
           </nav>
 
           <div className="appstats">
+            <button className="appnew" onClick={newLearning} title="开始一个新的学习目标（保留现有项目）">
+              <Icon name="plus" /> <span className="appnew-t">新学习</span>
+            </button>
             {streak > 0 && (
               <span className="appstat" title="连续学习天数">
                 <Icon name="spark" /> {streak}

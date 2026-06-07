@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: { unoptimized: true },
   turbopack: { root },
+  // 隐藏开发模式左下角的 Next 指示按钮（仅 dev 出现，生产本就没有）
+  devIndicators: false,
 };
 
 export default nextConfig;

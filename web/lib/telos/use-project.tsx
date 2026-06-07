@@ -1,6 +1,5 @@
-// 倒推「活动项目」的单一真相源：跨所有产品页面共享同一份图谱 + 学习状态。
-// Provider 挂在 layout，App Router 切路由时保持挂载，状态不丢。
-// 所有写操作都会落盘 telos:project 并刷新连胜，供复习页 / XP / 云同步读取。
+// 学习项目库的单一真相源：可同时持有多个学习项目，跨所有页面共享当前项目 + 列表。
+// Provider 挂在 layout，切路由保持挂载。所有写操作落盘 telos:projects 并刷新连胜。
 "use client";
 
 import {
@@ -21,41 +20,63 @@ import {
   review,
 } from "./engine";
 import { buildView, type LearnerView } from "./store";
-import { type Project, clearProject, loadProject, saveProject } from "./project";
+import {
+  type Project,
+  deleteProject as delProject,
+  genId,
+  getActiveId,
+  listProjects,
+  setActiveId,
+  upsertProject,
+} from "./project";
 import { deriveGraph } from "./derive";
 import { computeXp, getStreak, touchStreak } from "./xp";
 
 interface ProjectContextValue {
-  ready: boolean; // 已尝试从 localStorage 恢复（用于避免静态导出闪烁）
-  project: Project | null;
+  ready: boolean;
+  projects: Project[]; // 全部学习项目（按最近更新排序）
+  project: Project | null; // 当前项目
   graph: KnowledgeGraph | null;
   view: LearnerView | null;
   xp: number;
   streak: number;
+  composing: boolean; // 正在"新学习"（即使有旧项目也显示引导页）
   deriving: boolean;
   deriveError: string | null;
   derive: (goal: string) => Promise<boolean>;
   record: (id: string, correct: boolean, grade?: number) => void;
   reviewCard: (id: string, grade: number) => void;
   applyState: (state: LearnerState) => void;
-  reset: () => void;
+  switchProject: (id: string) => void;
+  startNew: () => void;
+  cancelNew: () => void;
+  removeProject: (id: string) => void;
 }
 
 const Ctx = createContext<ProjectContextValue | null>(null);
 
+const byRecent = (a: Project, b: Project) => (b.updatedAt || 0) - (a.updatedAt || 0);
+
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [project, setProject] = useState<Project | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeId, setActive] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
   const [streak, setStreak] = useState(0);
   const [deriving, setDeriving] = useState(false);
   const [deriveError, setDeriveError] = useState<string | null>(null);
 
   useEffect(() => {
-    setProject(loadProject());
+    setProjects(listProjects());
+    setActive(getActiveId());
     setStreak(getStreak());
     setReady(true);
   }, []);
 
+  const project = useMemo(
+    () => projects.find((p) => p.id === activeId) ?? null,
+    [projects, activeId],
+  );
   const graph = useMemo(
     () => (project ? new KnowledgeGraph(project.points) : null),
     [project],
@@ -69,11 +90,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     [graph, project],
   );
 
-  // 落盘 + 记一次「今天有学习活动」，并把 setState 一并完成。
-  const commit = useCallback((p: Project, touch = true) => {
-    saveProject(p);
-    setProject(p);
-    if (touch) setStreak(touchStreak());
+  // 把更新后的项目并入列表（去重 + 按最近排序）
+  const merge = useCallback((p: Project) => {
+    setProjects((prev) => [p, ...prev.filter((x) => x.id !== p.id)].sort(byRecent));
   }, []);
 
   const derive = useCallback(
@@ -84,12 +103,21 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       setDeriveError(null);
       try {
         const res = await deriveGraph(g);
-        commit({
+        const now = Date.now();
+        const p: Project = {
+          id: genId(),
           goal: res.goal,
           points: res.points,
           state: emptyState(),
-          updatedAt: Date.now(),
-        });
+          createdAt: now,
+          updatedAt: now,
+        };
+        upsertProject(p);
+        setActiveId(p.id);
+        merge(p);
+        setActive(p.id);
+        setComposing(false);
+        setStreak(touchStreak());
         setDeriving(false);
         return true;
       } catch (e) {
@@ -103,69 +131,94 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
     },
-    [commit],
+    [merge],
+  );
+
+  const mutateActive = useCallback(
+    (fn: (g: KnowledgeGraph, state: LearnerState) => void) => {
+      setProjects((prev) => {
+        const cur = prev.find((p) => p.id === activeId);
+        if (!cur) return prev;
+        const g = new KnowledgeGraph(cur.points);
+        const state: LearnerState = JSON.parse(JSON.stringify(cur.state));
+        fn(g, state);
+        const p: Project = { ...cur, state, updatedAt: Date.now() };
+        upsertProject(p);
+        return [p, ...prev.filter((x) => x.id !== cur.id)].sort(byRecent);
+      });
+      setStreak(touchStreak());
+    },
+    [activeId],
   );
 
   const record = useCallback(
     (id: string, correct: boolean, grade: number = GOOD) => {
-      setProject((prev) => {
-        if (!prev) return prev;
-        const g = new KnowledgeGraph(prev.points);
-        const state: LearnerState = JSON.parse(JSON.stringify(prev.state));
-        engineRecord(g, state, id, correct, grade);
-        const p: Project = { ...prev, state, updatedAt: Date.now() };
-        saveProject(p);
-        return p;
-      });
-      setStreak(touchStreak());
+      mutateActive((g, state) => engineRecord(g, state, id, correct, grade));
     },
-    [],
+    [mutateActive],
   );
 
-  const reviewCard = useCallback((id: string, grade: number) => {
-    setProject((prev) => {
-      if (!prev) return prev;
-      const state: LearnerState = JSON.parse(JSON.stringify(prev.state));
-      const c = state.cards[id] ?? newCard();
-      state.cards[id] = review(c, grade, state.day); // 纯 FSRS 重排，不动掌握度
-      state.version += 1;
-      const p: Project = { ...prev, state, updatedAt: Date.now() };
-      saveProject(p);
-      return p;
-    });
-    setStreak(touchStreak());
+  const reviewCard = useCallback(
+    (id: string, grade: number) => {
+      mutateActive((_g, state) => {
+        const c = state.cards[id] ?? newCard();
+        state.cards[id] = review(c, grade, state.day);
+        state.version += 1;
+      });
+    },
+    [mutateActive],
+  );
+
+  const applyState = useCallback(
+    (next: LearnerState) => {
+      mutateActive((_g, state) => {
+        state.mastery = next.mastery;
+        state.cards = next.cards;
+        state.day = next.day;
+        state.version = (state.version || 0) + 1;
+      });
+    },
+    [mutateActive],
+  );
+
+  const switchProject = useCallback((id: string) => {
+    setActiveId(id);
+    setActive(id);
+    setComposing(false);
   }, []);
 
-  const applyState = useCallback((state: LearnerState) => {
-    setProject((prev) => {
-      if (!prev) return prev;
-      const p: Project = { ...prev, state, updatedAt: Date.now() };
-      saveProject(p);
-      return p;
-    });
-    setStreak(touchStreak());
-  }, []);
-
-  const reset = useCallback(() => {
-    clearProject();
-    setProject(null);
+  const startNew = useCallback(() => {
+    setComposing(true);
     setDeriveError(null);
+  }, []);
+
+  const cancelNew = useCallback(() => setComposing(false), []);
+
+  const removeProject = useCallback((id: string) => {
+    delProject(id);
+    setProjects(listProjects());
+    setActive(getActiveId());
   }, []);
 
   const value: ProjectContextValue = {
     ready,
+    projects,
     project,
     graph,
     view,
     xp,
     streak,
+    composing,
     deriving,
     deriveError,
     derive,
     record,
     reviewCard,
     applyState,
-    reset,
+    switchProject,
+    startNew,
+    cancelNew,
+    removeProject,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
