@@ -96,6 +96,7 @@ function Onboarding({
 
   const run = (g: string) => {
     if (!g.trim() || deriving) return;
+    setGoal(g);
     void derive(g);
   };
   const saveCfg = () => {
