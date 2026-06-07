@@ -108,7 +108,7 @@ export default function DeriveCanvas({
     setDir((d) => (d === "TB" ? "LR" : "TB"));
   }, []);
 
-  const { nodes, edges } = useMemo(() => {
+  const { nodes, edges, focus } = useMemo(() => {
     const layout = layeredLayout(graph, dir);
     const vertical = dir === "TB";
     const ns: Node[] = Object.values(layout.nodes).map((n) => ({
@@ -144,7 +144,15 @@ export default function DeriveCanvas({
         },
       };
     });
-    return { nodes: ns, edges: es };
+    // 初始定位锚点：当前学习前沿 / "现在学" 的节点（找不到则取入口），
+    // 用于在长图谱里默认对准"该学的地方"，而不是缩到看不清地全图 fitView。
+    const focusId =
+      view.next?.id ??
+      Object.keys(layout.nodes).find((id) => view.visual[id] === "now") ??
+      Object.keys(layout.nodes)[0];
+    const fn = focusId ? layout.nodes[focusId] : null;
+    const focus = fn ? { x: fn.x, y: fn.y } : null;
+    return { nodes: ns, edges: es, focus };
   }, [graph, view, dir, onOpenNode]);
 
   return (
@@ -154,12 +162,17 @@ export default function DeriveCanvas({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.12 }}
         minZoom={0.2}
         maxZoom={2}
         nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
+        onInit={(inst) => {
+          // 长图谱：默认对准"当前该学的"节点、用可读的固定比例尺(不缩成看不清的全图)；
+          // 短图谱：fitView 正好铺满。
+          const long = graph.ids().length > 6;
+          if (focus && long) inst.setCenter(focus.x, focus.y, { zoom: 0.82, duration: 0 });
+          else inst.fitView({ padding: 0.14, maxZoom: 1 });
+        }}
       >
         <Background gap={24} size={1} color="#e2dfd7" />
         <Controls showInteractive={false} />
