@@ -105,6 +105,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 
 /* —— 引导 / 目标输入（全屏，无项目时）—— */
 .ob{flex:1;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;max-width:1100px;width:100%;margin:0 auto;padding:48px 28px}
+.ob-back{display:inline-flex;align-items:center;background:none;border:0;padding:0;margin-bottom:18px;font:600 13px var(--sans);color:var(--ink-3);cursor:pointer}
+.ob-back:hover{color:var(--ink)}
 @media(max-width:900px){.ob{grid-template-columns:1fr;gap:20px;padding:30px 22px 60px}}
 .ob h1{font-family:var(--serif);font-weight:500;font-size:46px;letter-spacing:-.022em;line-height:1.04;margin:14px 0 14px}
 @media(max-width:560px){.ob h1{font-size:34px}}
