@@ -1,265 +1,265 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { SiteHeader } from "@/components/site-header";
+// 起点诊断（全屏接管）：基于真实项目图谱，用信息增益选题 + CBM 信心加权折进 BKT，
+// "找到你的起点"框架，结果页给出「从 Y 开始、跳过 N 个已会的」。替换粗糙的会/不会。
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
-import { Diagnosis, SEED_GRAPH, emptyState, learningFrontier } from "@/lib/telos/engine";
-import { useLearner } from "@/lib/telos/store";
+import { useProject } from "@/lib/telos/use-project";
+import {
+  Diagnosis,
+  GOOD,
+  type LearnerState,
+  emptyState,
+  learningFrontier,
+  newCard,
+  review,
+  usesFsrs,
+} from "@/lib/telos/engine";
+import { generateProbes, type Probe } from "@/lib/telos/derive";
 
-interface Q {
-  topic: string;
-  prompt: string;
-  code?: string;
-  options: string[];
-  answer: number;
-}
-
-// One question per knowledge point; the engine decides which to ask next (adaptive).
-const BANK: Record<string, Q> = {
-  py: {
-    topic: "Python 基础",
-    prompt: "下面这段代码会输出什么？",
-    code: "d = {'a': 1}\nprint(d.get('b', 0))",
-    options: ["KeyError", "None", "0", "报错，缺少键"],
-    answer: 2,
-  },
-  types: {
-    topic: "函数与类型",
-    prompt: "表示「可能是 str，也可能是 None」最贴切的类型注解是？",
-    code: "def find(uid: int) -> ___:\n    ...",
-    options: ["str | None", "Optional", "Any", "str?"],
-    answer: 0,
-  },
-  http: {
-    topic: "HTTP 基础",
-    prompt: "请求一个需要登录、但未携带凭证的资源，最合适的状态码是？",
-    options: ["403 Forbidden", "401 Unauthorized", "400 Bad Request", "404 Not Found"],
-    answer: 1,
-  },
-  jwt: {
-    topic: "JWT 原理",
-    prompt: "关于 JWT，下列说法正确的是？",
-    options: [
-      "payload 经过加密，旁人无法读取",
-      "服务器必须查库才能验证 token",
-      "签名保证内容未被篡改，但 payload 是明文",
-      "token 一旦签发就永久有效",
-    ],
-    answer: 2,
-  },
-  rest: {
-    topic: "REST 设计",
-    prompt: "要「获取 id 为 42 的用户」，符合 REST 风格的是？",
-    code: "GET ___",
-    options: ["/getUser?id=42", "/users/42", "/user/get/42", "/api?action=user&id=42"],
-    answer: 1,
-  },
-  route: {
-    topic: "FastAPI 路由",
-    prompt: "在 FastAPI 中，把路径参数声明为整型的正确写法是？",
-    code: "@app.get('/items/{item_id}')\ndef read(item_id: ___):\n    ...",
-    options: ["str", "int", "Path", "Query"],
-    answer: 1,
-  },
-  mw: {
-    topic: "鉴权中间件",
-    prompt: "给一组路由统一加上「必须登录」，FastAPI 里最合适的做法是？",
-    options: [
-      "在每个函数里复制粘贴检查",
-      "用依赖项 Depends 注入鉴权",
-      "改前端隐藏入口",
-      "写在文档里提醒用户",
-    ],
-    answer: 1,
-  },
-  deploy: {
-    topic: "部署上线",
-    prompt: "把 FastAPI 应用部署到生产，通常怎么跑？",
-    options: [
-      "python app.py 直接跑",
-      "用 ASGI 服务器（uvicorn / gunicorn）+ 反向代理",
-      "拷进 Jupyter 运行",
-      "FTP 上传到虚拟主机",
-    ],
-    answer: 1,
-  },
-};
+type Phase = "intro" | "loading" | "asking" | "result";
+const CONF: ["low" | "mid" | "high", string][] = [
+  ["low", "不太"],
+  ["mid", "一般"],
+  ["high", "很有把握"],
+];
 
 export default function DiagnosePage() {
-  const { applyDiagnosis } = useLearner();
-  const [answers, setAnswers] = useState<Record<string, boolean>>({});
-  const [order, setOrder] = useState<string[]>([]);
-  const [picked, setPicked] = useState<number | null>(null);
+  const router = useRouter();
+  const { ready, project, graph, applyState } = useProject();
 
-  // Replay answers to let the engine pick the current (most informative) question.
-  const diag = new Diagnosis(SEED_GRAPH);
-  for (const id of order) diag.answer(id, answers[id]);
-  const currentPid = diag.nextQuestion();
-  const done = currentPid === null;
-  const q = currentPid ? BANK[currentPid] : null;
+  const dxRef = useRef<Diagnosis | null>(null);
+  const probesRef = useRef<Record<string, Probe>>({});
+  const [phase, setPhase] = useState<Phase>("intro");
+  const [err, setErr] = useState<string | null>(null);
+  const [q, setQ] = useState<string | null>(null);
+  const [count, setCount] = useState(0);
+  const [choice, setChoice] = useState<number | null>(null);
+  const [conf, setConf] = useState<"low" | "mid" | "high" | null>(null);
+  const [summary, setSummary] = useState<{ located: number; known: number; start: string } | null>(
+    null,
+  );
 
-  const total = SEED_GRAPH.ids().length;
-  const step = Math.min(order.length + 1, total);
-  const pct = done ? 100 : Math.round((order.length / total) * 100);
-
-  // Persist the diagnosed state once, when the run finishes.
   useEffect(() => {
-    if (done && order.length > 0) applyDiagnosis(answers);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done]);
+    if (ready && !project) router.replace("/");
+  }, [ready, project, router]);
 
-  const masteredJudged = SEED_GRAPH.ids().filter((id) => diag.belief[id] >= 0.6).length;
-  const suggest = (() => {
-    const st = emptyState();
-    for (const id of SEED_GRAPH.ids()) st.mastery[id] = diag.belief[id];
-    const f = learningFrontier(SEED_GRAPH, st)[0];
-    return f ? SEED_GRAPH.get(f[0]).name : "—";
-  })();
-
-  function choose(idx: number) {
-    if (picked !== null || !currentPid || !q) return;
-    setPicked(idx);
-    const correct = idx === q.answer;
-    const pidNow = currentPid;
-    window.setTimeout(() => {
-      setAnswers((a) => ({ ...a, [pidNow]: correct }));
-      setOrder((o) => [...o, pidNow]);
-      setPicked(null);
-    }, 360);
+  if (!ready || !project || !graph) {
+    return (
+      <div className="dx">
+        <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
+          <span className="spinner" /> 载入中…
+        </div>
+      </div>
+    );
   }
 
-  function restart() {
-    setAnswers({});
-    setOrder([]);
-    setPicked(null);
+  const total = graph.ids().length;
+  const max = Math.min(total, 14);
+
+  function nextProbe(d: Diagnosis): string | null {
+    for (;;) {
+      const x = d.nextQuestion();
+      if (x === null) return null;
+      if (probesRef.current[x]) return x;
+      d.asked.add(x);
+    }
   }
+
+  async function begin() {
+    if (!graph || !project) return;
+    setPhase("loading");
+    setErr(null);
+    try {
+      const pts = graph.ids().map((id) => ({
+        id,
+        name: graph.get(id).name,
+        domain: graph.get(id).domain,
+      }));
+      probesRef.current = await generateProbes(pts, project.goal);
+      const d = new Diagnosis(graph, 14);
+      dxRef.current = d;
+      setCount(0);
+      setChoice(null);
+      setConf(null);
+      setQ(nextProbe(d));
+      setPhase("asking");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "出题失败";
+      setErr(msg === "NO_ENDPOINT" ? "诊断需要端点（与倒推同源，到「我 · 设置」里配置）。" : msg);
+      setPhase("intro");
+    }
+  }
+
+  function finish(d: Diagnosis) {
+    if (!graph) return;
+    const s: LearnerState = emptyState();
+    for (const id of graph.ids()) s.mastery[id] = d.belief[id] >= 0.6 ? 0.9 : d.belief[id];
+    for (const id of graph.ids())
+      if (d.belief[id] >= 0.6 && usesFsrs(graph.get(id).domain)) s.cards[id] = review(newCard(), GOOD, 0);
+    s.version += 1;
+    applyState(s);
+
+    const known = graph.ids().filter((id) => d.belief[id] >= 0.6).length;
+    const f = learningFrontier(graph, s)[0];
+    const start = f ? graph.get(f[0]).name : "—";
+    setSummary({ located: d.asked.size, known, start });
+    setPhase("result");
+  }
+
+  function submit() {
+    const d = dxRef.current;
+    if (!d || !q || choice === null || !conf) return;
+    const correct = choice === probesRef.current[q].answer;
+    d.answerConf(q, correct, conf);
+    setCount(d.asked.size);
+    setChoice(null);
+    setConf(null);
+    const nx = nextProbe(d);
+    if (nx === null) finish(d);
+    else setQ(nx);
+  }
+
+  const probe = q ? probesRef.current[q] : null;
+  const pct = phase === "result" ? 100 : Math.round((count / max) * 100);
 
   return (
-    <>
-      <SiteHeader />
-      <div className="wrap">
-        <section>
-          <div className="shead">
-            <span className="no">00</span>
-            <h2>诊断测评</h2>
-            <span className="sub">自适应 · 测到有把握为止</span>
-          </div>
-          <div className="cap">
-            <span>测评</span>
-            <span>telos.app/diagnose</span>
-          </div>
-          <div className="plate">
-            <div className="ptop">
-              <span className="u">telos.app/diagnose</span>
-              <span className="br">
-                <i />
-                <i />
-                <i />
-              </span>
-            </div>
-
-            {!done && q && (
-              <>
-                <div className="dgbar">
-                  <span className="mono dgn">
-                    第 {step} / {total}
-                  </span>
-                  <div className="dgtrack">
-                    <i style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="mono dgloc">已定位 {order.length} 个知识点</span>
-                </div>
-                <div className="dgbody">
-                  <div className="dgq">
-                    <div className="dgtopic mono">
-                      <Icon name="target" /> 正在定位 · {q.topic}
-                    </div>
-                    <h3 className="dgprompt">{q.prompt}</h3>
-                    {q.code && <pre className="dgcode mono">{q.code}</pre>}
-                    <div className="dgopts">
-                      {q.options.map((opt, idx) => {
-                        const cls = picked === null ? "" : idx === picked ? " sel" : " dim";
-                        return (
-                          <button
-                            key={opt}
-                            className={`dgopt${cls}`}
-                            onClick={() => choose(idx)}
-                            disabled={picked !== null}
-                          >
-                            <span className="dgkey mono">{String.fromCharCode(65 + idx)}</span>
-                            <span className="dgtxt">{opt}</span>
-                            <span className="dgtick">
-                              <Icon name="arrow" />
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <aside className="dgside">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <span className="pmini dgface">
-                      <img src={asset("/portraits/think.png")} alt="" />
-                    </span>
-                    <div className="dgnote mono">题目会随你的作答变难或变易</div>
-                    <h4 className="dgsh">已定位</h4>
-                    <ul className="dglist">
-                      {order.map((pid) => (
-                        <li key={pid} className="dgli">
-                          <Icon name="check" /> {BANK[pid]?.topic ?? pid}
-                        </li>
-                      ))}
-                      {order.length === 0 && <li className="dgli empty mono">尚未开始</li>}
-                    </ul>
-                  </aside>
-                </div>
-              </>
-            )}
-
-            {done && (
-              <div className="dgdone">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <span className="pcirc dgdoneart">
-                  <img src={asset("/portraits/point.png")} alt="Telos 老师" />
-                </span>
-                <div className="eye mono">诊断完成</div>
-                <h2>已生成你的学习地图</h2>
-                <p className="dgdonep">
-                  我们定位了 {order.length} 个知识点，按前置依赖排出了你的学习前沿，并把结果记入了你的学习状态——
-                  地图、首页、个人中心都会随之更新。
-                </p>
-                <div className="dgsum">
-                  <div className="dgstat">
-                    <span className="num">{order.length}</span>
-                    <span className="lab mono">已定位知识点</span>
-                  </div>
-                  <div className="dgstat">
-                    <span className="num">{masteredJudged}</span>
-                    <span className="lab mono">判定已掌握</span>
-                  </div>
-                  <div className="dgstat">
-                    <span className="num">{suggest}</span>
-                    <span className="lab mono">建议起点</span>
-                  </div>
-                </div>
-                <div className="dgcta">
-                  <Link className="btn btn-ink" href="/map">
-                    查看学习地图 <Icon name="arrow" />
-                  </Link>
-                  <button className="btn btn-line" onClick={restart}>
-                    <Icon name="refresh" /> 重新测评
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
+    <div className="dx">
+      <div className="dx-top">
+        <button className="close" onClick={() => router.push("/")} aria-label="关闭">
+          ✕
+        </button>
+        <div className="dx-track">
+          <i style={{ width: `${pct}%` }} />
+        </div>
+        <span className="dx-n">
+          {phase === "asking" ? `已答 ${count}` : phase === "result" ? "完成" : "起点诊断"}
+        </span>
       </div>
-      <footer>
-        <div className="wrap">TELOS — 从结果倒推，学会任何事 · 开源 Demo</div>
-      </footer>
-    </>
+
+      <div className="dx-body">
+        {phase === "intro" && (
+          <div className="dx-intro">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="pcirc">
+              <img src={asset("/portraits/think.png")} alt="Telos 老师" />
+            </span>
+            <h2>先找到你的起点</h2>
+            <p>
+              这不是考试。几道题帮我搞清楚你<b>已经会哪些</b>，好跳过会的、直接学不会的。答错完全没关系——错得越清楚，定位越准。
+            </p>
+            <p>每题答完再选一下「有多大把握」：自信地答错，比蒙对更说明问题（信心加权诊断 CBM）。</p>
+            {err && <div className="errbox" style={{ marginTop: 8 }}>{err}</div>}
+            <div className="dx-cta" style={{ marginTop: 22 }}>
+              <button className="btn btn-ink" onClick={begin}>
+                开始（{max} 题内） <Icon name="arrow" />
+              </button>
+              <button className="btn btn-line" onClick={() => router.push("/")}>
+                以后再说
+              </button>
+            </div>
+          </div>
+        )}
+
+        {phase === "loading" && (
+          <div className="loadrow" style={{ justifyContent: "center", paddingTop: 60 }}>
+            <span className="spinner" /> 正在为「{project.goal}」出诊断题…（一次性，稍候）
+          </div>
+        )}
+
+        {phase === "asking" && probe && q && (
+          <>
+            <div className="dx-topic">
+              <Icon name="target" /> 正在定位 · {graph.get(q).name}
+            </div>
+            <h3 className="dx-q">{probe.q}</h3>
+            <div className="dx-opts">
+              {probe.options.map((o, i) => (
+                <button
+                  key={i}
+                  className={`dx-opt ${choice === i ? "sel" : ""}`}
+                  onClick={() => setChoice(i)}
+                >
+                  <span className="mk">{String.fromCharCode(65 + i)}</span>
+                  {o}
+                </button>
+              ))}
+            </div>
+            <div className="dx-conf">
+              <span className="lab">你多有把握？</span>
+              {CONF.map(([v, l]) => (
+                <button
+                  key={v}
+                  className={`dx-cbtn ${conf === v ? "sel" : ""}`}
+                  onClick={() => setConf(v)}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            <div className="dx-actions">
+              <button className="btn btn-ink" disabled={choice === null || !conf} onClick={submit}>
+                下一题
+              </button>
+              <button
+                className="btn btn-line"
+                onClick={() => dxRef.current && finish(dxRef.current)}
+              >
+                结束看结果
+              </button>
+            </div>
+          </>
+        )}
+
+        {phase === "result" && summary && (
+          <div className="dx-result">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="pcirc">
+              <img src={asset("/portraits/point.png")} alt="Telos 老师" />
+            </span>
+            <h2>已规划好你的起点</h2>
+            <p>
+              因为你想 <b>{project.goal}</b>，我们会从 <b>{summary.start}</b> 开始
+              {summary.known > 0 ? (
+                <>
+                  ，跳过你已经掌握的 <b>{summary.known}</b> 个能力点
+                </>
+              ) : null}
+              。地图、复习、进度都已按这个结果更新。
+            </p>
+            <div className="dx-sum">
+              <div className="s">
+                <span className="num">{summary.located}</span>
+                <span className="lab">已定位</span>
+              </div>
+              <div className="s">
+                <span className="num">{summary.known}</span>
+                <span className="lab">判定已会</span>
+              </div>
+              <div className="s">
+                <span className="num">{total - summary.known}</span>
+                <span className="lab">待学习</span>
+              </div>
+            </div>
+            <div className="dx-cta">
+              <button className="btn btn-ink" onClick={() => router.push("/")}>
+                去地图开始 <Icon name="arrow" />
+              </button>
+              <button
+                className="btn btn-line"
+                onClick={() => {
+                  setSummary(null);
+                  setPhase("intro");
+                }}
+              >
+                <Icon name="refresh" /> 重测
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
