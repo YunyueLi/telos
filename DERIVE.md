@@ -15,22 +15,17 @@
 
 ## A. 本地体验(最快)
 
-```bash
-cd core
-cp .env.example .env          # 首次:把 TELOS_LLM_API_KEY 改成你自己的新 key
-python3 serve.py              # 监听 127.0.0.1:8787
-```
-
-另开一个终端跑网页:
+一条命令——装依赖、起「倒推代理 + 网页」、自动开浏览器:
 
 ```bash
-cd web
-npm install --legacy-peer-deps
-NEXT_PUBLIC_TELOS_DERIVE_URL=http://127.0.0.1:8787/derive npm run dev
+./start.sh        # 或: make
 ```
 
-打开 `http://localhost:3000/derive`,输入任意目标即可。
-（或者不设环境变量,直接在「倒推」页底部把端点填成 `http://127.0.0.1:8787/derive` 保存。)
+首次会从 `core/.env.example` 生成 `core/.env`;把里面的 `TELOS_LLM_API_KEY` 换成你自己的新 key
+(到 [platform.deepseek.com](https://platform.deepseek.com) 拿,便宜),保存后刷新页面即可。
+网页在 `http://localhost:3000`,已**零配置**自动连本地代理(`127.0.0.1:8787`),不用设任何环境变量。
+
+> 想手动分开起? `cd core && python3 serve.py`(一个终端)+ `cd web && npm run dev`(另一个),效果相同。
 
 纯命令行也行,不用网页:
 
