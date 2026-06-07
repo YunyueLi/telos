@@ -12,10 +12,16 @@ const LEGACY = "telos:project";
 export interface Project {
   id: string;
   goal: string;
+  title?: string; // LLM 概括的简洁主题标题（导航/卡片显示）；旧项目可能无，回退到 goal
   points: KnowledgePoint[];
   state: LearnerState;
   createdAt: number;
   updatedAt: number;
+}
+
+// 导航/卡片用的简洁标题：优先 LLM 概括的 title，旧项目回退到完整 goal。
+export function projectTitle(p: { title?: string; goal: string }): string {
+  return (p.title && p.title.trim()) || p.goal;
 }
 
 export function genId(): string {

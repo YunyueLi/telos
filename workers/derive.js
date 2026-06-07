@@ -15,8 +15,9 @@ const USER = (goal) =>
   "先判断主导学习类型 domain：A=陈述记忆 / B=良构程序(数学/编程) / C=创造(写作/设计) / " +
   "D=动作技能(乐器/运动/手法) / E=开放对抗(竞技体育/电竞/辩论/商战) / F=习惯养成。" +
   "然后把目标倒推成 10-16 个【可训练能力节点】，输出严格 JSON：\n" +
-  '{"points":[{"id":"slug","name":"能做到的事(动宾短语)","prerequisites":["前置id"],"is_goal":false,"minutes":40,"domain":"E","desc":"can-do：在什么条件下能做到什么、到什么标准","drill":"怎么刻意练习(具体方法/反馈来源/如何逐步加难)","benchmark":"一个可量化或可观测的达标线(分新手/进阶/精英更好)"}]}\n' +
+  '{"title":"把目标概括成的简洁标题","points":[{"id":"slug","name":"能做到的事(动宾短语)","prerequisites":["前置id"],"is_goal":false,"minutes":40,"domain":"E","desc":"can-do：在什么条件下能做到什么、到什么标准","drill":"怎么刻意练习(具体方法/反馈来源/如何逐步加难)","benchmark":"一个可量化或可观测的达标线(分新手/进阶/精英更好)"}]}\n' +
   "硬性要求(违反就重写该节点)：\n" +
+  "0) title：把目标概括成一个简洁的【主题标题】，像课程名，用于导航栏显示——中文≤12字、英文≤4词；提炼核心主题，绝不照抄整句目标、不要带『我想/学会/达到…水平』这类口语。\n" +
   "1) 节点是【能力/可练单元】，不是知识名词。name 用动宾短语(如『把补刀稳定到14分钟120刀』)；禁止『了解/熟悉/理解X基础/综合能力/心理素质/基础操作』这类泛泛、不可观测的节点。\n" +
   "2) 每个节点必须：可观测(能在一段录像/一局/一份作品里看见)、可练习(能设计反复做且渐进加难的 drill)、有完成标准(benchmark 给量化或行为达标线)。\n" +
   "3) 每个节点要体现『高手与新手在这件事上的差距具体是什么数字/行为』——靠 benchmark 说清。\n" +
@@ -86,7 +87,8 @@ function toGraph(spec, goal) {
     for (const d of deps[x] || []) if (--indeg[d] === 0) q.push(d);
   }
   if (seen !== norm.length) throw new Error("LLM 返回的图谱有环");
-  return { goal, points: norm };
+  const title = String(spec.title ?? "").trim().slice(0, 40);
+  return { goal, title, points: norm };
 }
 
 async function derive(goal, env, lang) {
