@@ -172,6 +172,20 @@ _USER = (
 )
 
 
+def _derive_context(goal: str) -> str:
+    """倒推前联网检索真实课程/路径作背景，让能力图谱更贴合主流学习路径与真实术语。未配/出错 → ''。"""
+    src = web_search(f"{goal} 学习路径 课程大纲 入门", k=4)
+    if not src:
+        return ""
+    lines = "\n".join(
+        f"- {s['title']}（{s['domain']}）" + (f"：{s['snippet'][:70]}" if s.get("snippet") else "") for s in src
+    )
+    return (
+        "\n\n【联网参考资料（仅作背景）】以下为检索到的真实课程/资料标题与摘要——"
+        "据此让能力节点更贴合主流学习路径与真实术语；务必提炼为【可训练能力】，不要照抄标题、不要堆知识点：\n" + lines
+    )
+
+
 def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeGraph:
     """Call the LLM to reverse-derive a KnowledgeGraph from a free-text goal."""
     key, base, model = _config()
@@ -183,7 +197,7 @@ def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeG
         "model": model,
         "messages": [
             {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": _USER.format(goal=goal) + _lang_directive(lang)},
+            {"role": "user", "content": _USER.format(goal=goal) + _derive_context(goal) + _lang_directive(lang)},
         ],
         "temperature": 0.2,
         "stream": False,
@@ -272,26 +286,18 @@ _LESSON_REQS = (
 )
 
 
-def _lesson_user(name: str, domain: str, prereqs, goal: str, sources: list) -> str:
+def _lesson_user(name: str, domain: str, prereqs, goal: str) -> str:
+    # LLM 永远推荐资源（含视频公开课）—— 不依赖检索，保证无 Tavily 也有好体验。
+    # Tavily（若配置）在 lesson() 里后置增强：把真实直达链接前置到列表，而非替换这些建议。
     pre = "、".join(prereqs) if prereqs else "（无）"
     head = _LESSON_HEADER.format(name=name, domain=domain, prereqs=pre, goal=goal)
     body = _LESSON_STEPS
-    if sources:
-        # 联网 grounding：模型只能从真实来源里挑，用 ref 写下标，绝不编造 URL
-        body += ' "resources":[{"ref":0,"name":"该来源的简短中文标题(8-18字)"}]\n}\n'
-        body += _LESSON_REQS
-        lines = "\n".join(f"[{i}] {s['title']}（{s['domain']}）" for i, s in enumerate(sources))
-        body += (
-            "- resources：从下面【真实来源】里挑 2-3 个与本知识点最相关、最权威/口碑最好的，"
-            "用 ref 写它在列表中的下标(整数)、name 写简短标题；"
-            "**只能引用下面列出的来源，ref 必须是真实下标，绝对禁止编造 URL 或不在列表里的来源**。\n"
-            "只输出 JSON。\n\n"
-            f"真实来源（已联网检索，可直接引用，ref=下标）：\n{lines}\n"
-        )
-    else:
-        body += ' "resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]\n}\n'
-        body += _LESSON_REQS
-        body += "- resources 给 2-3 个真实存在、口碑最好的公开课/视频（只写课程名+平台，绝不编造 URL）。\n只输出 JSON。"
+    body += ' "resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]\n}\n'
+    body += _LESSON_REQS
+    body += (
+        "- resources 给 2-3 个真实存在、口碑最好的优质学习资源，**至少包含 1 个视频公开课**"
+        "（YouTube/B站/Coursera/中国大学MOOC 等）；只写课程/视频名 + 平台，绝不编造 URL。\n只输出 JSON。"
+    )
     return head + body
 
 _MCQ_KINDS = ("predict", "self_explain", "faded", "retrieve")
@@ -310,44 +316,54 @@ def _mcq_fields(s: dict):
     return options, answer, hints
 
 
-def _resolve_resources(spec: dict, sources: list) -> list:
-    """把模型返回的 resources 规整为 [{name, platform, url?, domain?, snippet?}]。
-    grounded 模式下 ref → 回填真实 url/domain/snippet；否则退回 name/platform。"""
+def _resolve_resources(spec: dict) -> list:
+    """规整 LLM 建议的资源为 [{name, platform}]（最多 3 个，去重）。前端无真链时回退平台搜索。"""
     out, seen = [], set()
     for r in (spec.get("resources") or [])[:6]:
         if not isinstance(r, dict):
             continue
-        res = None
-        if sources and r.get("ref") is not None:
-            try:
-                ix = int(r["ref"])
-            except (TypeError, ValueError):
-                ix = -1
-            if 0 <= ix < len(sources):
-                s = sources[ix]
-                res = {
-                    "name": (str(r.get("name", "")).strip() or s["title"])[:80],
-                    "url": s["url"],
-                    "domain": s.get("domain", ""),
-                    "platform": s.get("domain", ""),
-                    "snippet": s.get("snippet", ""),
-                }
-        if res is None:
-            name = str(r.get("name", "")).strip()
-            if not name:
-                continue
-            res = {"name": name, "platform": str(r.get("platform", "")).strip()}
-        key = res.get("url") or res["name"]
-        if key in seen:
+        name = str(r.get("name", "")).strip()
+        if not name or name in seen:
             continue
-        seen.add(key)
-        out.append(res)
+        seen.add(name)
+        out.append({"name": name, "platform": str(r.get("platform", "")).strip()})
         if len(out) >= 3:
             break
     return out
 
 
-def _validate_lesson(spec: dict, sources: list | None = None) -> dict:
+def _search_resources(topic: str, k: int = 2) -> list:
+    """Tavily 命中真实来源 → 真链资源卡（前置到 LLM 建议之前做增强）。未配/出错 → []。"""
+    out = []
+    for s in web_search(f"{topic} 教程 公开课".strip(), k=4):
+        out.append(
+            {"name": s["title"][:60], "url": s["url"], "domain": s.get("domain", ""),
+             "platform": s.get("domain", ""), "snippet": s.get("snippet", "")}
+        )
+        if len(out) >= k:
+            break
+    return out
+
+
+def _merge_resources(real: list, suggested: list) -> list:
+    """真链卡(real)在前 + LLM 建议(suggested)在后，按 url/域名/名称去重，最多 4 个。
+    Tavily 是增强：有真链也保留 LLM 的视频公开课建议，二者互补。"""
+    out, seen = [], set()
+    for r in list(real) + list(suggested):
+        dom = (r.get("domain") or "").strip()
+        key = (r.get("url") or "").strip() or r.get("name", "")
+        if key in seen or (dom and dom in seen):
+            continue
+        seen.add(key)
+        if dom:
+            seen.add(dom)
+        out.append(r)
+        if len(out) >= 4:
+            break
+    return out
+
+
+def _validate_lesson(spec: dict) -> dict:
     if not isinstance(spec, dict):
         raise RuntimeError("微课返回格式错误")
     out_steps = []
@@ -390,8 +406,7 @@ def _validate_lesson(spec: dict, sources: list | None = None) -> dict:
     graded = [st for st in out_steps if st["kind"] in ("retrieve", "faded", "self_explain")]
     if not out_steps or not graded:
         raise RuntimeError("微课内容不完整")
-    resources = _resolve_resources(spec, sources or [])
-    return {"concept": str(spec.get("concept", "")).strip(), "steps": out_steps, "resources": resources}
+    return {"concept": str(spec.get("concept", "")).strip(), "steps": out_steps, "resources": _resolve_resources(spec)}
 
 
 def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: float = 110.0, lang: str = "") -> dict:
@@ -399,14 +414,11 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
     key, base, model = _config()
     if not key:
         raise RuntimeError("未配置 LLM API key（见 core/.env.example）。")
-    # 先联网检索真实来源（未配检索 key → 返回 []，自动降级回平台搜索链接）
-    topic = (f"{goal} " if goal else "") + name
-    sources = web_search(f"{topic} 教程 公开课".strip())
     body = {
         "model": model,
         "messages": [
             {"role": "system", "content": _LESSON_SYSTEM},
-            {"role": "user", "content": _lesson_user(name, domain, prereqs, goal, sources) + _lang_directive(lang)},
+            {"role": "user", "content": _lesson_user(name, domain, prereqs, goal) + _lang_directive(lang)},
         ],
         "temperature": 0.3,
         "stream": False,
@@ -424,7 +436,13 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"LLM 请求失败 HTTP {e.code}（检查 key / base_url / model）") from e
     content = data["choices"][0]["message"]["content"]
-    return _validate_lesson(json.loads(content), sources)
+    out = _validate_lesson(json.loads(content))
+    # Tavily 增强（可选）：把真实直达链接前置到 LLM 建议之前，二者互补；未配则只用 LLM 建议
+    topic = (f"{goal} " if goal else "") + name
+    real = _search_resources(topic)
+    if real:
+        out["resources"] = _merge_resources(real, out["resources"])
+    return out
 
 
 # ---- 起点诊断：一次性为一组知识点各生成一道诊断单选题（客观探针）----

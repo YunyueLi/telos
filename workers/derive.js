@@ -91,11 +91,23 @@ function toGraph(spec, goal) {
   return { goal, title, points: norm };
 }
 
+// 倒推前联网检索真实课程/路径作背景，让能力图谱更贴合主流学习路径与真实术语。未配/出错→''。
+async function deriveContext(goal, env) {
+  const src = await webSearch(`${goal} 学习路径 课程大纲 入门`, env, 4);
+  if (!src.length) return "";
+  const lines = src.map((s) => `- ${s.title}（${s.domain}）${s.snippet ? "：" + s.snippet.slice(0, 70) : ""}`).join("\n");
+  return (
+    "\n\n【联网参考资料（仅作背景）】以下为检索到的真实课程/资料标题与摘要——" +
+    "据此让能力节点更贴合主流学习路径与真实术语；务必提炼为【可训练能力】，不要照抄标题、不要堆知识点：\n" + lines
+  );
+}
+
 async function derive(goal, env, lang) {
   const key = env.TELOS_LLM_API_KEY;
   if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const ctx = await deriveContext(goal, env);
   const resp = await fetch(base + "/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -103,7 +115,7 @@ async function derive(goal, env, lang) {
       model,
       messages: [
         { role: "system", content: SYSTEM },
-        { role: "user", content: USER(goal) + langDirective(lang) },
+        { role: "user", content: USER(goal) + ctx + langDirective(lang) },
       ],
       temperature: 0.2,
       stream: false,
@@ -209,28 +221,17 @@ const LESSON_REQS =
   "worked.steps 给 3-5 步(每步 do+why)；faded 是完成式问题(given 写好前几步、留空最后一步)，hints 提示阶梯 2-3 条由浅入深、最后一条几乎点破但不给答案；retrieve 无脚手架作为掌握闸门；" +
   "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric；D 动作=分解练习+达标；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励；";
 
-const LESSON_USER = (name, domain, prereqs, goal, sources) => {
+// LLM 永远推荐资源(含视频公开课)——不依赖检索；Tavily 在 lesson() 里后置增强(真链前置)，而非替换。
+const LESSON_USER = (name, domain, prereqs, goal) => {
   const head = `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n学习者已掌握的前置：${
     prereqs.length ? prereqs.join("、") : "（无）"
   }\n\n`;
-  if (sources && sources.length) {
-    const lines = sources.map((s, i) => `[${i}] ${s.title}（${s.domain}）`).join("\n");
-    return (
-      head +
-      LESSON_STEPS_JSON +
-      '"resources":[{"ref":0,"name":"该来源的简短中文标题(8-18字)"}]}\n' +
-      LESSON_REQS +
-      "resources：从下面【真实来源】里挑 2-3 个与本知识点最相关、最权威/口碑最好的，用 ref 写它在列表中的下标(整数)、name 写简短标题；" +
-      "只能引用下面列出的来源，ref 必须是真实下标，绝对禁止编造 URL 或不在列表里的来源。只输出 JSON。\n\n" +
-      `真实来源（已联网检索，可直接引用，ref=下标）：\n${lines}\n`
-    );
-  }
   return (
     head +
     LESSON_STEPS_JSON +
     '"resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]}\n' +
     LESSON_REQS +
-    "resources 给 2-3 个真实存在、口碑最好的公开课/视频(只写名+平台，绝不编造 URL)。只输出 JSON。"
+    "resources 给 2-3 个真实存在、口碑最好的优质学习资源，至少包含 1 个视频公开课(YouTube/B站/Coursera/中国大学MOOC 等)；只写课程/视频名+平台，绝不编造 URL。只输出 JSON。"
   );
 };
 
@@ -278,39 +279,46 @@ function toLesson(spec) {
   }
   const graded = out.filter((st) => ["retrieve", "faded", "self_explain"].includes(st.kind));
   if (!out.length || !graded.length) throw new Error("微课内容不完整");
-  return { concept: String(spec?.concept || "").trim(), steps: out, resources: resolveResources(spec, sources || []) };
+  return { concept: String(spec?.concept || "").trim(), steps: out, resources: resolveResources(spec) };
 }
 
-// resources 规整：grounded 下 ref→回填真实 url/domain/snippet；否则退回 name/platform。
-function resolveResources(spec, sources) {
+// 规整 LLM 建议资源为 [{name, platform}]（最多 3，去重）。前端无真链时回退平台搜索。
+function resolveResources(spec) {
   const out = [];
   const seen = new Set();
   for (const r of (Array.isArray(spec?.resources) ? spec.resources : []).slice(0, 6)) {
     if (!r || typeof r !== "object") continue;
-    let res = null;
-    if (sources.length && r.ref != null) {
-      const ix = parseInt(r.ref, 10);
-      if (Number.isFinite(ix) && ix >= 0 && ix < sources.length) {
-        const s = sources[ix];
-        res = {
-          name: (String(r.name || "").trim() || s.title).slice(0, 80),
-          url: s.url,
-          domain: s.domain || "",
-          platform: s.domain || "",
-          snippet: s.snippet || "",
-        };
-      }
-    }
-    if (!res) {
-      const name = String(r.name || "").trim();
-      if (!name) continue;
-      res = { name, platform: String(r.platform || "").trim() };
-    }
-    const key = res.url || res.name;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(res);
+    const name = String(r.name || "").trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push({ name, platform: String(r.platform || "").trim() });
     if (out.length >= 3) break;
+  }
+  return out;
+}
+
+// Tavily 命中真实来源 → 真链资源卡（前置增强）。未配/出错→[]。
+async function searchResources(topic, env, k = 2) {
+  const out = [];
+  for (const s of await webSearch(`${topic} 教程 公开课`.trim(), env, 4)) {
+    out.push({ name: String(s.title).slice(0, 60), url: s.url, domain: s.domain || "", platform: s.domain || "", snippet: s.snippet || "" });
+    if (out.length >= k) break;
+  }
+  return out;
+}
+
+// 真链卡在前 + LLM 建议在后，按 url/域名/名称去重，最多 4。Tavily 是增强、保留 LLM 视频建议。
+function mergeResources(real, suggested) {
+  const out = [];
+  const seen = new Set();
+  for (const r of [...real, ...suggested]) {
+    const dom = (r.domain || "").trim();
+    const key = (r.url || "").trim() || r.name || "";
+    if (seen.has(key) || (dom && seen.has(dom))) continue;
+    seen.add(key);
+    if (dom) seen.add(dom);
+    out.push(r);
+    if (out.length >= 4) break;
   }
   return out;
 }
@@ -324,9 +332,6 @@ async function lesson(body, env) {
   const model = env.TELOS_LLM_MODEL || "deepseek-chat";
   const prereqs = (body.prereqs || []).map(String);
   const goal = String(body.goal || "");
-  // 先联网检索真实来源（未配检索 key → []，自动降级回平台搜索链接）
-  const topic = (goal ? goal + " " : "") + name;
-  const sources = await webSearch(`${topic} 教程 公开课`.trim(), env);
   const resp = await fetch(base + "/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -334,7 +339,7 @@ async function lesson(body, env) {
       model,
       messages: [
         { role: "system", content: LESSON_SYSTEM },
-        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, goal, sources) + langDirective(body.lang) },
+        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, goal) + langDirective(body.lang) },
       ],
       temperature: 0.3,
       stream: false,
@@ -345,7 +350,12 @@ async function lesson(body, env) {
   const data = await resp.json();
   const content = data?.choices?.[0]?.message?.content;
   if (!content) throw new Error("LLM 返回为空");
-  return toLesson(JSON.parse(content), sources);
+  const out = toLesson(JSON.parse(content));
+  // Tavily 增强（可选）：真实直达链接前置到 LLM 建议之前，二者互补；未配则只用 LLM 建议
+  const topic = (goal ? goal + " " : "") + name;
+  const real = await searchResources(topic, env);
+  if (real.length) out.resources = mergeResources(real, out.resources);
+  return out;
 }
 
 // ---- 起点诊断题（批量） ----
