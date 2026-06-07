@@ -135,63 +135,107 @@ def _to_graph(spec: dict) -> KnowledgeGraph:
 # ---- 按需微课：讲解 + worked example + 一道检查题（喂回引擎做 teach-verify）----
 
 _LESSON_SYSTEM = (
-    "你是一位精通认知科学的微课老师。针对单个知识点，产出极简微课："
-    "建立直觉的讲解、一个走通的范例(worked example)、一道检验掌握的单选题。只输出 JSON。"
+    "你是一位精通认知科学的微课设计师。针对单个知识点，设计一节【交互式、能真正学会】的微课——"
+    "靠『让学习者动手、预测、补全、检索』来建构理解，而不是堆砌讲解文字。"
+    "遵循证据：预测先行 → 直觉讲解 → 分步范例 → 自我解释 → 渐隐填空(worked-example fading) → 无脚手架检索(掌握闸门)；"
+    "答错时给【提示阶梯】，逐步逼近但绝不直接给答案。只输出 JSON。"
 )
 
-_LESSON_USER = (
-    "知识点：{name}\n所属目标：{goal}\n学习类型(domain)：{domain}\n已掌握的前置：{prereqs}\n\n"
-    "产出严格 JSON：\n"
-    '{{"explain":"不超过180字、建立直觉的讲解","analogy":"用学习者已掌握的前置打一个贴切类比(无前置则用生活常识类比)",'
-    '"worked":{{"problem":"一个具体例子或任务","steps":["步骤1","步骤2","步骤3"]}},'
-    '"check":{{"q":"一道检验是否掌握的单选题","options":["A","B","C","D"],"answer":0,"rationale":"为什么对、其它为何错"}},'
-    '"resources":[{{"name":"真实存在、口碑最好的公开课程或视频名","platform":"YouTube/B站/Coursera/官方文档"}}]}}\n'
-    "要求：explain 建立直觉并点出『高手与新手的关键差别』，不要只给定义；"
-    "worked 是一个带具体情境/数字、能照着做一遍的真实范例，steps 给【3-6 个有实质内容的步骤】(每步:做什么 + 关键点/为什么)——"
-    "对抗(E)/动作(D)类则给一次可练的 drill(怎么做、反馈从哪来、达标线)；"
-    "check 考应用/情境判断而非背定义，恰 4 选项、answer 为正确项下标(0-3)、唯一正确答案、"
-    "每个错项对应一种真实的高水平误解(进阶者会被带偏、专家会避开)，禁止送分题。"
-    "analogy 用学习者【已掌握的前置】做贴切类比；resources 给 2-3 个该领域【真实存在、口碑最好】的公开课/视频(只写课程名 + 平台，绝不编造 URL)；"
-    "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric 要点；D 动作=分解练习+达标；E 对抗=情境拆解+决策。只输出 JSON。"
+# header 带占位符（.format 注入）；body 含 JSON 模板，保持原始花括号，不走 .format。
+_LESSON_HEADER = (
+    "知识点：{name}\n所属目标：{goal}\n学习类型(domain)：{domain}\n学习者已掌握的前置：{prereqs}\n\n"
 )
+_LESSON_BODY = (
+    "设计一节交互式微课，严格输出如下 JSON（steps 必须正好按此 6 步顺序、kind 用英文小写）：\n"
+    '{\n'
+    ' "concept":"一句话点出这个知识点的核心要义 / 高手的关键认知",\n'
+    ' "steps":[\n'
+    '  {"kind":"predict","prompt":"讲解前先抛出的核心问题，让学习者先猜（低风险、不计分）","options":["..4 项.."],"answer":0,"reveal":"揭示正确项并一句话点出为何，自然引出讲解"},\n'
+    '  {"kind":"explain","text":"≤160 字、建立直觉的讲解，点出高手与新手的关键差别，不要只给定义","analogy":"用学习者已掌握的前置打一个贴切类比（无前置则用生活常识）"},\n'
+    '  {"kind":"worked","problem":"一个带具体情境/数字、能照着做一遍的真实范例","steps":[{"do":"这一步做什么","why":"为什么/关键点"}]},\n'
+    '  {"kind":"self_explain","prompt":"针对上面范例的某一步问『为什么这样做/为何成立』","options":["..4 项.."],"answer":0,"rationale":"为什么对"},\n'
+    '  {"kind":"faded","problem":"与范例同类型的新题","given":["已替学习者写好的前几步（文字）"],"prompt":"最后一步该怎么做？","options":["..4 项.."],"answer":0,"hints":["提示1：方向","提示2：更具体","提示3：几乎点破但不给答案"],"rationale":"为什么"},\n'
+    '  {"kind":"retrieve","prompt":"一道全新的、无任何脚手架的应用/情境判断题（掌握闸门）","options":["..4 项.."],"answer":0,"hints":["提示1","提示2"],"rationale":"为什么对、其它为何错"}\n'
+    ' ],\n'
+    ' "resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]\n'
+    '}\n'
+    "硬性要求：\n"
+    "- 每道选择题恰 4 个选项，answer 为正确项下标(0-3)，唯一正确；错项要对应进阶者真实会犯的误解，禁止送分题。\n"
+    "- worked.steps 给 3-5 步，每步含 do+why，能照着做一遍。\n"
+    "- faded 是『完成式问题』：given 写好前几步、把最后一步留空让学习者补；hints 是【提示阶梯】2-3 条，由浅入深、最后一条几乎点破但仍不直接给答案。\n"
+    "- retrieve 是无脚手架的迁移题，作为掌握闸门。\n"
+    "- 按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric 要点；D 动作=分解练习+达标反馈；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励设计。\n"
+    "- resources 给 2-3 个真实存在、口碑最好的公开课/视频（只写课程名+平台，绝不编造 URL）。\n"
+    "只输出 JSON。"
+)
+
+_MCQ_KINDS = ("predict", "self_explain", "faded", "retrieve")
+
+
+def _mcq_fields(s: dict):
+    options = [str(o) for o in (s.get("options") or []) if str(o).strip()]
+    if len(options) < 2:
+        return None
+    try:
+        answer = int(s.get("answer", 0))
+    except (TypeError, ValueError):
+        answer = 0
+    answer = max(0, min(answer, len(options) - 1))
+    hints = [str(h).strip() for h in (s.get("hints") or []) if str(h).strip()]
+    return options, answer, hints
 
 
 def _validate_lesson(spec: dict) -> dict:
     if not isinstance(spec, dict):
         raise RuntimeError("微课返回格式错误")
-    explain = str(spec.get("explain", "")).strip()
-    worked = spec.get("worked") or {}
-    steps = [str(s) for s in (worked.get("steps") or []) if str(s).strip()]
-    check = spec.get("check") or {}
-    options = [str(o) for o in (check.get("options") or []) if str(o).strip()]
-    try:
-        answer = int(check.get("answer", 0))
-    except (TypeError, ValueError):
-        answer = 0
-    if not explain or len(options) < 2 or not str(check.get("q", "")).strip():
+    out_steps = []
+    for s in spec.get("steps") or []:
+        if not isinstance(s, dict):
+            continue
+        kind = str(s.get("kind", "")).strip()
+        if kind == "explain":
+            text = str(s.get("text", "")).strip()
+            if text:
+                out_steps.append({"kind": "explain", "text": text, "analogy": str(s.get("analogy", "")).strip()})
+        elif kind == "worked":
+            wsteps = []
+            for w in s.get("steps") or []:
+                if isinstance(w, dict) and str(w.get("do", "")).strip():
+                    wsteps.append({"do": str(w["do"]).strip(), "why": str(w.get("why", "")).strip()})
+                elif str(w).strip():
+                    wsteps.append({"do": str(w).strip(), "why": ""})
+            if wsteps:
+                out_steps.append({"kind": "worked", "problem": str(s.get("problem", "")).strip(), "steps": wsteps})
+        elif kind in _MCQ_KINDS:
+            m = _mcq_fields(s)
+            if not m:
+                continue
+            options, answer, hints = m
+            q = str(s.get("prompt") or s.get("q") or "").strip()
+            if not q:
+                continue
+            step = {"kind": kind, "prompt": q, "options": options, "answer": answer}
+            if kind == "predict":
+                step["reveal"] = str(s.get("reveal", "")).strip()
+            if kind == "faded":
+                step["problem"] = str(s.get("problem", "")).strip()
+                step["given"] = [str(g).strip() for g in (s.get("given") or []) if str(g).strip()]
+            if kind in ("self_explain", "faded", "retrieve"):
+                step["rationale"] = str(s.get("rationale", "")).strip()
+            if kind in ("faded", "retrieve"):
+                step["hints"] = hints
+            out_steps.append(step)
+    graded = [st for st in out_steps if st["kind"] in ("retrieve", "faded", "self_explain")]
+    if not out_steps or not graded:
         raise RuntimeError("微课内容不完整")
-    answer = max(0, min(answer, len(options) - 1))
     resources = []
     for r in (spec.get("resources") or [])[:4]:
         if isinstance(r, dict) and str(r.get("name", "")).strip():
-            resources.append(
-                {"name": str(r["name"]).strip(), "platform": str(r.get("platform", "")).strip()}
-            )
-    return {
-        "explain": explain,
-        "analogy": str(spec.get("analogy", "")).strip(),
-        "worked": {"problem": str(worked.get("problem", "")).strip(), "steps": steps},
-        "check": {
-            "q": str(check["q"]).strip(),
-            "options": options,
-            "answer": answer,
-            "rationale": str(check.get("rationale", "")).strip(),
-        },
-        "resources": resources,
-    }
+            resources.append({"name": str(r["name"]).strip(), "platform": str(r.get("platform", "")).strip()})
+    return {"concept": str(spec.get("concept", "")).strip(), "steps": out_steps, "resources": resources}
 
 
-def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: float = 60.0) -> dict:
+def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: float = 110.0) -> dict:
     """生成一个知识点的按需微课（OpenAI 兼容；返回校验过的 dict）。"""
     key, base, model = _config()
     if not key:
@@ -201,7 +245,7 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
         "model": model,
         "messages": [
             {"role": "system", "content": _LESSON_SYSTEM},
-            {"role": "user", "content": _LESSON_USER.format(name=name, domain=domain, prereqs=pre, goal=goal)},
+            {"role": "user", "content": _LESSON_HEADER.format(name=name, domain=domain, prereqs=pre, goal=goal) + _LESSON_BODY},
         ],
         "temperature": 0.3,
         "stream": False,

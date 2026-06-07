@@ -572,6 +572,16 @@
 .lcloseBtn { background: none; border: 0; display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px var(--sans); color: var(--ink-2); cursor: pointer; }
 .lcloseBtn:hover { color: var(--ink); }
 .lcrumb { margin-left: auto; font: 500 11px var(--mono); color: var(--ink-3); }
+/* interactive lesson runner */
+.lconcept { display: flex; align-items: flex-start; gap: 7px; font: 600 13.5px var(--sans); color: var(--ink); border: 1px solid var(--ink); border-radius: 12px; padding: 11px 14px; margin-bottom: 16px; line-height: 1.5; background: repeating-linear-gradient(45deg, transparent 0 7px, rgba(20,19,16,.03) 7px 8px); }
+.lconcept .ic { color: var(--ink); flex: none; margin-top: 1px; }
+.workedWhy { color: var(--ink-3); font-weight: 400; }
+.lgiven { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 14px; }
+.lgivenItem { display: flex; align-items: flex-start; font-size: 13.5px; color: #2c2a25; background: #f0f7f1; border: 1px solid #cfe3d3; border-radius: 9px; padding: 8px 11px; line-height: 1.45; }
+.lgivenItem .ic { color: #2f7d4f; flex: none; }
+.lhints { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.lhint { font-size: 13px; line-height: 1.55; color: var(--ink-2); border-left: 2px solid var(--ink); background: var(--paper); border-radius: 0 10px 10px 0; padding: 9px 13px; }
+.lhint b { font: 600 11px var(--mono); color: var(--ink); margin-right: 6px; }
 
 /* ===== mobile winding path (≤640) ===== */
 .pathWrap { display: flex; flex-direction: column; height: 70vh; min-height: 440px; }
