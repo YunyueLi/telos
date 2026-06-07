@@ -53,7 +53,9 @@ class KnowledgePoint:
     tags: tuple[str, ...] = ()
     minutes: int = 25  # estimated time-to-learn
     domain: DomainClass = DomainClass.PROCEDURAL  # 学习机制大类，决定诊断/复习策略
-    desc: str = ""  # 一句话描述「这是什么/为何学」（UI 用，可空）
+    desc: str = ""  # can-do：在什么条件下能做到什么（UI 用，可空）
+    drill: str = ""  # 怎么刻意练习这一项（具体方法/反馈/加难）
+    benchmark: str = ""  # 量化或可观测的达标线（新手/进阶/精英）
 
 
 @dataclass(frozen=True)
@@ -89,8 +91,11 @@ class KnowledgeGraph:
             minutes = int(row[4]) if len(row) > 4 else 25
             domain = coerce_domain(row[5]) if len(row) > 5 else DomainClass.PROCEDURAL
             desc = str(row[6]) if len(row) > 6 else ""
+            drill = str(row[7]) if len(row) > 7 else ""
+            benchmark = str(row[8]) if len(row) > 8 else ""
             pts[pid] = KnowledgePoint(
-                pid, name, prereqs, is_goal, minutes=minutes, domain=domain, desc=desc
+                pid, name, prereqs, is_goal, minutes=minutes, domain=domain,
+                desc=desc, drill=drill, benchmark=benchmark,
             )
         return cls(pts)
 
