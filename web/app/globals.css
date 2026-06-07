@@ -171,13 +171,14 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .langsw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0}
 
 /* —— 地图主页（map = home）—— */
-.mh{flex:1;min-height:0;max-height:calc(100dvh - 59px);display:grid;grid-template-columns:1fr 350px}
+.mh{flex:1;min-height:0;max-height:calc(100dvh - 59px);overflow:hidden;display:grid;grid-template-columns:1fr 350px;grid-template-rows:minmax(0,1fr)}
 .mh-map{position:relative;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}
-.mh-rail{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--card)}
+/* 右栏独立滚动（min-height:0 让 grid 子项可收缩并内部滚动）——滚侧栏时整页不滚、地图锁止，两个层级各管各的 */
+.mh-rail{overflow-y:auto;min-height:0;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--card)}
 @media(max-width:860px){
   /* 移动端重排：把引导栏拆进主轴并用 order 让「推荐下一步 + 开始学习」置顶可立即行动，
      路径自然全展开（不再 62vh 裁切隐藏后半截节点），进度/诊断/复习随后。 */
-  .mh{display:flex;flex-direction:column;max-height:none;gap:14px;padding:14px 0 8px}
+  .mh{display:flex;flex-direction:column;max-height:none;overflow:visible;gap:14px;padding:14px 0 8px}
   .mh-rail{display:contents}
   .mh-recap{order:1}
   .mh-cta{order:1}
