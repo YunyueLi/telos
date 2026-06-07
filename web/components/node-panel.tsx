@@ -9,6 +9,7 @@ import { AGAIN, GOOD, KnowledgeGraph, type LearnerState, domainLabel } from "@/l
 import type { LearnerView } from "@/lib/telos/store";
 import { generateLesson, generateProbes, getLessonUrl, type Lesson, type Probe } from "@/lib/telos/derive";
 import LessonRunner from "@/components/lesson-runner";
+import { TierText } from "@/components/tier-text";
 import { useT } from "@/lib/telos/i18n";
 
 type Phase = "detail" | "loading" | "lesson" | "challenge";
@@ -264,14 +265,14 @@ export default function NodePanel({
             {drill && (
               <div className={styles.detailSec}>
                 <div className={styles.detailH}>{t("np.howToPractice")}</div>
-                <div className={styles.unlockList}>{drill}</div>
+                <TierText text={drill} className={styles.unlockList} />
               </div>
             )}
 
             {benchmark && (
               <div className={styles.detailSec}>
                 <div className={styles.detailH}>{t("np.benchmark")}</div>
-                <div className={styles.unlockList}>{benchmark}</div>
+                <TierText text={benchmark} className={styles.unlockList} />
               </div>
             )}
 

@@ -509,6 +509,15 @@
   border-bottom: 1px solid var(--line-soft);
 }
 .olmLink:hover { color: var(--ink); border-color: var(--ink); }
+/* 分级达标线/练法（新手·进阶·精英）：标签 + 内容分行，便于扫读 */
+.tierList { display: flex; flex-direction: column; gap: 7px; }
+.tierRow { display: flex; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.5; color: #2c2a25; }
+.tierLabel {
+  flex: none; font: 600 10px var(--mono); letter-spacing: 0.02em; color: var(--ink-2);
+  background: var(--paper); border: 1px solid var(--line-soft); border-radius: 6px; padding: 2px 7px;
+}
+.tierBody { flex: 1; min-width: 0; }
+
 /* 引用卡片（联网检索出处，仿 ChatGPT/Perplexity citation） */
 .resCards { display: flex; flex-direction: column; gap: 7px; }
 .resCard {
