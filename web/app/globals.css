@@ -154,9 +154,17 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .mh-map{position:relative;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}
 .mh-rail{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--card)}
 @media(max-width:860px){
-  .mh{display:flex;flex-direction:column;max-height:none}
-  .mh-map{border-right:0;border-bottom:1px solid var(--line-soft);height:62vh;min-height:420px}
-  .mh-rail{background:var(--paper)}
+  /* 移动端重排：把引导栏拆进主轴并用 order 让「推荐下一步 + 开始学习」置顶可立即行动，
+     路径自然全展开（不再 62vh 裁切隐藏后半截节点），进度/诊断/复习随后。 */
+  .mh{display:flex;flex-direction:column;max-height:none;gap:14px;padding:14px 0 8px}
+  .mh-rail{display:contents}
+  .mh-recap{order:1}
+  .mh-cta{order:1}
+  .mh-map{order:2;border-right:0;height:auto;min-height:300px;overflow:visible}
+  .mh-rail .mh-card{order:3;background:var(--card)}
+  .mh-dxbtn{order:3}
+  .mh-rail .appstats{order:3}
+  .mh-recap,.mh-cta,.mh-rail .mh-card,.mh-dxbtn,.mh-rail .appstats{margin-left:16px;margin-right:16px}
 }
 .mh-recap{font-size:13px;color:var(--ink-2);line-height:1.55;border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;background:var(--card)}
 .mh-recap b{color:var(--ink);font-weight:600}
