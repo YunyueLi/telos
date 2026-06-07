@@ -176,9 +176,9 @@ export default function DeriveCanvas({
         panOnDrag
         zoomOnScroll={false}
         onInit={(inst) => {
-          // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用可读比例尺(看不全可拖)
-          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 0.95, duration: 0 });
-          else inst.fitView({ padding: 0.18, maxZoom: 1 });
+          // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用更大的可读比例尺(看不全可拖)
+          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 1.2, duration: 0 });
+          else inst.fitView({ padding: 0.16, maxZoom: 1.25 });
         }}
       >
         <Background gap={24} size={1} color="#e2dfd7" />
