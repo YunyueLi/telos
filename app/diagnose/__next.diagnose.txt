@@ -2,4 +2,4 @@
 2:I[39756,["/telos/app/_next/static/chunks/0l7x4qdntfqo_.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/0p6uvbc7tl9s2.js"],"default"]
 3:I[37457,["/telos/app/_next/static/chunks/0l7x4qdntfqo_.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/0p6uvbc7tl9s2.js"],"default"]
 4:[]
-0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"cmIQHm8gzqNlfandE21B1"}
+0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"ydYsxtWcZtwcBf12teYmu"}
