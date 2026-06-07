@@ -10,7 +10,13 @@ import { AppShell } from "@/components/app-shell";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
 import { getDeriveUrl, setDeriveUrl } from "@/lib/telos/derive";
-import { loadProject, saveProject } from "@/lib/telos/project";
+import { genId, loadActive, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
+
+function progressOf(p: Project): { mastered: number; total: number } {
+  const total = p.points.length;
+  const mastered = p.points.filter((k) => (p.state.mastery[k.id] ?? 0) >= 0.8).length;
+  return { mastered, total };
+}
 
 const GROUPS = [
   { key: "done", title: "已掌握" },
@@ -21,7 +27,18 @@ const GROUPS = [
 
 export default function MePage() {
   const router = useRouter();
-  const { ready, project, graph, view, xp, streak, reset } = useProject();
+  const {
+    ready,
+    project,
+    graph,
+    view,
+    xp,
+    streak,
+    projects,
+    switchProject,
+    removeProject,
+    startNew,
+  } = useProject();
 
   const [mounted, setMounted] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
@@ -42,7 +59,7 @@ export default function MePage() {
     setMsg("端点已保存");
   };
   const doExport = () => {
-    const p = loadProject();
+    const p = loadActive();
     if (!p) {
       setMsg("还没有项目可备份");
       return;
@@ -52,20 +69,24 @@ export default function MePage() {
   };
   const doImport = () => {
     try {
-      const p = JSON.parse(backup);
-      if (!p || !Array.isArray(p.points)) throw new Error();
-      saveProject(p);
+      const p = JSON.parse(backup) as Project;
+      if (!p || !Array.isArray(p.points) || !p.points.length) throw new Error();
+      const now = Date.now();
+      const proj: Project = { ...p, id: p.id || genId(), createdAt: p.createdAt || now, updatedAt: now };
+      upsertProject(proj);
+      setActiveId(proj.id);
       setMsg("已导入 —— 即将刷新");
       setTimeout(() => window.location.reload(), 600);
     } catch {
       setMsg("备份码无效");
     }
   };
-  const changeGoal = () => {
-    if (window.confirm("换一个目标会清空当前项目的学习进度。继续？")) {
-      reset();
-      router.push("/");
-    }
+  const newLearning = () => {
+    startNew();
+    router.push("/");
+  };
+  const remove = (id: string, goal: string) => {
+    if (window.confirm(`删除「${goal}」及其学习进度？此操作不可撤销。`)) removeProject(id);
   };
 
   if (!ready) {
@@ -132,6 +153,51 @@ export default function MePage() {
           </div>
         )}
 
+        {/* 我的学习 —— 项目库（存放 / 沉淀 / 切换） */}
+        <div className="me-sect">
+          <div className="me-sh">
+            <h3>我的学习 · {projects.length}</h3>
+            <button className="appnew" style={{ marginLeft: "auto" }} onClick={newLearning}>
+              <Icon name="plus" /> 新学习
+            </button>
+          </div>
+          {projects.length === 0 ? (
+            <p className="me-note">还没有学习项目。点「新学习」说一个目标即可开始。</p>
+          ) : (
+            <div className="me-projects">
+              {projects.map((p) => {
+                const pr = progressOf(p);
+                const active = project?.id === p.id;
+                return (
+                  <div key={p.id} className={`me-proj ${active ? "on" : ""}`}>
+                    <button
+                      className="me-proj-main"
+                      onClick={() => {
+                        switchProject(p.id);
+                        router.push("/");
+                      }}
+                    >
+                      <span className="me-proj-goal">{p.goal}</span>
+                      <span className="me-proj-meta">
+                        {active && <i className="me-proj-dot" />}
+                        {pr.mastered}/{pr.total} 已掌握{active ? " · 当前" : ""}
+                      </span>
+                    </button>
+                    <button
+                      className="me-proj-del"
+                      onClick={() => remove(p.id, p.goal)}
+                      title="删除项目"
+                      aria-label="删除项目"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="me-2col">
           {/* 掌握进度 */}
           <div>
@@ -184,10 +250,10 @@ export default function MePage() {
                   <span className="l">重新测起点</span>
                   <span className="v">CBM 诊断</span>
                 </button>
-                <button className="me-row" onClick={changeGoal} disabled={!project}>
-                  <Icon name="refresh" className="ic" />
-                  <span className="l">换个目标</span>
-                  <span className="v">清空进度</span>
+                <button className="me-row" onClick={newLearning}>
+                  <Icon name="plus" className="ic" />
+                  <span className="l">新学习</span>
+                  <span className="v">保留现有项目</span>
                 </button>
               </div>
 

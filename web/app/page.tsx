@@ -32,7 +32,19 @@ const DeriveCanvas = dynamic(() => import("@/components/canvas"), {
 });
 
 export default function HubPage() {
-  const { ready, project, graph, view, derive, deriving, deriveError, record } = useProject();
+  const {
+    ready,
+    project,
+    graph,
+    view,
+    projects,
+    derive,
+    deriving,
+    deriveError,
+    record,
+    composing,
+    cancelNew,
+  } = useProject();
   const router = useRouter();
   const [openNode, setOpenNode] = useState<string | null>(null);
 
@@ -46,8 +58,16 @@ export default function HubPage() {
     );
   }
 
-  if (!project || !graph || !view) {
-    return <Onboarding derive={derive} deriving={deriving} deriveError={deriveError} />;
+  if (!project || !graph || !view || composing) {
+    return (
+      <Onboarding
+        derive={derive}
+        deriving={deriving}
+        deriveError={deriveError}
+        canCancel={!!project || projects.length > 0}
+        onCancel={cancelNew}
+      />
+    );
   }
 
   return (
@@ -77,10 +97,14 @@ function Onboarding({
   derive,
   deriving,
   deriveError,
+  canCancel,
+  onCancel,
 }: {
   derive: (g: string) => Promise<boolean>;
   deriving: boolean;
   deriveError: string | null;
+  canCancel?: boolean;
+  onCancel?: () => void;
 }) {
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -114,9 +138,14 @@ function Onboarding({
             </svg>
             <span>Telos</span>
           </span>
-          <span className="appgoal" style={{ marginLeft: "auto" }}>
-            从结果倒推，学会任何事
-          </span>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+            {canCancel && (
+              <button className="appstat" style={{ cursor: "pointer" }} onClick={onCancel}>
+                <Icon name="arrow" style={{ width: 12, height: 12, transform: "rotate(180deg)" }} /> 返回学习
+              </button>
+            )}
+            <span className="ob-hint" style={{ whiteSpace: "nowrap" }}>从结果倒推，学会任何事</span>
+          </div>
         </div>
       </header>
 
