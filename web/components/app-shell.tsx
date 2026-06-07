@@ -30,11 +30,13 @@ export function AppShell({
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const { t } = useT();
-  const { project, view, xp, streak, startNew } = useProject();
+  const { project, view, xp, streak, startNew, cancelNew } = useProject();
   const newLearning = () => {
     startNew();
     router.push("/");
   };
+  // 点导航 Tab：退出「新学习」编辑态，让「地图」直达当前项目地图（取代旧的「返回学习」按钮）。
+  const leaveCompose = () => cancelNew();
   const tab: Tab =
     active ??
     (pathname.startsWith("/review")
@@ -64,7 +66,7 @@ export function AppShell({
 
           <nav className="appnav">
             {TABS.map((tb) => (
-              <Link key={tb.key} href={tb.href} className={tab === tb.key ? "on" : ""}>
+              <Link key={tb.key} href={tb.href} className={tab === tb.key ? "on" : ""} onClick={leaveCompose}>
                 <Icon name={tb.icon} />
                 {t(tb.labelKey)}
                 {tb.key === "review" && due > 0 && <i className="appnav-badge">{due}</i>}
@@ -97,7 +99,7 @@ export function AppShell({
 
       <nav className="apptabs">
         {TABS.map((tb) => (
-          <Link key={tb.key} href={tb.href} className={tab === tb.key ? "on" : ""}>
+          <Link key={tb.key} href={tb.href} className={tab === tb.key ? "on" : ""} onClick={leaveCompose}>
             <span className="apptab-ic">
               <Icon name={tb.icon} />
               {tb.key === "review" && due > 0 && <i className="apptab-badge">{due}</i>}
