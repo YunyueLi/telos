@@ -118,12 +118,25 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-box textarea::placeholder{color:var(--ink-3)}
 .ob-bar{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line-soft);padding-top:12px}
 .ob-hint{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
-.ob-egs{margin-top:20px;display:flex;flex-direction:column;gap:11px}
-.ob-egs .lab{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:2px}
-.ob-eg{display:flex;gap:9px;align-items:center;font-size:14px;color:var(--ink-2);cursor:pointer;background:none;border:0;text-align:left;font-family:var(--sans);padding:0}
-.ob-eg:hover{color:var(--ink)}
-.ob-eg i{width:5px;height:5px;border-radius:50%;background:var(--ink-3);flex:none}
-.ob-eg:hover i{background:var(--ink)}
+/* 六类学习 · 液态玻璃分类卡（3×2）—— 参考 Apple Liquid Glass + ChatGPT/Gemini 建议卡 */
+.ob-cats{margin-top:24px}
+.ob-cats .lab{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:11px}
+.ob-catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ob-cat{
+  display:flex;flex-direction:column;gap:5px;text-align:left;cursor:pointer;
+  padding:13px 15px;border-radius:15px;
+  background:linear-gradient(152deg,rgba(255,255,255,.62),rgba(255,255,255,.38));
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 7px 20px rgba(20,19,16,.06);
+  -webkit-backdrop-filter:blur(11px) saturate(1.35);backdrop-filter:blur(11px) saturate(1.35);
+  transition:transform .18s,box-shadow .18s,border-color .18s;
+}
+.ob-cat:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 12px 28px rgba(20,19,16,.1)}
+.ob-cat:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+.ob-cat-k{font:600 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ob-cat-g{font:500 13.5px/1.35 var(--sans);color:var(--ink)}
+@media(max-width:560px){.ob-catgrid{grid-template-columns:repeat(2,1fr);gap:8px}.ob-cat{padding:11px 13px;-webkit-backdrop-filter:blur(7px) saturate(1.3);backdrop-filter:blur(7px) saturate(1.3)}}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){.ob-cat{background:var(--card)}}
 .ob-art{justify-self:center;position:relative;width:330px;height:360px}
 @media(max-width:900px){.ob-art{display:none}}
 .ob-art .pcirc{width:280px;height:280px;position:absolute;left:25px;top:36px}
