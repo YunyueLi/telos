@@ -40,8 +40,12 @@ def _graph_to_json(goal: str, g) -> dict:
                 "desc": g[pid].desc,
                 "drill": g[pid].drill,
                 "benchmark": g[pid].benchmark,
+                "module": g[pid].module,
+                "moduleTitle": g[pid].module_title,
             }
-            for pid in g.topological_order()
+            # 按「模块分组」顺序输出（倒推装配时已按阶段排好），前端据首次出现得到模块顺序；
+            # 图谱合法性与布局不依赖此顺序（前端 layeredLayout 自行拓扑分层）。
+            for pid in g.points
         ],
     }
 

@@ -322,6 +322,34 @@ function MapHome({
           </div>
         </div>
 
+        {view.modules.length > 1 && (
+          <div className="mh-card mh-card-paper">
+            <h4>
+              {t("home.modulesTitle")}
+              <span className="mh-n">{t("home.modulesCount", { n: view.modules.length })}</span>
+            </h4>
+            <div className="mh-mods">
+              {view.modules.map((m, i) => {
+                const mp = m.total ? Math.round((m.mastered / m.total) * 100) : 0;
+                return (
+                  <button key={m.id} className="mh-mod" onClick={() => onOpenNode(m.firstId)} title={m.title}>
+                    <span className="mh-mod-i">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="mh-mod-main">
+                      <span className="mh-mod-t">{m.title}</span>
+                      <span className="mh-mod-track">
+                        <i style={{ width: `${mp}%` }} />
+                      </span>
+                    </span>
+                    <span className="mh-mod-n">
+                      {m.mastered}/{m.total}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <button className="btn btn-line mh-dxbtn" onClick={onDiagnose}>
           <Icon name="spark" /> {fresh ? t("home.diagnoseFirst") : t("home.diagnoseAgain")}
         </button>

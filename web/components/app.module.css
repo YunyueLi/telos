@@ -662,3 +662,15 @@
 .pn_lock { border-style: dashed; }
 .pn_lock .pathCardName { color: var(--ink-3); }
 .pn_lock .pathDot { border-style: dashed; }
+
+/* 路径上的「阶段/模块」小标题：把竖排路径按学科阶段分组，成体系 */
+.pathSection {
+  position: relative; z-index: 1; display: flex; align-items: center; gap: 8px;
+  margin: 20px 0 9px; padding: 2px 0; background: var(--card);
+  font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2);
+}
+.pathSection:first-child { margin-top: 0; }
+.pathSectionN { font: 600 10px var(--mono); color: var(--paper); background: var(--ink); border-radius: 6px; padding: 2px 6px; flex: none; }
+
+/* 节点详情里的「所属阶段」chip */
+.modChip { font: 600 10px var(--mono); letter-spacing: 0.02em; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line-soft); border-radius: 999px; padding: 3px 9px; }

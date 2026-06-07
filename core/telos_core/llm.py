@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .models import KnowledgeGraph
 
@@ -186,20 +188,25 @@ def _derive_context(goal: str) -> str:
     )
 
 
-def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeGraph:
-    """Call the LLM to reverse-derive a KnowledgeGraph from a free-text goal."""
+# ============ 层级化倒推（多段 + 并行 fan-out）============
+# 单发 LLM 只产 10-16 个节点、易截断、无层级 → 框架稀疏。改为研究印证的「蓝图→并行模块展开→合并/断环」：
+#   ① 蓝图：判定广度档位，倒推出有序模块大纲 + 终点目标节点；
+#   ② 模块展开：每模块并行各一发，产可练能力节点（Bloom 动词 + can-do + drill + 量化达标线 + 模块内前置 + 跨模块文本 hint）；
+#   ③ 合并：去重、跨模块 hint→真边、模块按阶段链接、单一目标终点、断环、按广度封顶。
+# 任一段失败优雅回退到单发倒推，绝不退化为不可用。
+
+
+def _chat_json(system: str, user: str, lang: str = "", timeout: float = 90.0, temperature: float = 0.2) -> dict:
     key, base, model = _config()
     if not key:
-        raise RuntimeError(
-            "未配置 LLM API key。请在 core/.env 设置 TELOS_LLM_API_KEY（见 core/.env.example）。"
-        )
+        raise RuntimeError("未配置 LLM API key（见 core/.env.example）。")
     body = {
         "model": model,
         "messages": [
-            {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": _USER.format(goal=goal) + _derive_context(goal) + _lang_directive(lang)},
+            {"role": "system", "content": system},
+            {"role": "user", "content": user + _lang_directive(lang)},
         ],
-        "temperature": 0.2,
+        "temperature": temperature,
         "stream": False,
         "response_format": {"type": "json_object"},
     }
@@ -214,17 +221,370 @@ def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeG
             data = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"LLM 请求失败 HTTP {e.code}（检查 key / base_url / model）") from e
-    content = data["choices"][0]["message"]["content"]
-    spec = json.loads(content)
-    g = _to_graph(spec)
-    # 概括标题（用于导航栏；非破坏性地挂到图对象，serve.py 会带出，CLI 忽略）
-    if isinstance(spec, dict):
-        title = str(spec.get("title", "")).strip()
-        if title:
+    return json.loads(data["choices"][0]["message"]["content"])
+
+
+_BLUEPRINT_SYSTEM = (
+    "你是精通逆向课程设计(backward design)、胜任力框架(CEFR/Bloom/EPA)与知识空间理论的总架构师。"
+    "给定目标，你先判断它的广度，再把它倒推成一份有序的【模块/阶段大纲】(像一门课的章节路线图)，"
+    "为后续逐模块展开可训练能力搭好骨架。模块要把这门学习【完整覆盖】、相邻模块递进。只输出 JSON。"
+)
+
+_BLUEPRINT_USER_TPL = (
+    "目标：__GOAL__\n\n"
+    "第一步，判断广度档位 scope 并据此定模块数：\n"
+    "- narrow 很窄的单项技能(如『练好CSGO准星拉枪』)→ 3-5 个模块、每模块 4-6 个能力\n"
+    "- skill 一项成形技能/一个单元(如『入门React』『人像布光』)→ 5-7 个模块、每模块 6-8 个\n"
+    "- course 一门课/较完整能力(如『半马完赛』『写出可发表短篇』)→ 6-8 个模块、每模块 7-9 个\n"
+    "- subject 一门学科/大领域(如『掌握机器学习』『精通哈利波特研究』)→ 7-9 个模块、每模块 8-10 个\n\n"
+    "第二步，把目标倒推成有序模块(由基础到综合)，并给出终点目标节点。严格输出 JSON：\n"
+    '{"title":"简洁主题标题(导航用,中文≤12字/英文≤4词,提炼核心、不照抄整句)",'
+    '"domain":"主导学习类型A-F(A陈述记忆/B良构程序/C创造/D动作/E对抗/F习惯)",'
+    '"scope":"narrow|skill|course|subject",'
+    '"modules":[{"id":"英文slug","title":"模块名(名词短语)","summary":"这个模块覆盖什么(一句话)","target":本模块能力数,"order":1}],'
+    '"goal":{"id":"英文slug","name":"终点能力(动宾短语,即目标本身)","domain":"E","desc":"can-do：在什么条件下能做到什么、到什么标准","drill":"怎么综合演练","benchmark":"量化达标线(分新手/进阶/精英)","module":"它所属的最后一个模块id"}}\n'
+    "要求：1)模块数与 target 按 scope 选，总能力数 ~15(窄)到 ~75(学科)；"
+    "2)模块覆盖完整(基础/核心/进阶/综合/实战等关键阶段不缺)、相邻递进；"
+    "3)模块是『阶段/主题』而非单个能力；goal 是整门学习的综合产出(像 EPA：能独立完成的真实任务)；"
+    "4)id 唯一英文 slug。只输出 JSON。"
+)
+
+_MODULE_SYSTEM = (
+    "你是精通刻意练习(deliberate practice)与胜任力分解的世界级教练。给定一门学习的某个模块，"
+    "你把它展开成若干【可训练能力节点】——每个都可观测、可反复练习且能渐进加难、有量化达标线，"
+    "是『能做到的事』而不是知识名词。只输出 JSON。"
+)
+
+_MODULE_USER_TPL = (
+    "总目标：__GOAL__\n"
+    "这门学习的全部模块(顺序)：__MODLIST__\n"
+    "终点产出：__GOALNAME__\n\n"
+    "现在只展开这一个模块：【__MID__】__MTITLE__ —— __MSUM__\n"
+    "把它展开成约 __TARGET__ 个可训练能力节点，严格输出 JSON：\n"
+    '{"nodes":[{"id":"模块内唯一英文slug","name":"能做到的事(动宾短语,用Bloom动词)","domain":"A-F","minutes":40,"desc":"can-do：在什么条件下能做到什么、到什么标准","drill":"怎么刻意练习(方法/反馈来源/如何加难)","benchmark":"量化或可观测达标线(分新手/进阶/精英更好)","prereq_ids":["本模块内更基础节点的id"],"prereq_hints":["需要先掌握但属于其它模块的能力(用自然语言短语,不要编id)"]}]}\n'
+    "硬性要求：1)节点是能力/可练单元，name 用动宾短语(如『把补刀稳定到14分钟120刀』)；"
+    "禁止『了解/熟悉/理解X基础/综合能力/心理素质』这类不可观测的词。"
+    "2)每个节点可观测、能设计反复且渐进加难的 drill、benchmark 给量化或行为达标线(体现高手与新手差距)。"
+    "3)按 domain 调整：E对抗/D动作→带动态对手/时间压力的情境技能、drill用复盘(VOD)/陪练、benchmark用表现数据；"
+    "C创造→作品+rubric维度；A/B→在新情境中运用而非死记。"
+    "4)prereq_ids 只引用本模块内 id；跨模块前置写进 prereq_hints(自然语言)。由易到难。只输出 JSON。"
+)
+
+
+def _blueprint(goal: str, ctx: str, lang: str, timeout: float = 70.0) -> dict:
+    spec = _chat_json(_BLUEPRINT_SYSTEM, _BLUEPRINT_USER_TPL.replace("__GOAL__", goal) + ctx, lang, timeout=timeout)
+    if not isinstance(spec, dict):
+        raise RuntimeError("蓝图返回格式错误")
+    mods = [
+        m for m in (spec.get("modules") or [])
+        if isinstance(m, dict) and str(m.get("id", "")).strip() and str(m.get("title", "")).strip()
+    ]
+    if len(mods) < 2:
+        raise RuntimeError("蓝图模块过少")
+    seen, clean = set(), []
+    for i, m in enumerate(mods[:9]):
+        mid = str(m["id"]).strip()
+        if mid in seen:
+            continue
+        seen.add(mid)
+        m["id"] = mid
+        m["order"] = int(m.get("order")) if str(m.get("order", "")).strip().lstrip("-").isdigit() else i + 1
+        clean.append(m)
+    spec["modules"] = clean
+    return spec
+
+
+def _expand_module(goal: str, bp: dict, module: dict, lang: str, timeout: float = 95.0) -> list:
+    try:
+        target = max(4, min(int(module.get("target")), 12))
+    except (TypeError, ValueError):
+        target = 8
+    modlist = "、".join(str(m.get("title", "")) for m in bp["modules"])
+    user = (
+        _MODULE_USER_TPL.replace("__GOAL__", goal)
+        .replace("__MODLIST__", modlist)
+        .replace("__GOALNAME__", str((bp.get("goal") or {}).get("name", goal)))
+        .replace("__MID__", str(module["id"]))
+        .replace("__MTITLE__", str(module.get("title", "")))
+        .replace("__MSUM__", str(module.get("summary", "")))
+        .replace("__TARGET__", str(target))
+    )
+    spec = _chat_json(_MODULE_SYSTEM, user, lang, timeout=timeout, temperature=0.3)
+    nodes = spec.get("nodes") if isinstance(spec, dict) else None
+    return nodes if isinstance(nodes, list) else []
+
+
+def _parallel_expand(goal: str, bp: dict, lang: str) -> dict:
+    mods = bp["modules"]
+    out: dict = {}
+    with ThreadPoolExecutor(max_workers=min(8, max(1, len(mods)))) as ex:
+        futs = {ex.submit(_expand_module, goal, bp, m, lang): m["id"] for m in mods}
+        for fut in as_completed(futs):
+            mid = futs[fut]
             try:
-                g.title = title[:40]
-            except Exception:
-                pass
+                out[mid] = fut.result()
+            except Exception:  # noqa: BLE001 — 单模块失败不拖垮整体
+                out[mid] = []
+    return out
+
+
+def _norm(s: str) -> str:
+    return re.sub(r"[\s\W_]+", "", str(s).lower())
+
+
+def _bigrams(s: str) -> list:
+    return [s[i : i + 2] for i in range(len(s) - 1)] if len(s) >= 2 else ([s] if s else [])
+
+
+def _clean_node(n: dict) -> dict:
+    return {k: n[k] for k in ("id", "name", "prereqs", "is_goal", "minutes", "domain", "desc", "drill", "benchmark", "module", "module_title")}
+
+
+def _break_cycles(nodes: dict) -> None:
+    """反复找一条环上的回边并删掉(沿 prereq 反向 DFS)，直到无环。"""
+
+    def find_back_edge():
+        color = {g: 0 for g in nodes}  # 0=white 1=gray 2=black
+
+        def dfs(u):
+            color[u] = 1
+            for v in list(nodes[u]["prereqs"]):
+                if v not in nodes:
+                    continue
+                if color[v] == 1:
+                    return (u, v)
+                if color[v] == 0:
+                    r = dfs(v)
+                    if r:
+                        return r
+            color[u] = 2
+            return None
+
+        for g in list(nodes):
+            if color[g] == 0:
+                r = dfs(g)
+                if r:
+                    return r
+        return None
+
+    for _ in range(5000):
+        be = find_back_edge()
+        if not be:
+            break
+        u, v = be
+        if v in nodes[u]["prereqs"]:
+            nodes[u]["prereqs"].remove(v)
+
+
+def _cap_nodes(nodes: dict, goal_gid: str, limit: int = 82) -> None:
+    while len(nodes) > limit:
+        has_dep = set()
+        for n in nodes.values():
+            for p in n["prereqs"]:
+                has_dep.add(p)
+        cands = [g for g in nodes if g != goal_gid and g not in has_dep and not nodes[g]["is_goal"]]
+        if not cands:
+            break
+        drop = sorted(cands, key=lambda g: (-len(nodes[g]["prereqs"]), g))[0]
+        del nodes[drop]
+        for n in nodes.values():
+            if drop in n["prereqs"]:
+                n["prereqs"].remove(drop)
+
+
+def _assemble(goal: str, bp: dict, expansions: dict) -> dict:
+    mods = sorted(bp["modules"], key=lambda m: int(m.get("order", 0)))
+    order_of = {m["id"]: i for i, m in enumerate(mods)}
+    nodes: dict = {}
+    name_index: dict = {}
+    remap: dict = {}
+    mod_nodes = {m["id"]: [] for m in mods}
+
+    for m in mods:
+        mid, mtitle = m["id"], str(m.get("title", ""))
+        for raw in expansions.get(mid, []):
+            if not isinstance(raw, dict):
+                continue
+            lid = str(raw.get("id", "")).strip() or _norm(raw.get("name", ""))[:24]
+            name = str(raw.get("name", "") or lid).strip()
+            if not lid or not name:
+                continue
+            gid = f"{mid}.{lid}"
+            if gid in nodes:
+                gid = f"{gid}~{len(nodes)}"
+            nm = _norm(name)
+            if nm and nm in name_index:
+                remap[gid] = name_index[nm]
+                continue
+            try:
+                mins = max(5, min(int(raw.get("minutes")), 180))
+            except (TypeError, ValueError):
+                mins = 30
+            nodes[gid] = {
+                "id": gid, "name": name,
+                "domain": str(raw.get("domain") or m.get("domain") or bp.get("domain") or "B"),
+                "minutes": mins,
+                "desc": re.sub(r"^\s*can-?do\s*[:：]\s*", "", str(raw.get("desc", "")).strip(), flags=re.I),
+                "drill": str(raw.get("drill", "")).strip(),
+                "benchmark": str(raw.get("benchmark", "")).strip(),
+                "module": mid, "module_title": mtitle,
+                "_pids": [f"{mid}.{str(x).strip()}" for x in (raw.get("prereq_ids") or []) if str(x).strip()],
+                "_hints": [str(x).strip() for x in (raw.get("prereq_hints") or []) if str(x).strip()],
+                "is_goal": False,
+            }
+            if nm:
+                name_index[nm] = gid
+            mod_nodes[mid].append(gid)
+
+    # 终点目标节点(来自蓝图，保证唯一)
+    gspec = bp.get("goal") or {}
+    gmid = str(gspec.get("module", "")).strip()
+    if gmid not in order_of:
+        gmid = mods[-1]["id"]
+    ggid = f"{gmid}.{str(gspec.get('id', 'goal')).strip() or 'goal'}"
+    while ggid in nodes:
+        ggid += "_g"
+    nodes[ggid] = {
+        "id": ggid, "name": str(gspec.get("name") or goal).strip(),
+        "domain": str(gspec.get("domain") or bp.get("domain") or "B"),
+        "minutes": 45,
+        "desc": re.sub(r"^\s*can-?do\s*[:：]\s*", "", str(gspec.get("desc", "")).strip(), flags=re.I),
+        "drill": str(gspec.get("drill", "")).strip(),
+        "benchmark": str(gspec.get("benchmark", "")).strip(),
+        "module": gmid, "module_title": next((str(m.get("title", "")) for m in mods if m["id"] == gmid), ""),
+        "_pids": [], "_hints": [], "is_goal": True,
+    }
+    mod_nodes.setdefault(gmid, []).append(ggid)
+
+    def fix(ids):
+        out = []
+        for x in ids:
+            x = remap.get(x, x)
+            if x in nodes and x not in out:
+                out.append(x)
+        return out
+
+    for n in nodes.values():
+        n["prereqs"] = fix(n.get("_pids", []))
+
+    # 跨模块 hint → 真边(按名字 bigram 重合度匹配，阈值 0.5)
+    name_norm = {gid: _norm(nd["name"]) for gid, nd in nodes.items()}
+    for gid, n in nodes.items():
+        for hint in n.get("_hints", []):
+            h = _norm(hint)
+            if len(h) < 2:
+                continue
+            hb = set(_bigrams(h))
+            best, bestscore = None, 0.0
+            for cand, cnm in name_norm.items():
+                if cand == gid or nodes[cand]["module"] == n["module"] or not cnm:
+                    continue
+                if h in cnm or cnm in h:
+                    score = min(len(h), len(cnm)) / max(len(h), len(cnm))
+                else:
+                    cb = set(_bigrams(cnm))
+                    score = len(hb & cb) / len(hb | cb) if (hb and cb) else 0.0
+                if score > bestscore:
+                    best, bestscore = cand, score
+            if best and bestscore >= 0.5 and best not in n["prereqs"]:
+                n["prereqs"].append(best)
+
+    # 模块代表节点(每模块最后一个非目标节点，作递进锚)
+    rep = {}
+    for m in mods:
+        members = [g for g in mod_nodes.get(m["id"], []) if not nodes[g]["is_goal"]]
+        if members:
+            rep[m["id"]] = members[-1]
+
+    # 模块链接：后续模块里没有任何前置的孤儿 → 挂到上一模块代表(保证连通且按阶段递进)
+    for m in mods:
+        idx = order_of[m["id"]]
+        if idx == 0:
+            continue
+        prev = rep.get(mods[idx - 1]["id"])
+        if not prev:
+            continue
+        for gid in mod_nodes.get(m["id"], []):
+            if not nodes[gid]["is_goal"] and not nodes[gid]["prereqs"]:
+                nodes[gid]["prereqs"] = [prev]
+
+    # 目标前置：最后模块的 sink 节点(无人依赖)，否则该模块全部，否则各模块代表
+    has_dep = set()
+    for n in nodes.values():
+        for p in n["prereqs"]:
+            has_dep.add(p)
+    last_members = [g for g in mod_nodes.get(gmid, []) if g != ggid]
+    last_sinks = [g for g in last_members if g not in has_dep]
+    gpre = fix(last_sinks or last_members)
+    if not gpre:
+        gpre = [rep[m["id"]] for m in mods if rep.get(m["id"]) and rep[m["id"]] != ggid]
+    nodes[ggid]["prereqs"] = [p for p in gpre if p != ggid]
+
+    _break_cycles(nodes)
+    _cap_nodes(nodes, ggid, limit=82)
+
+    points, seen = [], set()
+    for m in mods:
+        for gid in mod_nodes.get(m["id"], []):
+            if gid in nodes and gid not in seen:
+                points.append(_clean_node(nodes[gid]))
+                seen.add(gid)
+    for gid, n in nodes.items():
+        if gid not in seen:
+            points.append(_clean_node(n))
+            seen.add(gid)
+    return {"title": str(bp.get("title", "")).strip(), "points": points}
+
+
+def _derive_single_spec(goal: str, ctx: str, lang: str, timeout: float) -> dict:
+    """回退：单发倒推(老逻辑)，产 ~10-16 个节点的 spec。"""
+    spec = _chat_json(_SYSTEM, _USER.format(goal=goal) + ctx, lang, timeout=timeout)
+    pts = spec.get("points") if isinstance(spec, dict) else None
+    if not pts:
+        raise RuntimeError("LLM 返回缺少 points 字段")
+    out = []
+    for p in pts:
+        if not isinstance(p, dict) or not str(p.get("id", "")).strip():
+            continue
+        pre = p.get("prerequisites")
+        if pre is None:
+            pre = p.get("prereqs") or []
+        out.append({
+            "id": str(p["id"]), "name": str(p.get("name", p["id"])),
+            "prereqs": [str(x) for x in pre], "is_goal": bool(p.get("is_goal", False)),
+            "minutes": int(p["minutes"]) if str(p.get("minutes", "")).strip().isdigit() else 25,
+            "domain": str(p.get("domain", "B")), "desc": str(p.get("desc", "")),
+            "drill": str(p.get("drill", "")), "benchmark": str(p.get("benchmark", "")),
+            "module": "", "module_title": "",
+        })
+    return {"title": str(spec.get("title", "")).strip(), "points": out}
+
+
+def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeGraph:
+    """层级化倒推：蓝图 → 并行模块展开 → 合并/断环。失败优雅回退到单发倒推。"""
+    key, _, _ = _config()
+    if not key:
+        raise RuntimeError("未配置 LLM API key。请在 core/.env 设置 TELOS_LLM_API_KEY（见 core/.env.example）。")
+    ctx = _derive_context(goal)
+    spec = None
+    try:
+        bp = _blueprint(goal, ctx, lang)
+        expansions = _parallel_expand(goal, bp, lang)
+        if sum(len(v) for v in expansions.values()) >= 6:
+            cand = _assemble(goal, bp, expansions)
+            if len(cand.get("points", [])) >= 6:
+                spec = cand
+    except Exception:  # noqa: BLE001 — 多段失败回退单发
+        spec = None
+    if spec is None:
+        spec = _derive_single_spec(goal, ctx, lang, timeout)
+    g = _to_graph(spec)
+    title = str(spec.get("title", "")).strip()
+    if title:
+        try:
+            g.title = title[:40]
+        except Exception:  # noqa: BLE001
+            pass
     return g
 
 
@@ -232,20 +592,30 @@ def _to_graph(spec: dict) -> KnowledgeGraph:
     points = spec.get("points") if isinstance(spec, dict) else None
     if not points:
         raise RuntimeError("LLM 返回缺少 points 字段")
-    rows = [
-        (
-            str(p["id"]),
-            str(p.get("name", p["id"])),
-            tuple(p.get("prerequisites") or []),
-            bool(p.get("is_goal", False)),
-            int(p.get("minutes", 25)),
-            str(p.get("domain", "B")),
-            str(p.get("desc", "")),
-            str(p.get("drill", "")),
-            str(p.get("benchmark", "")),
+    rows = []
+    for p in points:
+        pre = p.get("prereqs")
+        if pre is None:
+            pre = p.get("prerequisites") or []
+        try:
+            mins = int(p.get("minutes", 25))
+        except (TypeError, ValueError):
+            mins = 25
+        rows.append(
+            (
+                str(p["id"]),
+                str(p.get("name", p["id"])),
+                tuple(str(x) for x in pre),
+                bool(p.get("is_goal", False)),
+                mins,
+                str(p.get("domain", "B")),
+                str(p.get("desc", "")),
+                str(p.get("drill", "")),
+                str(p.get("benchmark", "")),
+                str(p.get("module", "")),
+                str(p.get("module_title", "")),
+            )
         )
-        for p in points
-    ]
     return KnowledgeGraph.from_spec(rows)  # validates the DAG + prerequisite existence
 
 
