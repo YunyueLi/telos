@@ -105,12 +105,24 @@ function Onboarding({
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
+  const [elapsed, setElapsed] = useState(0); // 倒推实时耗时（秒）——替代固定的「约 10–20 秒」估值
   const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
     setCfgUrl(getDeriveUrl());
   }, []);
+
+  // 倒推进行中：每 250ms 刷新已用秒数；结束清零。
+  useEffect(() => {
+    if (!deriving) {
+      setElapsed(0);
+      return;
+    }
+    const t0 = Date.now();
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 250);
+    return () => clearInterval(id);
+  }, [deriving]);
 
   const run = (g: string) => {
     if (!g.trim() || deriving) return;
@@ -166,7 +178,7 @@ function Onboarding({
 
           {deriving && (
             <div className="loadrow">
-              <span className="spinner" /> {t("ob.derivingLine", { goal })}
+              <span className="spinner" /> {t("ob.derivingLine", { goal, sec: elapsed })}
             </div>
           )}
           {deriveError && <div className="errbox">{deriveError}</div>}
