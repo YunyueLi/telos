@@ -77,18 +77,27 @@ export function AppShell({
           </nav>
 
           <div className="appstats">
-            <LangSwitch />
+            {/* 进度：连胜 + XP 合并成一枚药丸，glanceable */}
+            <span className="appdiv" aria-hidden="true" />
+            <div className="appprog">
+              {streak > 0 && (
+                <span className="appprog-seg" title={t("shell.streakTitle")}>
+                  <Icon name="spark" /> {streak}
+                </span>
+              )}
+              <span className="appprog-seg" title={t("shell.xpTitle")}>
+                {xp} <i className="appprog-u">XP</i>
+              </span>
+            </div>
+
+            {/* 主行动 */}
             <button className="appnew" onClick={newLearning} title={t("shell.newTitle")}>
               <Icon name="plus" /> <span className="appnew-t">{t("shell.new")}</span>
             </button>
-            {streak > 0 && (
-              <span className="appstat" title={t("shell.streakTitle")}>
-                <Icon name="spark" /> {streak}
-              </span>
-            )}
-            <span className="appstat" title={t("shell.xpTitle")}>
-              {xp} XP
-            </span>
+
+            {/* 系统 / 账户 */}
+            <span className="appdiv" aria-hidden="true" />
+            <LangSwitch />
             <Link
               href="/settings"
               className={`appgear ${tab === "settings" ? "on" : ""}`}
