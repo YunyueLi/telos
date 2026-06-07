@@ -155,7 +155,7 @@ export default function DeriveCanvas({
         edges={edges}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.12 }}
         minZoom={0.2}
         maxZoom={2}
         nodesConnectable={false}

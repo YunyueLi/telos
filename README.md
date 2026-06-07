@@ -2,87 +2,94 @@
 
 # Telos
 
-**从结果倒推，学会任何事**
+**Say the goal. Learn it backward.**
 
-*Say the outcome. Telos works backward to what you must learn, and teaches only the gaps.*
+*Name what you want to achieve — Telos reverse-derives the skills you actually need, teaches only your gaps, and verifies as it goes.*
 
-`开源` · `Apache-2.0` · `Work in Progress`
+`Open Source` · `Apache-2.0` · `Work in Progress`
 
-**在线访问** · [落地页](https://yunyueli.github.io/telos/) · [交互 Demo](https://yunyueli.github.io/telos/app/)
+**English** · [简体中文](README.zh-CN.md)
+
+[Landing](https://yunyueli.github.io/telos/) · [Live Demo](https://yunyueli.github.io/telos/app/)
 
 </div>
 
 ---
 
-## 在线访问
+## What it is
 
-| | 链接 |
+Telos is a **backward-design** learning engine.
+
+> Say the outcome you want → Telos reverse-derives the abilities needed → decomposes them into a prerequisite DAG → diagnoses what you already know → computes your **learning frontier (ZPD)** → teaches the gaps at your level → verifies mastery → repeats.
+
+The first beachhead is **programming / technical skills**, where mastery can be verified objectively (run the tests) and the loop is cleanest — but the engine is domain-aware (see below).
+
+## What works today
+
+- **Reverse-derive any goal** into a skill DAG via an LLM (run it locally with `core/serve.py`, or a Cloudflare Worker for the public site — your API key stays server-side, never in the front-end).
+- **Expert-level decomposition.** Nodes are *trainable can-do abilities*, each with a deliberate-practice **drill** and a measurable **benchmark** — not a shallow topic list. (Grounded in deliberate practice, EPA/CEFR competency frameworks.)
+- **Six domain classes** (A declarative · B well-structured procedural · C creative · D motor · E open-adversarial · F habit) drive different diagnosis & review strategies.
+- **Adaptive placement diagnosis.** Diagnostic-distractor MCQs + confidence (Certainty-Based Marking) folded into Bayesian Knowledge Tracing, with information-gain item selection over the prerequisite DAG — replacing crude yes/no self-report.
+- **Full-page micro-lessons.** Explanation → "understand it through what you already know" analogy → worked example → a check question that feeds the engine; plus recommended best public courses.
+- **Spaced review (FSRS-4.5).** What you learn flows into a review screen; due cards reschedule on each grade.
+- **Knowledge map.** React Flow canvas — horizontal on desktop, a vertical guided path on mobile — click any node for details and to start learning.
+- **Game layer v1.** XP from *real learning signals* (mastery gains, on-time reviews, goal unlocks) + streaks — never tied to time-on-app.
+
+## Three open standards
+
+Telos splits the paradigm into three independently usable, interoperable data standards:
+
+| Standard | Role |
 | --- | --- |
-| 落地页 | https://yunyueli.github.io/telos/ |
-| 交互 Demo（目标 → 地图 → 学习） | https://yunyueli.github.io/telos/app/ |
+| **Outcome Spec** | Structures a one-line goal into a reverse-derivable spec |
+| **Knowledge Graph** | A prerequisite DAG of trainable abilities |
+| **Learner State** | Single-writer, versioned mastery state |
 
-> Demo 用预置的「FastAPI + JWT」示例图谱演示完整流程；接入真实 LLM 对任意目标倒推是下一步。
+## Repo layout
 
-## 这是什么
-
-Telos 是一个 **「逆向设计 / 从结果倒推」** 的学习框架与 Agent。
-
-> 你说出想达成的结果 → Telos 倒推出所需技能 → 拆成带前置依赖的知识点图谱
-> → 诊断你当前的掌握 → 计算你的「学习前沿（ZPD）」→ 生成个性化路径
-> → 按你的水平教学 → 跑测试客观验证掌握 → 循环。
-
-第一个落点（beachhead）是 **编程 / 技术栈学习**：掌握度可以用「跑通测试」客观验证，闭环最干净。
-
-## 三个开放标准
-
-Telos 把整套范式拆成三份可独立使用、可互操作的数据标准：
-
-| 标准 | 作用 |
-| --- | --- |
-| **Outcome Spec** | 把一句话目标结构化成可倒推的规格 |
-| **Knowledge Graph** | 带前置依赖的知识点图谱（DAG） |
-| **Learner State** | 单写者、可版本化的学习者掌握状态 |
-
-## 形态
-
-- **telos-core** — 可移植的核心引擎（Python）：知识空间理论（KST）、自适应诊断、知识追踪（BKT）、FSRS 间隔复习、FIRe 学分传播
-- **SKILL.md 适配器** — 兼容 agentskills.io / openclaw 生态，让任意支持 Skill 的 Agent 都能跑 Telos
-- **web** — 产品 Demo（Next.js + Tailwind）
-- **landing** — 落地页（静态）
-
-## 目录结构
-
-| 路径 | 内容 | 状态 |
+| Path | What | Status |
 | --- | --- | --- |
-| `landing/` | 落地页（静态 HTML） | ✅ |
-| `web/` | 产品 Demo（Next.js + Tailwind + TypeScript） | 🚧 进行中 |
-| `core/` | 学习引擎（Python；KST / 诊断 / FIRe / FSRS） | ✅ 可运行（13 测试通过） |
-| `skill/` | SKILL.md 适配器 | 📋 规划中 |
+| `core/` | Learning engine (Python, zero-dependency): KST · BKT+CBM diagnosis · FIRe credit propagation · FSRS review · LLM reverse-derivation | ✅ 21 tests pass |
+| `web/` | Product (Next.js + React + Tailwind + TypeScript, static export) | 🚧 active |
+| `workers/` | Cloudflare Worker LLM proxy (`/derive` · `/lesson` · `/probe`) | ✅ |
+| `landing/` | Landing page (static HTML — the design reference) | ✅ |
+| `docs/STRATEGY.md` | Research-backed roadmap & decisions | ✅ |
 
-## 快速开始
+## Quick start
 
 ```bash
-# 落地页：直接用浏览器打开
+# Landing page — open in a browser
 open landing/index.html
+
+# Engine (zero-dependency, pure stdlib)
+cd core
+python3 run_tests.py      # 21 tests
+python3 demo.py           # end-to-end demo
+python3 derive.py "用 Rust 写一个高性能 HTTP 服务器"   # reverse-derive (needs a key — see DERIVE.md)
 
 # Web Demo
 cd web
 npm install --legacy-peer-deps
-npm run dev          # http://localhost:3000
-
-# 学习引擎（零依赖，纯标准库）
-cd core
-python3 demo.py      # 端到端演示
-python3 run_tests.py # 13 个测试
+npm run dev               # http://localhost:3000
 ```
 
-## 设计语言
+To **reverse-derive any goal in the web app**, run the local proxy and point the app at it:
 
-纯黑白 + 暖灰纸感；衬线显赫（Fraunces）+ 无衬线正文（Inter）+ 等宽（JetBrains Mono）；手绘线性图标；编辑感版式。品牌看板娘为一位年轻女老师，黑白二次元墨线、同一角色多姿态。
+```bash
+cd core && python3 serve.py     # http://127.0.0.1:8787  (reads your key from core/.env)
+# then, in another shell:
+cd web && NEXT_PUBLIC_TELOS_DERIVE_URL=http://127.0.0.1:8787/derive npm run dev
+```
 
-## 借鉴的研究与项目
+See **[DERIVE.md](DERIVE.md)** to enable this (local key, or a Cloudflare Worker for the public site). **Never commit your API key.**
 
-逆向设计（Understanding by Design）、知识空间理论（Knowledge Space Theory）、ALEKS 自适应诊断、最近发展区 / 学习前沿（ZPD）、知识追踪（BKT / DKT）、FSRS 间隔复习，以及 GenMentor、IntelliCode、OATutor 等开源工作。
+## Design language
+
+Pure black-and-white on warm paper; a bold serif (Fraunces) + clean sans (Inter) + mono (JetBrains Mono); hand-drawn line icons with a sketch filter; editorial layout. The brand mascot is a young teacher character, monochrome ink, one character across many poses.
+
+## Research & prior art
+
+Backward design (Understanding by Design), Knowledge Space Theory & ALEKS adaptive assessment, Zone of Proximal Development, Bayesian Knowledge Tracing (and its link to IRT), Certainty-Based Marking, FSRS spaced repetition, deliberate practice (Ericsson), EPA/CEFR/ACS competency frameworks, situational judgment tests, and misconception-as-distractor design (FCI). Full citations in [docs/STRATEGY.md](docs/STRATEGY.md).
 
 ## License
 
