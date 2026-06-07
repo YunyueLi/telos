@@ -1,12 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
-import { AGAIN, EASY, GOOD, HARD, SEED_GRAPH } from "@/lib/telos/engine";
+import {
+  AGAIN,
+  EASY,
+  GOOD,
+  HARD,
+  KnowledgeGraph,
+  SEED_GRAPH,
+  dueReviews,
+  newCard,
+  review,
+} from "@/lib/telos/engine";
 import { useLearner } from "@/lib/telos/store";
+import { type Project, loadProject, saveProject } from "@/lib/telos/project";
 import styles from "./review.module.css";
 
 const GRADES = [
@@ -20,17 +31,39 @@ export default function ReviewPage() {
   const L = useLearner();
   const [reviewed, setReviewed] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  // 有倒推项目就复习它（#2 复习闭环），否则回退到 seed 演示
+  const [proj, setProj] = useState<Project | null>(null);
+  useEffect(() => setProj(loadProject()), []);
+  const projGraph = useMemo(() => (proj ? new KnowledgeGraph(proj.points) : null), [proj]);
 
-  const card = L.due[0] ?? null;
-  const total = reviewed + L.due.length;
+  const due =
+    projGraph && proj
+      ? dueReviews(projGraph, proj.state).map(([id, r]) => ({ id, name: projGraph.get(id).name, r }))
+      : L.due;
+  const goalLabel = proj?.goal ?? null;
+
+  const card = due[0] ?? null;
+  const total = reviewed + due.length;
   const pct = total > 0 ? Math.round((reviewed / total) * 100) : 0;
 
   function grade(g: number) {
     if (!card) return;
-    L.reviewCard(card.id, g); // FSRS 重排 → 该卡离开 due，L.due[0] 自动变成下一张
+    if (projGraph && proj) {
+      const next: Project["state"] = JSON.parse(JSON.stringify(proj.state));
+      const c = next.cards[card.id] ?? newCard();
+      next.cards[card.id] = review(c, g, next.day); // 纯 FSRS 重排
+      next.version += 1;
+      const np: Project = { ...proj, state: next, updatedAt: Date.now() };
+      saveProject(np);
+      setProj(np);
+    } else {
+      L.reviewCard(card.id, g);
+    }
     setReviewed((n) => n + 1);
     setRevealed(false);
   }
+  const nameOf = (id: string) =>
+    projGraph ? projGraph.get(id).name : SEED_GRAPH.get(id).name;
 
   const shell = (body: React.ReactNode) => (
     <>
@@ -66,7 +99,7 @@ export default function ReviewPage() {
   );
 
   // Empty — nothing due, nothing reviewed yet today.
-  if (L.due.length === 0 && reviewed === 0) {
+  if (due.length === 0 && reviewed === 0) {
     return shell(
       <div className={styles.done}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,7 +119,7 @@ export default function ReviewPage() {
   }
 
   // Completion — finished a session this visit.
-  if (L.due.length === 0 && reviewed > 0) {
+  if (due.length === 0 && reviewed > 0) {
     return shell(
       <div className={styles.done}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,7 +142,7 @@ export default function ReviewPage() {
   }
 
   // Active session — always show the current most-urgent due card.
-  const hintName = card ? SEED_GRAPH.get(card.id).name : "";
+  const hintName = card ? nameOf(card.id) : "";
 
   return shell(
     <>
@@ -118,13 +151,13 @@ export default function ReviewPage() {
         <div className={styles.track}>
           <i style={{ width: `${pct}%` }} />
         </div>
-        <span className={styles.barloc}>剩 {L.due.length}</span>
+        <span className={styles.barloc}>剩 {due.length}</span>
       </div>
 
       {card && (
         <div className={styles.card}>
           <div className={styles.topic}>
-            <Icon name="refresh" /> 间隔重复 · 趁还没忘
+            <Icon name="refresh" /> 间隔重复 · {goalLabel ?? "趁还没忘"}
           </div>
           <h3 className={styles.name}>{card.name}</h3>
 

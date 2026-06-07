@@ -29,6 +29,7 @@ import {
 } from "@/lib/telos/derive";
 import NodePanel from "./node-panel";
 import PathView from "./path-view";
+import { clearProject, loadProject, saveProject } from "@/lib/telos/project";
 
 const EXAMPLES = [
   "用 Rust 写一个高性能 HTTP 服务器",
@@ -111,7 +112,22 @@ export default function DerivePage() {
     const u = getDeriveUrl();
     setCfgUrl(u);
     setUrlDraft(u);
+    // 恢复上次的倒推项目（学习进度不丢）
+    const p = loadProject();
+    if (p) {
+      setResult({ goal: p.goal, points: p.points });
+      setGraph(new KnowledgeGraph(p.points));
+      setState(p.state);
+      setPhase("ready");
+    }
   }, []);
+
+  // 落盘：把当前倒推项目 + 学习状态持久化，供复习页/云同步读取
+  useEffect(() => {
+    if (phase === "ready" && graph && result) {
+      saveProject({ goal: result.goal, points: result.points, state, updatedAt: Date.now() });
+    }
+  }, [phase, graph, result, state]);
 
   const view = graph ? buildView(graph, state) : null;
   const layout = graph ? layeredLayout(graph) : null;
@@ -150,6 +166,7 @@ export default function DerivePage() {
     setDiagnosing(false);
     setDxQ(null);
     setOpenNode(null);
+    clearProject();
   };
 
   const onLearned = useCallback(
