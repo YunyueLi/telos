@@ -28,6 +28,7 @@ import {
   type Probe,
 } from "@/lib/telos/derive";
 import NodePanel from "./node-panel";
+import PathView from "./path-view";
 
 const EXAMPLES = [
   "用 Rust 写一个高性能 HTTP 服务器",
@@ -94,6 +95,16 @@ export default function DerivePage() {
 
   // 节点详情抽屉
   const [openNode, setOpenNode] = useState<string | null>(null);
+
+  // 手机竖屏(≤640)走专门的蜿蜒路径渲染器，否则 React Flow
+  const [isPhone, setIsPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const apply = () => setIsPhone(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -435,7 +446,11 @@ export default function DerivePage() {
   function renderCanvas() {
     return (
       <div className={styles.canvasCell}>
-        <DeriveCanvas graph={graph!} view={view!} onOpenNode={setOpenNode} />
+        {isPhone ? (
+          <PathView graph={graph!} view={view!} onOpenNode={setOpenNode} />
+        ) : (
+          <DeriveCanvas graph={graph!} view={view!} onOpenNode={setOpenNode} />
+        )}
       </div>
     );
   }

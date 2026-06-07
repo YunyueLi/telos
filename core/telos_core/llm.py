@@ -61,9 +61,10 @@ _SYSTEM = (
 _USER = (
     "目标：{goal}\n\n"
     "倒推出 8-14 个知识点，输出严格的 JSON：\n"
-    '{{"points":[{{"id":"slug","name":"中文名","prerequisites":["前置id"],"is_goal":false,"minutes":25,"domain":"B"}}]}}\n'
+    '{{"points":[{{"id":"slug","name":"中文名","prerequisites":["前置id"],"is_goal":false,"minutes":25,"domain":"B","desc":"一句话说明这是什么/为何学"}}]}}\n'
     "要求：id 为唯一的简短英文 slug；prerequisites 只引用本列表中的 id 且不成环；"
     "恰有一个终点知识点 is_goal=true（即目标本身）；按由易到难大致排列；minutes 为预计学习分钟数；"
+    "desc 为一句话(≤40字)说明这个知识点是什么、为何重要；"
     "domain 为该知识点的学习类型：A=陈述性记忆(词汇/术语/事实)，B=良构程序或算法(数学/编程/可分步)，"
     "C=创造或设计(写作/构思，无唯一解)，D=身体动作技能(乐器/运动)，E=对抗或临场表现(竞技/辩论)，F=习惯/情感/态度养成。"
     "只输出 JSON，不要解释。"
@@ -114,6 +115,7 @@ def _to_graph(spec: dict) -> KnowledgeGraph:
             bool(p.get("is_goal", False)),
             int(p.get("minutes", 25)),
             str(p.get("domain", "B")),
+            str(p.get("desc", "")),
         )
         for p in points
     ]

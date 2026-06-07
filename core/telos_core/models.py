@@ -53,6 +53,7 @@ class KnowledgePoint:
     tags: tuple[str, ...] = ()
     minutes: int = 25  # estimated time-to-learn
     domain: DomainClass = DomainClass.PROCEDURAL  # 学习机制大类，决定诊断/复习策略
+    desc: str = ""  # 一句话描述「这是什么/为何学」（UI 用，可空）
 
 
 @dataclass(frozen=True)
@@ -80,14 +81,17 @@ class KnowledgeGraph:
 
     @classmethod
     def from_spec(cls, rows: Iterable[tuple]) -> "KnowledgeGraph":
-        """rows: (id, name, prerequisites[, is_goal[, minutes[, domain]]])"""
+        """rows: (id, name, prerequisites[, is_goal[, minutes[, domain[, desc]]]])"""
         pts: dict[str, KnowledgePoint] = {}
         for row in rows:
             pid, name, prereqs = row[0], row[1], tuple(row[2])
             is_goal = bool(row[3]) if len(row) > 3 else False
             minutes = int(row[4]) if len(row) > 4 else 25
             domain = coerce_domain(row[5]) if len(row) > 5 else DomainClass.PROCEDURAL
-            pts[pid] = KnowledgePoint(pid, name, prereqs, is_goal, minutes=minutes, domain=domain)
+            desc = str(row[6]) if len(row) > 6 else ""
+            pts[pid] = KnowledgePoint(
+                pid, name, prereqs, is_goal, minutes=minutes, domain=domain, desc=desc
+            )
         return cls(pts)
 
     def __contains__(self, pid: str) -> bool:

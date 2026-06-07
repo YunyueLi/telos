@@ -38,6 +38,7 @@ export interface DerivedPoint {
   isGoal?: boolean;
   minutes?: number;
   domain?: DomainClass;
+  desc?: string;
 }
 
 export interface DerivedGraph {
@@ -58,6 +59,7 @@ function normalize(points: unknown[]): DerivedPoint[] {
       isGoal: Boolean(p.isGoal ?? p.is_goal ?? false),
       minutes: Number(p.minutes ?? 25) || 25,
       domain: (DOMAINS.has(dom) ? dom : "B") as DomainClass,
+      desc: String(p.desc ?? "").trim(),
     };
   });
 }

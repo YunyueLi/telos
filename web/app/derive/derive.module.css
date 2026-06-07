@@ -488,3 +488,48 @@
 .confBtn { font: 600 12.5px var(--sans); padding: 7px 14px; border-radius: 999px; border: 1.4px solid var(--line-soft); background: var(--card); color: var(--ink-2); cursor: pointer; }
 .confBtn:hover { border-color: var(--ink-3); }
 .confSel { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+
+.detailDesc { font-size: 14px; line-height: 1.6; color: #2c2a25; margin: 2px 0 18px; }
+.olmLink {
+  display: inline-block; margin-top: 12px; background: none; border: 0; padding: 0;
+  font: 600 13px var(--sans); color: var(--ink-2); cursor: pointer;
+  border-bottom: 1px solid var(--line-soft);
+}
+.olmLink:hover { color: var(--ink); border-color: var(--ink); }
+
+/* ===== mobile winding path (≤640) ===== */
+.pathWrap { display: flex; flex-direction: column; height: 70vh; min-height: 440px; }
+.pathSticky {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line-soft);
+}
+.pathSticky button {
+  flex: 1; text-align: left; background: var(--ink); color: var(--paper); border: 0;
+  border-radius: 10px; padding: 11px 13px; font: 600 13px var(--sans); cursor: pointer;
+}
+.pathDone { flex: 1; font: 500 15px var(--serif); }
+.pathCount { font: 600 12px var(--mono); color: var(--ink-3); }
+.pathList { position: relative; overflow-y: auto; padding: 16px 14px 48px; }
+.pathList::before { content: ""; position: absolute; left: 21px; top: 16px; bottom: 40px; width: 2px; background: var(--line-soft); }
+.pathNode {
+  position: relative; display: block; width: 100%; text-align: left; background: var(--card);
+  border: 1.5px solid var(--line-soft); border-radius: 14px; padding: 11px 14px 11px 46px;
+  margin-bottom: 12px; cursor: pointer; scroll-margin-top: 72px; min-height: 56px;
+}
+.pathDot {
+  position: absolute; left: 13px; top: 20px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--card); border: 2px solid var(--ink-3); z-index: 1;
+}
+.pathIndex { font: 600 9.5px var(--mono); color: var(--ink-3); }
+.pathCardName { display: block; font-weight: 600; font-size: 15px; margin-top: 1px; }
+.pathCardSub { display: block; font: 500 10.5px var(--mono); color: var(--ink-3); text-transform: uppercase; margin-top: 3px; }
+.pn_done { background: var(--ink); border-color: var(--ink); }
+.pn_done .pathCardName, .pn_done .pathIndex { color: var(--paper); }
+.pn_done .pathCardSub { color: rgba(240, 238, 233, 0.7); }
+.pn_done .pathDot { background: var(--paper); border-color: var(--paper); }
+.pn_now { border: 2px solid var(--ink); box-shadow: 0 0 0 4px rgba(20, 19, 16, 0.06); }
+.pn_now .pathDot { background: var(--ink); border-color: var(--ink); }
+.pn_learn { background: repeating-linear-gradient(45deg, transparent 0 5px, var(--hatch) 5px 6px), var(--card); border-color: var(--ink-3); }
+.pn_lock { border-style: dashed; }
+.pn_lock .pathCardName { color: var(--ink-3); }
+.pn_lock .pathDot { border-style: dashed; }

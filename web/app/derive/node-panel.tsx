@@ -7,9 +7,9 @@ import { Icon } from "@/components/icon";
 import styles from "./derive.module.css";
 import { AGAIN, GOOD, KnowledgeGraph, type LearnerState, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
-import { generateLesson, getLessonUrl, type Lesson } from "@/lib/telos/derive";
+import { generateLesson, generateProbes, getLessonUrl, type Lesson, type Probe } from "@/lib/telos/derive";
 
-type Phase = "detail" | "loading" | "lesson";
+type Phase = "detail" | "loading" | "lesson" | "challenge";
 
 export default function NodePanel({
   graph,
@@ -35,6 +35,10 @@ export default function NodePanel({
   const [err, setErr] = useState<string | null>(null);
   const [choice, setChoice] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  // 开放学习者模型：用户挑战"我其实会"
+  const [chProbe, setChProbe] = useState<Probe | null>(null);
+  const [chChoice, setChChoice] = useState<number | null>(null);
+  const [chSubmitted, setChSubmitted] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -54,9 +58,17 @@ export default function NodePanel({
     done: view.visual[id] === "done",
     pct: Math.round((state.mastery[id] ?? 0) * 100),
   }));
-  const unmet = prereqs.filter((p) => !p.done);
   const unlocks = graph.dependents(pid).map((id) => graph.get(id).name);
   const lessonReady = !!getLessonUrl();
+  const desc =
+    (node.desc ?? "").trim() ||
+    `${domainLabel(node.domain)}类知识点${
+      node.isGoal
+        ? "，是这条学习路径的最终目标。"
+        : unlocks.length
+          ? `，掌握后会解锁 ${unlocks.slice(0, 3).join("、")}${unlocks.length > 3 ? " 等" : ""}。`
+          : "。"
+    }`;
 
   async function start() {
     setErr(null);
@@ -84,6 +96,27 @@ export default function NodePanel({
     const correct = choice === lesson.check.answer;
     setSubmitted(true);
     onLearned(pid, correct, correct ? GOOD : AGAIN);
+  }
+
+  async function challenge() {
+    setErr(null);
+    setChProbe(null);
+    setChChoice(null);
+    setChSubmitted(false);
+    setPhase("challenge");
+    try {
+      const ps = await generateProbes([{ id: pid, name: node.name, domain: node.domain }], goal);
+      setChProbe(ps[pid] ?? Object.values(ps)[0]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "出题失败";
+      setErr(msg === "NO_ENDPOINT" ? "需要端点（启动 serve.py 即可）。" : msg);
+      setPhase("detail");
+    }
+  }
+  function submitChallenge() {
+    if (chChoice === null || !chProbe) return;
+    setChSubmitted(true);
+    onLearned(pid, chChoice === chProbe.answer, chChoice === chProbe.answer ? GOOD : AGAIN);
   }
 
   const correct = submitted && lesson ? choice === lesson.check.answer : false;
@@ -165,6 +198,65 @@ export default function NodePanel({
               </>
             )}
           </div>
+        ) : phase === "challenge" ? (
+          <div className={styles.lessonBody}>
+            <h3 className={styles.drawerName}>{node.name}</h3>
+            <div className={styles.lessonSec}>
+              <div className={styles.lessonLabel}>考你一道 —— 答对就直接标记掌握</div>
+              {!chProbe ? (
+                <div className={styles.loading}>
+                  <span className={styles.spin} /> 正在出题…
+                </div>
+              ) : (
+                <>
+                  <p className={styles.checkQ}>{chProbe.q}</p>
+                  <div className={styles.opts}>
+                    {chProbe.options.map((o, i) => {
+                      const isAns = i === chProbe.answer;
+                      const cls = [
+                        styles.opt,
+                        chSubmitted && isAns ? styles.optRight : "",
+                        chSubmitted && chChoice === i && !isAns ? styles.optWrong : "",
+                        !chSubmitted && chChoice === i ? styles.optSel : "",
+                      ].join(" ");
+                      return (
+                        <button key={i} className={cls} disabled={chSubmitted} onClick={() => setChChoice(i)}>
+                          <span className={styles.optMark}>{String.fromCharCode(65 + i)}</span>
+                          {o}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!chSubmitted ? (
+                    <button
+                      className={`btn btn-ink ${styles.lessonBtn}`}
+                      disabled={chChoice === null}
+                      onClick={submitChallenge}
+                    >
+                      提交
+                    </button>
+                  ) : (
+                    <>
+                      <div className={chChoice === chProbe.answer ? styles.outcomeOk : styles.outcomeNo}>
+                        {chChoice === chProbe.answer ? "已确认掌握 ✓" : "看来还需要学一下。"}
+                        {chProbe.rationale && <span> {chProbe.rationale}</span>}
+                      </div>
+                      <div className={styles.lessonActions}>
+                        <button className={`btn btn-ink ${styles.lessonBtn}`} onClick={onClose}>
+                          完成
+                        </button>
+                        {chChoice !== chProbe.answer && (
+                          <button className={`btn btn-line ${styles.lessonBtn}`} onClick={start}>
+                            去学一下
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         ) : (
           <div className={styles.detailBody}>
             <h3 className={styles.drawerName}>
@@ -177,6 +269,8 @@ export default function NodePanel({
               <span className={styles.metaDim}>⏱ 约 {node.minutes ?? 25} 分钟</span>
             </div>
 
+            <p className={styles.detailDesc}>{desc}</p>
+
             {err && <div className={styles.drawerErr}>{err}</div>}
 
             {ready ? (
@@ -188,19 +282,18 @@ export default function NodePanel({
                 {phase === "loading" ? "正在生成微课…" : "开始学习"} {phase !== "loading" && <Icon name="arrow" />}
               </button>
             ) : (
-              <div className={styles.lockNote}>
-                先学前置：
-                {unmet.map((p) => (
-                  <button key={p.id} className={styles.preLink} onClick={() => onOpenNode(p.id)}>
-                    {p.name}
-                  </button>
-                ))}
-              </div>
+              <div className={styles.lockNote}>🔒 未解锁 · 先学完下面的前置</div>
             )}
             {!lessonReady && (
               <div className={styles.metaDim} style={{ marginTop: 8 }}>
                 （微课需启动 serve.py / 配置端点，与倒推同源）
               </div>
+            )}
+
+            {status !== "done" && lessonReady && (
+              <button className={styles.olmLink} onClick={challenge}>
+                我其实已经会了，考我一下 →
+              </button>
             )}
 
             {prereqs.length > 0 && (
