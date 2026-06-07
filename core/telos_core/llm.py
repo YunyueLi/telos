@@ -249,6 +249,45 @@ def _to_graph(spec: dict) -> KnowledgeGraph:
     return KnowledgeGraph.from_spec(rows)  # validates the DAG + prerequisite existence
 
 
+# ---- 概括标题：把一句目标压成导航用的简洁主题（给旧项目补标题用，轻量纯文本）----
+
+_TITLE_SYSTEM = "你把学习目标概括成一个简洁的【主题标题】，像课程名。只输出标题本身，不要引号、不要标点结尾、不要解释。"
+_TITLE_USER = (
+    "把下面的学习目标概括成一个简洁标题：中文≤12字、英文≤4词；提炼核心主题，"
+    "去掉『我想/学会/达到…水平』这类口语。只输出标题。\n目标：{goal}"
+)
+
+
+def summarize_title(goal: str, lang: str = "", timeout: float = 30.0) -> str:
+    """把目标概括成简洁主题标题（纯文本，便宜快速）。失败/未配置 → 返回 ''（前端回退到原目标）。"""
+    key, base, model = _config()
+    if not key:
+        return ""
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": _TITLE_SYSTEM},
+            {"role": "user", "content": _TITLE_USER.format(goal=goal) + _lang_directive(lang)},
+        ],
+        "temperature": 0.3,
+        "stream": False,
+        "max_tokens": 40,
+    }
+    req = urllib.request.Request(
+        base + "/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        title = str(data["choices"][0]["message"]["content"]).strip()
+    except Exception:  # noqa: BLE001
+        return ""
+    return title.strip().strip('"').strip("“”「」").splitlines()[0][:40] if title else ""
+
+
 # ---- 按需微课：讲解 + worked example + 一道检查题（喂回引擎做 teach-verify）----
 
 _LESSON_SYSTEM = (

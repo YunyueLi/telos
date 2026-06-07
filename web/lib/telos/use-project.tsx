@@ -8,6 +8,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -30,7 +31,7 @@ import {
   setActiveId,
   upsertProject,
 } from "./project";
-import { deriveGraph } from "./derive";
+import { deriveGraph, generateTitle } from "./derive";
 import { computeXp, getStreak, touchStreak } from "./xp";
 
 interface ProjectContextValue {
@@ -74,6 +75,23 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setStreak(getStreak());
     setReady(true);
   }, []);
+
+  // 给旧项目补「概括标题」：加载后对没有 title 的项目逐个联网概括并存回（一次性、节流、失败回退原目标）。
+  const backfilledRef = useRef(false);
+  useEffect(() => {
+    if (!ready || backfilledRef.current) return;
+    const need = projects.filter((p) => !(p.title && p.title.trim()));
+    if (!need.length) return;
+    backfilledRef.current = true;
+    (async () => {
+      for (const p of need) {
+        const title = await generateTitle(p.goal);
+        if (!title) continue;
+        upsertProject({ ...p, title });
+        setProjects((prev) => prev.map((x) => (x.id === p.id ? { ...x, title } : x)));
+      }
+    })();
+  }, [ready, projects]);
 
   const project = useMemo(
     () => projects.find((p) => p.id === activeId) ?? null,

@@ -247,6 +247,29 @@ export function getProbeUrl(): string {
   return u ? u.replace(/\/derive\/?$/, "/probe") : "";
 }
 
+// 概括标题（给旧项目补标题）：轻量纯文本调用；未配置/失败 → ""（调用方回退到原 goal）。
+export function getTitleUrl(): string {
+  const u = getDeriveUrl();
+  return u ? u.replace(/\/derive\/?$/, "/title") : "";
+}
+
+export async function generateTitle(goal: string): Promise<string> {
+  const url = getTitleUrl();
+  if (!url || !goal.trim()) return "";
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goal, lang: outputLang() }),
+    });
+    if (!res.ok) return "";
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    return String(data.title ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 export async function generateProbes(
   points: { id: string; name: string; domain?: string }[],
   goal: string,

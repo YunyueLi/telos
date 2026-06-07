@@ -80,7 +80,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802
         path = self.path.rstrip("/")
-        if path not in ("/derive", "/lesson", "/probe"):
+        if path not in ("/derive", "/lesson", "/probe", "/title"):
             self._json(404, {"error": "not found"})
             return
         if not llm.available():
@@ -115,6 +115,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(502, {"error": str(e)})
                 return
             self._json(200, out)
+        elif path == "/title":  # 概括标题（给旧项目补标题）
+            goal = str(data.get("goal", "")).strip()
+            if not goal:
+                self._json(400, {"error": "goal 不能为空"})
+                return
+            self._json(200, {"title": llm.summarize_title(goal, lang=str(data.get("lang", "")))})
         else:  # /probe —— 起点诊断题（批量）
             points = data.get("points") or []
             if not isinstance(points, list) or not points:
