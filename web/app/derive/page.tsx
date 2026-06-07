@@ -30,6 +30,7 @@ import {
 import NodePanel from "./node-panel";
 import PathView from "./path-view";
 import { clearProject, loadProject, saveProject } from "@/lib/telos/project";
+import { computeXp, getStreak, touchStreak } from "@/lib/telos/xp";
 
 const EXAMPLES = [
   "用 Rust 写一个高性能 HTTP 服务器",
@@ -97,6 +98,8 @@ export default function DerivePage() {
   // 节点详情抽屉
   const [openNode, setOpenNode] = useState<string | null>(null);
 
+  const [streak, setStreak] = useState(0);
+
   // 手机竖屏(≤640)走专门的蜿蜒路径渲染器，否则 React Flow
   const [isPhone, setIsPhone] = useState(false);
   useEffect(() => {
@@ -109,6 +112,7 @@ export default function DerivePage() {
 
   useEffect(() => {
     setMounted(true);
+    setStreak(getStreak());
     const u = getDeriveUrl();
     setCfgUrl(u);
     setUrlDraft(u);
@@ -122,10 +126,11 @@ export default function DerivePage() {
     }
   }, []);
 
-  // 落盘：把当前倒推项目 + 学习状态持久化，供复习页/云同步读取
+  // 落盘：把当前倒推项目 + 学习状态持久化，供复习页/云同步读取；并记一次"今天有学习活动"
   useEffect(() => {
     if (phase === "ready" && graph && result) {
       saveProject({ goal: result.goal, points: result.points, state, updatedAt: Date.now() });
+      setStreak(touchStreak());
     }
   }, [phase, graph, result, state]);
 
@@ -491,6 +496,13 @@ export default function DerivePage() {
           <i style={{ width: `${view!.pct}%` }} />
         </div>
         <div className={styles.statSub}>按当前节奏 · 预计 {view!.etaDays} 天达成</div>
+        <div className={styles.xpRow}>
+          <span className={styles.xpItem}>
+            <Icon name="spark" style={{ width: 13, height: 13, verticalAlign: -2, marginRight: 4 }} />
+            {computeXp(graph!, state)} XP
+          </span>
+          {streak > 0 && <span className={styles.xpItem}>连胜 {streak} 天</span>}
+        </div>
 
         {view!.next && (
           <div className={`dark ${styles.next}`}>

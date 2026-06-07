@@ -281,6 +281,8 @@
 .big { font-family: var(--serif); font-size: 38px; font-weight: 500; line-height: 1; }
 .big sup { font-family: var(--mono); font-size: 12px; color: var(--ink-3); font-weight: 400; }
 .statSub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+.xpRow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.xpItem { font: 600 11px var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-soft); color: var(--ink-2); }
 .bar2 { height: 7px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line-soft); overflow: hidden; margin: 12px 0 6px; }
 .bar2 i { display: block; height: 100%; background: var(--ink); }
 .next { margin-top: 20px; border-radius: 14px; padding: 16px; }
