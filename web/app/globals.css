@@ -121,16 +121,18 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .psw-clear{position:absolute;right:8px;display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border:0;background:none;border-radius:6px;color:var(--ink-3);cursor:pointer}
 .psw-clear:hover{background:rgba(20,19,16,.08);color:var(--ink)}
 .psw-clear .ic{width:13px;height:13px}
-.psw-controls{display:flex;align-items:center;gap:8px;padding:10px 16px 6px;flex-wrap:wrap}
-.psw-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
-.psw-fchip{display:inline-flex;align-items:center;gap:5px;font:600 11.5px var(--sans);color:var(--ink-2);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 10px;cursor:pointer;transition:.12s}
+/* 控制行强制单行：分面 chips 一排（必要时内部横向滚动，隐藏滚动条），排序收成图标 + 下拉 */
+.psw-controls{display:flex;align-items:center;gap:8px;padding:10px 14px 8px;flex-wrap:nowrap}
+.psw-chips{display:flex;gap:5px;flex-wrap:nowrap;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.psw-chips::-webkit-scrollbar{display:none}
+.psw-fchip{display:inline-flex;align-items:center;gap:5px;flex:none;white-space:nowrap;font:600 11.5px var(--sans);color:var(--ink-2);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 9px;cursor:pointer;transition:.12s}
 .psw-fchip:hover{border-color:var(--ink-3)}
 .psw-fchip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .psw-fchip i{font-style:normal;font-family:var(--mono);font-size:10px;opacity:.7}
-.psw-sort{position:relative;display:inline-flex;align-items:center;gap:6px;flex:none}
-.psw-sort > span{font:600 10px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
-.psw-sort select{appearance:none;font:600 11.5px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 25px 5px 11px;cursor:pointer}
-.psw-sortcv{position:absolute;right:8px;width:12px;height:12px;color:var(--ink-3);pointer-events:none}
+.psw-sort{position:relative;display:inline-flex;align-items:center;flex:none}
+.psw-sorti{position:absolute;left:9px;width:13px;height:13px;color:var(--ink-3);pointer-events:none}
+.psw-sort select{appearance:none;font:600 11.5px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 23px 5px 28px;cursor:pointer}
+.psw-sortcv{position:absolute;right:7px;width:12px;height:12px;color:var(--ink-3);pointer-events:none}
 .psw-list{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 8px}
 .psw-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-radius:12px;padding:10px 12px;cursor:pointer}
 .psw-opt.active{background:rgba(20,19,16,.05)}

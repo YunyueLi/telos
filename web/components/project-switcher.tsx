@@ -323,9 +323,10 @@ export function ProjectSwitcher() {
                     </button>
                   ))}
                 </div>
-                <label className="psw-sort">
-                  <span>{t("psw.sortLabel")}</span>
+                <label className="psw-sort" title={t("psw.sortLabel")}>
+                  <Icon name="sort" className="psw-sorti" />
                   <select
+                    aria-label={t("psw.sortLabel")}
                     value={sort}
                     onChange={(e) => {
                       setSort(e.target.value as SortKey);
