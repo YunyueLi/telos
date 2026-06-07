@@ -108,43 +108,78 @@ async function derive(goal, env) {
 // ---- 按需微课 ----
 
 const LESSON_SYSTEM =
-  "你是一位精通认知科学的微课老师。针对单个知识点，产出极简微课：" +
-  "建立直觉的讲解、一个走通的范例(worked example)、一道检验掌握的单选题。只输出 JSON。";
+  "你是一位精通认知科学的微课设计师。针对单个知识点，设计一节【交互式、能真正学会】的微课——" +
+  "靠『让学习者动手、预测、补全、检索』来建构理解，而不是堆砌讲解文字。" +
+  "遵循：预测先行 → 直觉讲解 → 分步范例 → 自我解释 → 渐隐填空 → 无脚手架检索(掌握闸门)；" +
+  "答错给【提示阶梯】，逐步逼近但绝不直接给答案。只输出 JSON。";
 
 const LESSON_USER = (name, domain, prereqs, goal) =>
-  `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n已掌握的前置：${
+  `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n学习者已掌握的前置：${
     prereqs.length ? prereqs.join("、") : "（无）"
   }\n\n` +
-  "产出严格 JSON：\n" +
-  '{"explain":"不超过180字、建立直觉的讲解","analogy":"用学习者已掌握的前置打一个贴切类比(无前置则用生活常识类比)","worked":{"problem":"一个具体例子或任务","steps":["步骤1","步骤2","步骤3"]},"check":{"q":"一道检验是否掌握的单选题","options":["A","B","C","D"],"answer":0,"rationale":"为什么对、其它为何错"},"resources":[{"name":"真实存在、口碑最好的公开课程或视频名","platform":"YouTube/B站/Coursera/官方文档"}]}\n' +
-  "要求：explain 建立直觉并点出『高手与新手的关键差别』，不要只给定义；" +
-  "worked 是一个带具体情境/数字、能照着做一遍的真实范例，steps 给【3-6 个有实质内容的步骤】(每步:做什么 + 关键点/为什么)——对抗(E)/动作(D)类则给一次可练的 drill(怎么做、反馈从哪来、达标线)；" +
-  "check 考应用/情境判断而非背定义，恰 4 选项、answer 为正确项下标(0-3)、唯一正确答案、" +
-  "每个错项对应一种真实的高水平误解(进阶者会被带偏、专家会避开)，禁止送分题。" +
-  "analogy 用学习者【已掌握的前置】做贴切类比；resources 给 2-3 个该领域【真实存在、口碑最好】的公开课/视频(只写课程名 + 平台，绝不编造 URL)；" +
-  "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric 要点；D 动作=分解练习+达标；E 对抗=情境拆解+决策。只输出 JSON。";
+  "设计一节交互式微课，严格输出如下 JSON（steps 必须正好按此 6 步顺序、kind 用英文小写）：\n" +
+  '{"concept":"一句话点出核心要义/高手的关键认知","steps":[' +
+  '{"kind":"predict","prompt":"讲解前先抛出的核心问题，让学习者先猜（低风险、不计分）","options":["..4 项.."],"answer":0,"reveal":"揭示正确项并一句话点出为何"},' +
+  '{"kind":"explain","text":"≤160 字、建立直觉的讲解，点出高手与新手的关键差别","analogy":"用已掌握的前置打贴切类比（无则用生活常识）"},' +
+  '{"kind":"worked","problem":"带具体情境/数字、能照着做一遍的真实范例","steps":[{"do":"做什么","why":"为什么/关键点"}]},' +
+  '{"kind":"self_explain","prompt":"针对范例某一步问『为什么这样做』","options":["..4 项.."],"answer":0,"rationale":"为什么对"},' +
+  '{"kind":"faded","problem":"同类型新题","given":["已写好的前几步"],"prompt":"最后一步该怎么做？","options":["..4 项.."],"answer":0,"hints":["提示1:方向","提示2:更具体","提示3:几乎点破"],"rationale":"为什么"},' +
+  '{"kind":"retrieve","prompt":"全新、无脚手架的应用/情境判断题（掌握闸门）","options":["..4 项.."],"answer":0,"hints":["提示1","提示2"],"rationale":"为什么对、其它为何错"}' +
+  '],"resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]}\n' +
+  "硬性要求：每题恰 4 选项、answer 为正确项下标(0-3)、唯一正确、错项对应进阶者真实误解、禁止送分题；" +
+  "worked.steps 给 3-5 步(每步 do+why)；faded 是完成式问题(given 写好前几步、留空最后一步)，hints 提示阶梯 2-3 条由浅入深、最后一条几乎点破但不给答案；retrieve 无脚手架作为掌握闸门；" +
+  "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric；D 动作=分解练习+达标；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励；" +
+  "resources 给 2-3 个真实存在、口碑最好的公开课/视频(只写名+平台，绝不编造 URL)。只输出 JSON。";
+
+function mcqFields(s) {
+  const options = (s.options || []).map(String).filter((o) => o.trim());
+  if (options.length < 2) return null;
+  let answer = parseInt(s.answer, 10);
+  if (!Number.isFinite(answer)) answer = 0;
+  answer = Math.max(0, Math.min(answer, options.length - 1));
+  const hints = (s.hints || []).map((h) => String(h).trim()).filter(Boolean);
+  return { options, answer, hints };
+}
 
 function toLesson(spec) {
-  const explain = String(spec?.explain ?? "").trim();
-  const worked = spec?.worked || {};
-  const steps = (worked.steps || []).map(String).filter((s) => s.trim());
-  const check = spec?.check || {};
-  const options = (check.options || []).map(String).filter((o) => o.trim());
-  let answer = parseInt(check.answer, 10);
-  if (!Number.isFinite(answer)) answer = 0;
-  if (!explain || options.length < 2 || !String(check.q ?? "").trim()) throw new Error("微课内容不完整");
-  answer = Math.max(0, Math.min(answer, options.length - 1));
+  const out = [];
+  for (const s of Array.isArray(spec?.steps) ? spec.steps : []) {
+    if (!s || typeof s !== "object") continue;
+    const kind = String(s.kind || "").trim();
+    if (kind === "explain") {
+      const text = String(s.text || "").trim();
+      if (text) out.push({ kind, text, analogy: String(s.analogy || "").trim() });
+    } else if (kind === "worked") {
+      const steps = [];
+      for (const w of s.steps || []) {
+        if (w && typeof w === "object" && String(w.do || "").trim())
+          steps.push({ do: String(w.do).trim(), why: String(w.why || "").trim() });
+        else if (String(w || "").trim()) steps.push({ do: String(w).trim(), why: "" });
+      }
+      if (steps.length) out.push({ kind, problem: String(s.problem || "").trim(), steps });
+    } else if (["predict", "self_explain", "faded", "retrieve"].includes(kind)) {
+      const m = mcqFields(s);
+      if (!m) continue;
+      const q = String(s.prompt || s.q || "").trim();
+      if (!q) continue;
+      const step = { kind, prompt: q, options: m.options, answer: m.answer };
+      if (kind === "predict") step.reveal = String(s.reveal || "").trim();
+      if (kind === "faded") {
+        step.problem = String(s.problem || "").trim();
+        step.given = (s.given || []).map((g) => String(g).trim()).filter(Boolean);
+      }
+      if (["self_explain", "faded", "retrieve"].includes(kind)) step.rationale = String(s.rationale || "").trim();
+      if (["faded", "retrieve"].includes(kind)) step.hints = m.hints;
+      out.push(step);
+    }
+  }
+  const graded = out.filter((st) => ["retrieve", "faded", "self_explain"].includes(st.kind));
+  if (!out.length || !graded.length) throw new Error("微课内容不完整");
   const resources = (Array.isArray(spec?.resources) ? spec.resources : [])
-    .filter((r) => r && String(r.name ?? "").trim())
+    .filter((r) => r && String(r.name || "").trim())
     .slice(0, 4)
-    .map((r) => ({ name: String(r.name).trim(), platform: String(r.platform ?? "").trim() }));
-  return {
-    explain,
-    analogy: String(spec?.analogy ?? "").trim(),
-    worked: { problem: String(worked.problem ?? "").trim(), steps },
-    check: { q: String(check.q).trim(), options, answer, rationale: String(check.rationale ?? "").trim() },
-    resources,
-  };
+    .map((r) => ({ name: String(r.name).trim(), platform: String(r.platform || "").trim() }));
+  return { concept: String(spec?.concept || "").trim(), steps: out, resources };
 }
 
 async function lesson(body, env) {

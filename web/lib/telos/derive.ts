@@ -98,11 +98,27 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
 
 // ---- 按需微课 ----
 
+// 交互式微课的分步状态机（#9）：预测→讲解→分步范例→自我解释→渐隐填空→无脚手架检索。
+export type LessonStep =
+  | { kind: "predict"; prompt: string; options: string[]; answer: number; reveal?: string }
+  | { kind: "explain"; text: string; analogy?: string }
+  | { kind: "worked"; problem: string; steps: { do: string; why?: string }[] }
+  | { kind: "self_explain"; prompt: string; options: string[]; answer: number; rationale?: string }
+  | {
+      kind: "faded";
+      problem?: string;
+      given?: string[];
+      prompt: string;
+      options: string[];
+      answer: number;
+      hints?: string[];
+      rationale?: string;
+    }
+  | { kind: "retrieve"; prompt: string; options: string[]; answer: number; hints?: string[]; rationale?: string };
+
 export interface Lesson {
-  explain: string;
-  analogy?: string;
-  worked: { problem: string; steps: string[] };
-  check: { q: string; options: string[]; answer: number; rationale: string };
+  concept: string;
+  steps: LessonStep[];
   resources?: { name: string; platform: string }[];
 }
 
@@ -130,11 +146,18 @@ export async function generateLesson(
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
-  const check = data.check as { options?: unknown[] } | undefined;
-  if (!data.explain || !check?.options?.length) throw new Error("微课返回不完整");
-  const lesson = data as unknown as Lesson;
-  lesson.check.options = lesson.check.options.map(stripOptionLabel);
-  return lesson;
+  const steps = (Array.isArray(data.steps) ? data.steps : []) as LessonStep[];
+  if (!steps.length) throw new Error("微课返回不完整");
+  // 去掉选项里 LLM 自带的 A./B、序号前缀，避免和角标重复
+  for (const s of steps) {
+    const opts = (s as { options?: unknown }).options;
+    if (Array.isArray(opts)) (s as { options: string[] }).options = opts.map((o) => stripOptionLabel(String(o)));
+  }
+  return {
+    concept: String(data.concept ?? ""),
+    steps,
+    resources: data.resources as Lesson["resources"],
+  };
 }
 
 // ---- 起点诊断题（批量客观探针）----
