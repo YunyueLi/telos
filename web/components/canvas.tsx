@@ -144,14 +144,14 @@ export default function DeriveCanvas({
         },
       };
     });
-    // 初始定位锚点：当前学习前沿 / "现在学" 的节点（找不到则取入口），
-    // 用于在长图谱里默认对准"该学的地方"，而不是缩到看不清地全图 fitView。
-    const focusId =
-      view.next?.id ??
-      Object.keys(layout.nodes).find((id) => view.visual[id] === "now") ??
-      Object.keys(layout.nodes)[0];
-    const fn = focusId ? layout.nodes[focusId] : null;
-    const focus = fn ? { x: fn.x, y: fn.y } : null;
+    // 居中锚点：把"你所在的活动区域"(已掌握 + 现在学，非未解锁)的几何中心放到画面中央，
+    // 读得清、又是当前该学的地方；未解锁的深层节点自然向外延伸(可拖动查看)。
+    const active = Object.values(layout.nodes).filter((n) => view.visual[n.id] !== "lock");
+    const pts = active.length ? active : Object.values(layout.nodes);
+    const focus = {
+      x: pts.reduce((s, n) => s + n.x, 0) / pts.length,
+      y: pts.reduce((s, n) => s + n.y, 0) / pts.length,
+    };
     return { nodes: ns, edges: es, focus };
   }, [graph, view, dir, onOpenNode]);
 
@@ -167,11 +167,9 @@ export default function DeriveCanvas({
         nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
         onInit={(inst) => {
-          // 长图谱：默认对准"当前该学的"节点、用可读的固定比例尺(不缩成看不清的全图)；
-          // 短图谱：fitView 正好铺满。
-          const long = graph.ids().length > 6;
-          if (focus && long) inst.setCenter(focus.x, focus.y, { zoom: 0.82, duration: 0 });
-          else inst.fitView({ padding: 0.14, maxZoom: 1 });
+          // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用可读比例尺(看不全可拖)
+          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 0.8, duration: 0 });
+          else inst.fitView({ padding: 0.18, maxZoom: 1 });
         }}
       >
         <Background gap={24} size={1} color="#e2dfd7" />
