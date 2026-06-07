@@ -13,12 +13,14 @@ import {
   domainLabel,
   emptyState,
   newCard,
+  recordResult,
   review,
   usesFsrs,
 } from "@/lib/telos/engine";
 import { buildView } from "@/lib/telos/store";
 import { layeredLayout } from "@/lib/telos/layout";
 import { deriveGraph, getDeriveUrl, setDeriveUrl, type DerivedGraph } from "@/lib/telos/derive";
+import NodePanel from "./node-panel";
 
 const EXAMPLES = [
   "用 Rust 写一个高性能 HTTP 服务器",
@@ -78,6 +80,9 @@ export default function DerivePage() {
   const [dxQ, setDxQ] = useState<string | null>(null);
   const [dxCount, setDxCount] = useState(0);
 
+  // 节点详情抽屉
+  const [openNode, setOpenNode] = useState<string | null>(null);
+
   useEffect(() => {
     setMounted(true);
     const u = getDeriveUrl();
@@ -105,6 +110,7 @@ export default function DerivePage() {
       setState(emptyState());
       setDiagnosing(false);
       setDxQ(null);
+      setOpenNode(null);
       setPhase("ready");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "倒推失败";
@@ -120,7 +126,19 @@ export default function DerivePage() {
     setErr(null);
     setDiagnosing(false);
     setDxQ(null);
+    setOpenNode(null);
   };
+
+  const onLearned = useCallback(
+    (id: string, correct: boolean, grade: number) => {
+      setState((prev) => {
+        const next: LearnerState = JSON.parse(JSON.stringify(prev));
+        if (graph) recordResult(graph, next, id, correct, grade);
+        return next;
+      });
+    },
+    [graph],
+  );
 
   const startDx = () => {
     if (!graph) return;
@@ -168,6 +186,18 @@ export default function DerivePage() {
       <footer>
         <div className="wrap">TELOS — 从结果倒推，学会任何事 · 开源 Demo</div>
       </footer>
+      {openNode && graph && view && graph.get(openNode) && (
+        <NodePanel
+          graph={graph}
+          view={view}
+          state={state}
+          pid={openNode}
+          goal={result?.goal ?? goal}
+          onClose={() => setOpenNode(null)}
+          onLearned={onLearned}
+          onOpenNode={setOpenNode}
+        />
+      )}
     </>
   );
 
@@ -355,7 +385,7 @@ export default function DerivePage() {
   function renderCanvas() {
     return (
       <div className={styles.canvasCell}>
-        <DeriveCanvas graph={graph!} view={view!} />
+        <DeriveCanvas graph={graph!} view={view!} onOpenNode={setOpenNode} />
       </div>
     );
   }

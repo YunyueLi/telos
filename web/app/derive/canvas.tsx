@@ -1,13 +1,14 @@
 "use client";
 
-// 画布 P1：React Flow 渲染倒推图谱 —— 滚轮缩放 / 拖拽平移 / fitView / 小地图。
-// 节点位置复用纯函数 layeredLayout（后续 P3 可换 d3-dag/elk，渲染层不变）。
-import { useMemo } from "react";
+// 画布 P1+：React Flow 渲染倒推图谱 —— 缩放/平移/fitView/小地图，
+// 并支持横向(LR，宽屏) / 纵向(TB，竖屏/手机) 两种方向，窄屏自动切纵向。
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Background,
   Controls,
   Handle,
   MiniMap,
+  Panel,
   Position,
   ReactFlow,
   type Edge,
@@ -18,7 +19,7 @@ import "@xyflow/react/dist/style.css";
 import styles from "./derive.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
-import { layeredLayout } from "@/lib/telos/layout";
+import { layeredLayout, type Direction } from "@/lib/telos/layout";
 
 type NodeStatus = "done" | "now" | "learn" | "lock";
 
@@ -28,14 +29,35 @@ interface TelosData {
   status: NodeStatus;
   isGoal: boolean;
   domainLabel: string;
+  dir: Direction;
+  onOpen: () => void;
   [key: string]: unknown;
+}
+
+function detectDir(): Direction {
+  if (typeof window === "undefined") return "LR";
+  return window.matchMedia("(max-width: 820px)").matches ? "TB" : "LR";
 }
 
 function TelosNode({ data }: NodeProps) {
   const d = data as TelosData;
+  const vertical = d.dir === "TB";
   return (
-    <div className={`${styles.rfNode} ${styles[d.status]}`}>
-      <Handle type="target" position={Position.Left} className={styles.handle} isConnectable={false} />
+    <div
+      className={`${styles.rfNode} ${styles[d.status]}`}
+      onClick={d.onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") d.onOpen();
+      }}
+    >
+      <Handle
+        type="target"
+        position={vertical ? Position.Top : Position.Left}
+        className={styles.handle}
+        isConnectable={false}
+      />
       <span className={styles.rfBadge} title={`学习类型：${d.domainLabel}`}>
         {d.domainLabel}
       </span>
@@ -44,16 +66,47 @@ function TelosNode({ data }: NodeProps) {
         {d.name}
       </div>
       <s>{d.sub}</s>
-      <Handle type="source" position={Position.Right} className={styles.handle} isConnectable={false} />
+      <Handle
+        type="source"
+        position={vertical ? Position.Bottom : Position.Right}
+        className={styles.handle}
+        isConnectable={false}
+      />
     </div>
   );
 }
 
 const nodeTypes = { telos: TelosNode };
 
-export default function DeriveCanvas({ graph, view }: { graph: KnowledgeGraph; view: LearnerView }) {
+export default function DeriveCanvas({
+  graph,
+  view,
+  onOpenNode,
+}: {
+  graph: KnowledgeGraph;
+  view: LearnerView;
+  onOpenNode?: (id: string) => void;
+}) {
+  const [dir, setDir] = useState<Direction>(detectDir);
+  const [pinned, setPinned] = useState(false); // 用户手动切过则不再自动跟随
+
+  useEffect(() => {
+    if (pinned) return;
+    const mq = window.matchMedia("(max-width: 820px)");
+    const apply = () => setDir(mq.matches ? "TB" : "LR");
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [pinned]);
+
+  const toggle = useCallback(() => {
+    setPinned(true);
+    setDir((d) => (d === "TB" ? "LR" : "TB"));
+  }, []);
+
   const { nodes, edges } = useMemo(() => {
-    const layout = layeredLayout(graph);
+    const layout = layeredLayout(graph, dir);
+    const vertical = dir === "TB";
     const ns: Node[] = Object.values(layout.nodes).map((n) => ({
       id: n.id,
       type: "telos",
@@ -64,10 +117,12 @@ export default function DeriveCanvas({ graph, view }: { graph: KnowledgeGraph; v
         status: view.visual[n.id],
         isGoal: !!graph.get(n.id).isGoal,
         domainLabel: domainLabel(graph.get(n.id).domain),
+        dir,
+        onOpen: () => onOpenNode?.(n.id),
       } satisfies TelosData,
       style: { width: layout.nodeW, height: layout.nodeH },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
+      sourcePosition: vertical ? Position.Bottom : Position.Right,
+      targetPosition: vertical ? Position.Top : Position.Left,
       connectable: false,
     }));
     const es: Edge[] = layout.edges.map((e) => {
@@ -86,11 +141,12 @@ export default function DeriveCanvas({ graph, view }: { graph: KnowledgeGraph; v
       };
     });
     return { nodes: ns, edges: es };
-  }, [graph, view]);
+  }, [graph, view, dir, onOpenNode]);
 
   return (
     <div className={styles.rfWrap}>
       <ReactFlow
+        key={`${dir}|${graph.ids().join(",")}`}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -109,6 +165,11 @@ export default function DeriveCanvas({ graph, view }: { graph: KnowledgeGraph; v
           nodeColor={(n) => ((n.data as TelosData).status === "done" ? "#141310" : "#b9b4a8")}
           maskColor="rgba(240,238,233,0.6)"
         />
+        <Panel position="top-right">
+          <button className={styles.dirToggle} onClick={toggle} title="切换横向 / 纵向">
+            {dir === "TB" ? "横向 ⇄" : "纵向 ⇄"}
+          </button>
+        </Panel>
       </ReactFlow>
     </div>
   );

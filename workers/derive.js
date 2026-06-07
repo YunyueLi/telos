@@ -99,6 +99,68 @@ async function derive(goal, env) {
   return toGraph(JSON.parse(content), goal);
 }
 
+// ---- 按需微课 ----
+
+const LESSON_SYSTEM =
+  "你是一位精通认知科学的微课老师。针对单个知识点，产出极简微课：" +
+  "建立直觉的讲解、一个走通的范例(worked example)、一道检验掌握的单选题。只输出 JSON。";
+
+const LESSON_USER = (name, domain, prereqs, goal) =>
+  `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n已掌握的前置：${
+    prereqs.length ? prereqs.join("、") : "（无）"
+  }\n\n` +
+  "产出严格 JSON：\n" +
+  '{"explain":"不超过180字、建立直觉的讲解","worked":{"problem":"一个具体例子或任务","steps":["步骤1","步骤2","步骤3"]},"check":{"q":"一道检验是否掌握的单选题","options":["A","B","C","D"],"answer":0,"rationale":"为什么对、其它为何错"}}\n' +
+  "要求：explain 通俗有直觉；worked 是一个走通的范例；check 恰好 4 个选项、answer 为正确项下标(0-3)、" +
+  "有唯一正确答案、干扰项要像样能暴露常见误解。按学习类型调整：A 记忆=例子/助记；B 程序=可分步范例；" +
+  "C 创造=范例+要点；D 动作=分解练习步骤；E 对抗=情境拆解；F 习惯=微行动建议。只输出 JSON。";
+
+function toLesson(spec) {
+  const explain = String(spec?.explain ?? "").trim();
+  const worked = spec?.worked || {};
+  const steps = (worked.steps || []).map(String).filter((s) => s.trim());
+  const check = spec?.check || {};
+  const options = (check.options || []).map(String).filter((o) => o.trim());
+  let answer = parseInt(check.answer, 10);
+  if (!Number.isFinite(answer)) answer = 0;
+  if (!explain || options.length < 2 || !String(check.q ?? "").trim()) throw new Error("微课内容不完整");
+  answer = Math.max(0, Math.min(answer, options.length - 1));
+  return {
+    explain,
+    worked: { problem: String(worked.problem ?? "").trim(), steps },
+    check: { q: String(check.q).trim(), options, answer, rationale: String(check.rationale ?? "").trim() },
+  };
+}
+
+async function lesson(body, env) {
+  const key = env.TELOS_LLM_API_KEY;
+  if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
+  const name = String(body.name || "").trim();
+  if (!name) throw new Error("name 不能为空");
+  const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
+  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const prereqs = (body.prereqs || []).map(String);
+  const resp = await fetch(base + "/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: LESSON_SYSTEM },
+        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, String(body.goal || "")) },
+      ],
+      temperature: 0.3,
+      stream: false,
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!resp.ok) throw new Error(`LLM 请求失败 HTTP ${resp.status}（检查 key / base_url / model）`);
+  const data = await resp.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) throw new Error("LLM 返回为空");
+  return toLesson(JSON.parse(content));
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -122,6 +184,19 @@ export default {
       if (goal.length > 200) return json({ error: "goal 过长" }, 400, env);
       try {
         return json(await derive(goal, env), 200, env);
+      } catch (e) {
+        return json({ error: String(e.message || e) }, 502, env);
+      }
+    }
+    if (request.method === "POST" && path === "/lesson") {
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: "请求体需为 JSON" }, 400, env);
+      }
+      try {
+        return json(await lesson(body, env), 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }

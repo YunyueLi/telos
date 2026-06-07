@@ -82,3 +82,40 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
   if (!Array.isArray(points) || points.length === 0) throw new Error("返回数据里没有 points");
   return { goal: String(data.goal ?? goal), points: normalize(points) };
 }
+
+// ---- 按需微课 ----
+
+export interface Lesson {
+  explain: string;
+  worked: { problem: string; steps: string[] };
+  check: { q: string; options: string[]; answer: number; rationale: string };
+}
+
+export function getLessonUrl(): string {
+  const u = getDeriveUrl();
+  return u ? u.replace(/\/derive\/?$/, "/lesson") : "";
+}
+
+export async function generateLesson(
+  input: { name: string; domain?: string; prereqs?: string[]; goal?: string },
+  signal?: AbortSignal,
+): Promise<Lesson> {
+  const url = getLessonUrl();
+  if (!url) throw new Error("NO_ENDPOINT");
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      signal,
+    });
+  } catch {
+    throw new Error("连不上微课服务（确认 serve.py 在运行，或端点正确）");
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
+  const check = data.check as { options?: unknown[] } | undefined;
+  if (!data.explain || !check?.options?.length) throw new Error("微课返回不完整");
+  return data as unknown as Lesson;
+}
