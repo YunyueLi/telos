@@ -68,10 +68,10 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .appbar-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:18px;height:58px;padding:0 22px}
 .appbrand{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:600;font-size:21px;letter-spacing:-.01em;flex:none}
 .appbrand svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.8}
-.appgoal{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appgoal{display:flex;align-items:center;gap:8px;min-width:0;flex:0 1 auto;max-width:46ch;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appgoal-l{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);border:1px solid var(--line-soft);border-radius:5px;padding:2px 6px;flex:none}
-.appnav{display:flex;gap:4px;margin-left:auto}
-.appnav a{position:relative;display:inline-flex;align-items:center;gap:7px;font:600 13px var(--sans);color:var(--ink-3);padding:8px 13px;border-radius:999px}
+.appnav{display:flex;gap:4px;margin-left:auto;flex:none}
+.appnav a{position:relative;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font:600 13px var(--sans);color:var(--ink-3);padding:8px 13px;border-radius:999px}
 .appnav a .ic{width:15px;height:15px}
 .appnav a:hover{color:var(--ink);background:rgba(20,19,16,.04)}
 .appnav a.on{color:var(--ink);background:rgba(20,19,16,.07)}
@@ -279,7 +279,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .me-proj-dot{width:7px;height:7px;border-radius:50%;background:var(--ink);display:inline-block;flex:none}
 .me-proj-del{flex:none;align-self:stretch;background:none;border:0;border-left:1px solid var(--line-soft);color:var(--ink-3);font-size:13px;cursor:pointer;padding:0 13px}
 .me-proj-del:hover{color:#b4453a;background:rgba(180,69,58,.06)}
-.me-2col{display:grid;grid-template-columns:1fr 320px;gap:34px}
+.me-2col{display:grid;grid-template-columns:1fr 320px;gap:34px;margin-top:32px}
 @media(max-width:760px){.me-2col{grid-template-columns:1fr;gap:26px}}
 .me-set{border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
 .me-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line-soft);padding:13px 15px;font-family:var(--sans);font-size:13.5px;color:var(--ink);cursor:pointer}
