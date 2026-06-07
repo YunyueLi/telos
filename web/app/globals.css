@@ -84,11 +84,11 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .appavatar{width:34px;height:34px;border-radius:11px;overflow:hidden;border:1.5px solid var(--line-soft);flex:none}
 .appavatar.on{border-color:var(--ink)}
 .appavatar img{width:100%;height:100%;object-fit:cover;object-position:50% 16%}
-/* 顶栏齿轮 → 独立设置页 */
-.appgear{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;color:var(--ink-2);border:1.5px solid transparent;flex:none}
-.appgear:hover{color:var(--ink);background:var(--paper)}
-.appgear.on{color:var(--ink);border-color:var(--ink)}
-.appgear .ic{width:18px;height:18px}
+/* 顶栏齿轮 → 独立设置页：与统计药丸同款（齐高、带边框、icon + 文字），明确是「设置」 */
+.appgear{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--mono);color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:5px 11px;text-decoration:none;flex:none}
+.appgear:hover{color:var(--ink);border-color:var(--ink)}
+.appgear.on{color:var(--ink);border-color:var(--ink);background:var(--paper)}
+.appgear .ic{width:14px;height:14px}
 /* 欢迎页：未配置端点时的轻提示（取代内嵌配置面板） */
 .ob-cfglink{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;text-decoration:none;background:var(--card)}
 .ob-cfglink:hover{border-color:var(--ink);color:var(--ink)}
@@ -111,6 +111,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .appgoal{display:none}
   .appnew-t{display:none}
   .appnew{padding:8px}
+  .appgear-t{display:none}
+  .appgear{padding:7px}
   .appbar-in{padding:0 16px;gap:12px}
   .appmain{padding-bottom:64px}
   .apptabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;height:60px;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}

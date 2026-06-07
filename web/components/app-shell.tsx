@@ -95,7 +95,7 @@ export function AppShell({
               aria-label={t("nav.settings")}
               title={t("nav.settings")}
             >
-              <Icon name="settings" />
+              <Icon name="settings" /> <span className="appgear-t">{t("nav.settings")}</span>
             </Link>
             <Link href="/me" className={`appavatar ${tab === "me" ? "on" : ""}`} aria-label={t("nav.me")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
