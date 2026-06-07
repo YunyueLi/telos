@@ -8,6 +8,11 @@ import type { DomainClass } from "./engine";
 const LS_KEY = "telos:derive-url";
 const DOMAINS = new Set(["A", "B", "C", "D", "E", "F"]);
 
+// 剥掉选项文本里 LLM 自带的序号前缀（如 "A. " / "B、" / "1) "），避免和角标重复。
+export function stripOptionLabel(s: string): string {
+  return String(s).replace(/^\s*[A-Da-d1-4１-４一二三四][.\．、)）:：]\s*/, "").trim();
+}
+
 export function envDeriveUrl(): string {
   return (process.env.NEXT_PUBLIC_TELOS_DERIVE_URL ?? "").trim();
 }
@@ -119,7 +124,9 @@ export async function generateLesson(
   if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
   const check = data.check as { options?: unknown[] } | undefined;
   if (!data.explain || !check?.options?.length) throw new Error("微课返回不完整");
-  return data as unknown as Lesson;
+  const lesson = data as unknown as Lesson;
+  lesson.check.options = lesson.check.options.map(stripOptionLabel);
+  return lesson;
 }
 
 // ---- 起点诊断题（批量客观探针）----
@@ -158,5 +165,6 @@ export async function generateProbes(
   if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
   const probes = data.probes as Record<string, Probe> | undefined;
   if (!probes || !Object.keys(probes).length) throw new Error("诊断题返回为空");
+  for (const k of Object.keys(probes)) probes[k].options = (probes[k].options || []).map(stripOptionLabel);
   return probes;
 }

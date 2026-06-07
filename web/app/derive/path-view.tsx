@@ -3,6 +3,7 @@
 // 手机竖屏「蜿蜒路径」渲染器：把拓扑序竖排成一条引导路径，原生纵向滚动(不缩放)，
 // 吸顶"下一步"、自动滚到当前节点。点卡片打开节点详情。依据移动地图调研(多邻国 path)。
 import { useEffect, useRef } from "react";
+import { Icon } from "@/components/icon";
 import styles from "./derive.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
@@ -36,7 +37,10 @@ export default function PathView({
             下一步 · {view.next.name} →
           </button>
         ) : (
-          <span className={styles.pathDone}>目标已达成 🎯</span>
+          <span className={styles.pathDone}>
+            <Icon name="flag" style={{ width: 15, height: 15, verticalAlign: -2, marginRight: 5 }} />
+            目标已达成
+          </span>
         )}
         <span className={styles.pathCount}>
           {view.mastered}/{view.total}
@@ -56,7 +60,11 @@ export default function PathView({
               <span className={styles.pathDot} />
               <span className={styles.pathIndex}>{String(i + 1).padStart(2, "0")}</span>
               <span className={styles.pathCardName}>
-                {kp.isGoal && <span className={styles.star}>★</span>}
+                {kp.isGoal && (
+                  <span className={styles.star}>
+                    <Icon name="target" style={{ width: 13, height: 13 }} />
+                  </span>
+                )}
                 {kp.name}
               </span>
               <span className={styles.pathCardSub}>
