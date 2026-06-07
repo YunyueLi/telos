@@ -81,6 +81,14 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .appnav + .appstats{margin-left:14px}
 .appstat{display:inline-flex;align-items:center;gap:5px;font:600 11.5px var(--mono);color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:5px 10px}
 .appstat .ic{width:12px;height:12px;color:var(--ink)}
+/* 进度药丸：连胜 + XP 同处一框，内部细线分隔 —— 读作单一「进度」对象 */
+.appprog{display:inline-flex;align-items:center;border:1px solid var(--line-soft);border-radius:999px;overflow:hidden;flex:none}
+.appprog-seg{display:inline-flex;align-items:center;gap:5px;font:600 11.5px var(--mono);color:var(--ink-2);padding:5px 11px}
+.appprog-seg + .appprog-seg{border-left:1px solid var(--line-soft)}
+.appprog-seg .ic{width:12px;height:12px;color:var(--ink)}
+.appprog-u{font-style:normal;font-size:9px;letter-spacing:.04em;color:var(--ink-3)}
+/* 分组竖线：导航 | 进度+行动 | 系统 三段层级的视觉边界（柔和暖灰，不喧宾夺主） */
+.appdiv{width:1px;height:17px;background:var(--hatch);flex:none;margin:0 1px}
 .appavatar{width:34px;height:34px;border-radius:11px;overflow:hidden;border:1.5px solid var(--line-soft);flex:none}
 .appavatar.on{border-color:var(--ink)}
 .appavatar img{width:100%;height:100%;object-fit:cover;object-position:50% 16%}
@@ -113,7 +121,12 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .appnew{padding:8px}
   .appgear-t{display:none}
   .appgear{padding:7px}
-  .appbar-in{padding:0 16px;gap:12px}
+  /* 移动端：分组竖线收起，语言切换移交设置页（齿轮可达），顶栏只留进度/新建/设置/头像 */
+  /* .langsw 基础规则在文件后方，需用更高特异性覆盖才能在移动端隐藏 */
+  .appdiv{display:none}
+  .appstats .langsw{display:none}
+  .appstats{gap:8px}
+  .appbar-in{padding:0 16px;gap:10px}
   .appmain{padding-bottom:64px}
   .apptabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;height:60px;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
   .apptabs a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:600 10px var(--sans);color:var(--ink-3);text-decoration:none}
@@ -184,9 +197,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .epc-note{font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.6;margin-top:11px}
 
 /* 语言切换（#7） */
-.langsw{position:relative;display:inline-flex;align-items:center;flex:none}
-.langsw-cur{font:600 11.5px var(--mono);color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:5px 11px;white-space:nowrap;transition:.15s}
-.langsw:hover .langsw-cur{border-color:var(--ink);color:var(--ink)}
+.langsw{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;border-radius:999px;border:1px solid var(--line-soft);color:var(--ink-2);cursor:pointer;transition:.15s}
+.langsw:hover{border-color:var(--ink);color:var(--ink)}
+.langsw .ic{width:16px;height:16px}
 .langsw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0}
 
 /* —— 地图主页（map = home）—— */
