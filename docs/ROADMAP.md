@@ -72,7 +72,7 @@ cd web  && npm run dev               # :3000
 
 **怎么开启真实链接**（给用户）：在 `core/.env` 加 `TELOS_SEARCH_PROVIDER=tavily` + `TELOS_SEARCH_API_KEY=tvly-...`（[tavily.com](https://tavily.com) 注册，~1000 次/月免费），**重启 serve.py** 即生效。线上 Worker：`wrangler secret put TELOS_SEARCH_API_KEY` + `wrangler.toml [vars] TELOS_SEARCH_PROVIDER`。详见 `DERIVE.md`「联网检索」。
 
-> 待用户给 key 后再实测一次 grounded 端到端（真实 URL + favicon + 域名）。无法替用户注册，故 grounded 实链未在本地跑通，仅单测验证。
+> ✅ grounded 已用 Tavily key 端到端实测：web_search 命中真实来源 → 微课资源回填真实直达 URL（如 zh-hans.react.dev/reference/react/useMemo）→ 前端引用卡显示真实 favicon + 域名 + 直达链接。本地 key 在 `core/.env`（`TELOS_SEARCH_PROVIDER=tavily` + `TELOS_SEARCH_API_KEY`，已 gitignore）；线上 Worker：`wrangler.toml [vars] TELOS_SEARCH_PROVIDER="tavily"` 已就位，待用户跑 `wrangler secret put TELOS_SEARCH_API_KEY` + `wrangler deploy`。
 
 ---
 
@@ -89,5 +89,5 @@ cd web  && npm run dev               # :3000
 ## 3. 注意事项
 - 用户用**自己的 DeepSeek key**（在 core/.env，已明确授权使用，别再提醒轮换）。搜索 key 同理放服务端。
 - 后台进程：serve.py(:8787)、`npm run dev`(:3000) 可能需在新会话重启。
-- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（方案 A，降级已实测、grounded 待 key）、**#10 配置简化**（预设+测试连接+本地零配置，已实测）、**#6 移动端主页重排**（CTA 置顶+路径全展开，已实测 375×812）、**#8 学习页去浮层**（纸感全页接管，已实测）、**#7 九语种 i18n**（UI 全量 + LLM 输出语言 + 语言切换，已实测）。
+- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（Tavily 已装配，grounded 端到端实测：真实 URL + favicon + 域名）、**#10 配置简化**（预设+测试连接+本地零配置，已实测）、**#6 移动端主页重排**（CTA 置顶+路径全展开，已实测 375×812）、**#8 学习页去浮层**（纸感全页接管，已实测）、**#7 九语种 i18n**（UI 全量 + LLM 输出语言 + 语言切换，已实测）。
 - 全局工作偏好已写入 `~/.claude/CLAUDE.md`（在 ~/clauderoam，需 `clauderoam push` 同步）与项目 `CLAUDE.md`。
