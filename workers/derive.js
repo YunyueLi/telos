@@ -129,6 +129,32 @@ async function derive(goal, env, lang) {
   return toGraph(JSON.parse(content), goal);
 }
 
+// 概括标题（给旧项目补标题，轻量纯文本）。失败/未配 → ''（前端回退到原目标）。
+const TITLE_SYSTEM = "你把学习目标概括成一个简洁的【主题标题】，像课程名。只输出标题本身，不要引号、不要标点结尾、不要解释。";
+async function summarizeTitle(goal, env, lang) {
+  const key = env.TELOS_LLM_API_KEY;
+  if (!key) return "";
+  const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
+  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const user =
+    `把下面的学习目标概括成一个简洁标题：中文≤12字、英文≤4词；提炼核心主题，去掉『我想/学会/达到…水平』这类口语。只输出标题。\n目标：${goal}` +
+    langDirective(lang);
+  try {
+    const resp = await fetch(base + "/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, messages: [{ role: "system", content: TITLE_SYSTEM }, { role: "user", content: user }], temperature: 0.3, stream: false, max_tokens: 40 }),
+    });
+    if (!resp.ok) return "";
+    const data = await resp.json();
+    let tt = String(data?.choices?.[0]?.message?.content || "").trim();
+    tt = tt.replace(/^["“「]+|["”」]+$/g, "").split("\n")[0].slice(0, 40);
+    return tt;
+  } catch {
+    return "";
+  }
+}
+
 // ---- 联网检索（agentic grounding）：拿真实来源喂给模型，杜绝模型编造 URL ----
 // 默认不联网（优雅降级回平台搜索链接）。配 TELOS_SEARCH_PROVIDER=tavily|youtube + TELOS_SEARCH_API_KEY 启用。
 
@@ -461,6 +487,17 @@ export default {
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }
+    }
+    if (request.method === "POST" && path === "/title") {
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: "请求体需为 JSON" }, 400, env);
+      }
+      const goal = String(body.goal || "").trim();
+      if (!goal) return json({ error: "goal 不能为空" }, 400, env);
+      return json({ title: await summarizeTitle(goal, env, String(body.lang || "")) }, 200, env);
     }
     if (request.method === "POST" && path === "/probe") {
       let body;
