@@ -90,6 +90,7 @@ export interface LearnerView {
   next: { id: string; name: string; minutes: number } | null;
   frontier: { id: string; name: string; minutes: number }[];
   due: { id: string; name: string; r: number }[];
+  modules: { id: string; title: string; total: number; mastered: number; firstId: string }[];
 }
 
 export function buildView(g: KnowledgeGraph, state: LearnerState, t?: Translator): LearnerView {
@@ -109,6 +110,26 @@ export function buildView(g: KnowledgeGraph, state: LearnerState, t?: Translator
   }));
   const due = dueReviews(g, state).map(([id, r]) => ({ id, name: g.get(id).name, r }));
   const remaining = total - mastered;
+  // 模块/阶段汇总（按首次出现顺序——倒推已按阶段排好），用于地图侧栏「阶段概览」展示成体系结构。
+  const modOrder: string[] = [];
+  const modSeen = new Set<string>();
+  for (const id of ids) {
+    const m = g.get(id).module;
+    if (m && !modSeen.has(m)) {
+      modSeen.add(m);
+      modOrder.push(m);
+    }
+  }
+  const modules = modOrder.map((mid) => {
+    const members = ids.filter((id) => g.get(id).module === mid);
+    return {
+      id: mid,
+      title: g.get(members[0]).moduleTitle || mid,
+      total: members.length,
+      mastered: members.filter((id) => (state.mastery[id] ?? 0) >= 0.8).length,
+      firstId: members[0],
+    };
+  });
   return {
     state,
     mastered,
@@ -121,6 +142,7 @@ export function buildView(g: KnowledgeGraph, state: LearnerState, t?: Translator
     next: frontier[0] ?? null,
     frontier,
     due,
+    modules,
   };
 }
 

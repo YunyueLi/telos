@@ -226,6 +226,7 @@ export default function NodePanel({
               {node.name}
             </h3>
             <div className={styles.detailMeta}>
+              {node.moduleTitle && <span className={styles.modChip}>{node.moduleTitle}</span>}
               <span className={`${styles.statusPill} ${styles[`pill_${status}`]}`}>{view.sub[pid]}</span>
               {status === "learn" && <span className={styles.metaDim}>{t("np.masteryPct", { pct })}</span>}
               <span className={styles.metaDim}>{t("np.minutes", { min: node.minutes ?? 25 })}</span>

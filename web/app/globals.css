@@ -219,6 +219,16 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .mh-legend i{width:11px;height:11px;border-radius:4px;display:inline-block;vertical-align:-1px;margin-right:5px;border:1px solid var(--ink)}
 .mh-legend i.d{background:var(--ink)}
 .mh-legend i.k{border-style:dashed;border-color:var(--line-soft)}
+/* 阶段概览（模块）：成体系的学科结构一览 + 各阶段进度 */
+.mh-mods{display:flex;flex-direction:column;gap:1px}
+.mh-mod{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:9px;padding:8px 6px;cursor:pointer;font-family:var(--sans)}
+.mh-mod:hover{background:rgba(20,19,16,.045)}
+.mh-mod-i{font:600 9.5px var(--mono);color:var(--ink-3);flex:none;width:17px}
+.mh-mod-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.mh-mod-t{font-size:12.5px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.mh-mod-track{height:4px;border-radius:999px;background:var(--card);border:1px solid var(--line-soft);overflow:hidden}
+.mh-mod-track i{display:block;height:100%;background:var(--ink);transition:width .4s ease}
+.mh-mod-n{font:600 10px var(--mono);color:var(--ink-3);flex:none}
 /* floating 当前 button on the map */
 .mh-locate{position:absolute;right:14px;bottom:14px;z-index:5;display:inline-flex;align-items:center;gap:7px;font:600 11.5px var(--sans);background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:9px 15px;cursor:pointer;box-shadow:0 6px 18px rgba(20,19,16,.22)}
 .mh-locate .ic{width:13px;height:13px}

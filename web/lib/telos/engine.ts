@@ -17,6 +17,8 @@ export interface KnowledgePoint {
   desc?: string; // can-do：在什么条件下能做到什么（倒推时生成；可空）
   drill?: string; // 怎么刻意练习这一项
   benchmark?: string; // 量化/可观测的达标线
+  module?: string; // 所属模块/阶段 id（层级化倒推：按学科模块成体系分组）
+  moduleTitle?: string; // 模块标题（地图分带/路径分组显示）
 }
 
 export interface Card {
@@ -373,6 +375,39 @@ export class Diagnosis {
   isDone(): boolean {
     return this.nextQuestion() === null;
   }
+}
+
+// 诊断选点：图谱大时不能给每个节点都出题（会截断/超时）。挑「覆盖各模块 + 连通度最高」的代表点，
+// 其余节点靠 BKT 沿前置/后继传播推断。返回 ≤cap 个 id；图谱本身不超 cap 则全选。
+export function selectProbeTargets(g: KnowledgeGraph, cap = 18): string[] {
+  const ids = g.ids();
+  if (ids.length <= cap) return ids;
+  const score = (id: string) => g.descendants(id).size + g.ancestors(id).size; // 连通度：传播覆盖面
+  const byModule = new Map<string, string[]>();
+  for (const id of ids) {
+    const m = g.get(id).module || "_";
+    const arr = byModule.get(m);
+    if (arr) arr.push(id);
+    else byModule.set(m, [id]);
+  }
+  const chosen = new Set<string>(g.goals()); // 终点目标必考
+  for (const members of byModule.values()) {
+    const top = members.slice().sort((a, b) => score(b) - score(a)).slice(0, 2); // 每模块取连通度前 2，保覆盖
+    for (const id of top) chosen.add(id);
+  }
+  const rest = ids.filter((id) => !chosen.has(id)).sort((a, b) => score(b) - score(a));
+  for (const id of rest) {
+    if (chosen.size >= cap) break;
+    chosen.add(id);
+  }
+  if (chosen.size <= cap) return [...chosen];
+  // 超出（模块很多时）：保留目标，再按连通度裁到 cap
+  const keep = new Set<string>(g.goals());
+  for (const id of [...chosen].sort((a, b) => score(b) - score(a))) {
+    if (keep.size >= cap) break;
+    keep.add(id);
+  }
+  return [...keep];
 }
 
 // ============ frontier ============

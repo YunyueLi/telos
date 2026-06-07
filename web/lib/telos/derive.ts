@@ -93,6 +93,8 @@ export interface DerivedPoint {
   desc?: string;
   drill?: string;
   benchmark?: string;
+  module?: string;
+  moduleTitle?: string;
 }
 
 export interface DerivedGraph {
@@ -119,6 +121,8 @@ function normalize(points: unknown[]): DerivedPoint[] {
         .trim(),
       drill: String(p.drill ?? "").trim(),
       benchmark: String(p.benchmark ?? "").trim(),
+      module: String(p.module ?? "").trim(),
+      moduleTitle: String(p.moduleTitle ?? p.module_title ?? "").trim(),
     };
   });
 }

@@ -56,6 +56,8 @@ class KnowledgePoint:
     desc: str = ""  # can-do：在什么条件下能做到什么（UI 用，可空）
     drill: str = ""  # 怎么刻意练习这一项（具体方法/反馈/加难）
     benchmark: str = ""  # 量化或可观测的达标线（新手/进阶/精英）
+    module: str = ""  # 所属模块/阶段 id（层级化倒推：把图谱按学科模块成体系组织）
+    module_title: str = ""  # 模块标题（UI 分带/分组显示用）
 
 
 @dataclass(frozen=True)
@@ -83,7 +85,7 @@ class KnowledgeGraph:
 
     @classmethod
     def from_spec(cls, rows: Iterable[tuple]) -> "KnowledgeGraph":
-        """rows: (id, name, prerequisites[, is_goal[, minutes[, domain[, desc]]]])"""
+        """rows: (id, name, prerequisites[, is_goal[, minutes[, domain[, desc[, drill[, benchmark[, module[, module_title]]]]]]]])"""
         pts: dict[str, KnowledgePoint] = {}
         for row in rows:
             pid, name, prereqs = row[0], row[1], tuple(row[2])
@@ -93,9 +95,11 @@ class KnowledgeGraph:
             desc = str(row[6]) if len(row) > 6 else ""
             drill = str(row[7]) if len(row) > 7 else ""
             benchmark = str(row[8]) if len(row) > 8 else ""
+            module = str(row[9]) if len(row) > 9 else ""
+            module_title = str(row[10]) if len(row) > 10 else ""
             pts[pid] = KnowledgePoint(
                 pid, name, prereqs, is_goal, minutes=minutes, domain=domain,
-                desc=desc, drill=drill, benchmark=benchmark,
+                desc=desc, drill=drill, benchmark=benchmark, module=module, module_title=module_title,
             )
         return cls(pts)
 

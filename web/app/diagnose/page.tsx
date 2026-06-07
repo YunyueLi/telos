@@ -15,6 +15,7 @@ import {
   learningFrontier,
   newCard,
   review,
+  selectProbeTargets,
   usesFsrs,
 } from "@/lib/telos/engine";
 import { generateProbes, type Probe } from "@/lib/telos/derive";
@@ -79,11 +80,13 @@ export default function DiagnosePage() {
     setPhase("loading");
     setErr(null);
     try {
-      const pts = graph.ids().map((id) => ({
-        id,
-        name: graph.get(id).name,
-        domain: graph.get(id).domain,
-      }));
+      // 图谱大时只给「覆盖各模块 + 连通度最高」的代表点出题（≤18），其余靠 BKT 传播推断——
+      // 否则 70+ 节点会让一发 LLM 出题截断/超时。
+      const targets = new Set(selectProbeTargets(graph, 18));
+      const pts = graph
+        .ids()
+        .filter((id) => targets.has(id))
+        .map((id) => ({ id, name: graph.get(id).name, domain: graph.get(id).domain }));
       probesRef.current = await generateProbes(pts, project.goal);
       const d = new Diagnosis(graph, 14);
       dxRef.current = d;
