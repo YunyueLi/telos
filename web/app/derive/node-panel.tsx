@@ -69,6 +69,8 @@ export default function NodePanel({
           ? `，掌握后会解锁 ${unlocks.slice(0, 3).join("、")}${unlocks.length > 3 ? " 等" : ""}。`
           : "。"
     }`;
+  const drill = (node.drill ?? "").trim();
+  const benchmark = (node.benchmark ?? "").trim();
 
   async function start() {
     setErr(null);
@@ -308,6 +310,20 @@ export default function NodePanel({
               <button className={styles.olmLink} onClick={challenge}>
                 我其实已经会了，考我一下 →
               </button>
+            )}
+
+            {drill && (
+              <div className={styles.detailSec}>
+                <div className={styles.detailH}>怎么练</div>
+                <div className={styles.unlockList}>{drill}</div>
+              </div>
+            )}
+
+            {benchmark && (
+              <div className={styles.detailSec}>
+                <div className={styles.detailH}>达标线</div>
+                <div className={styles.unlockList}>{benchmark}</div>
+              </div>
             )}
 
             {prereqs.length > 0 && (

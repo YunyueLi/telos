@@ -14,7 +14,9 @@ export interface KnowledgePoint {
   isGoal?: boolean;
   minutes?: number;
   domain?: DomainClass; // 学习机制大类，决定诊断/复习策略；缺省按 B（良构程序）
-  desc?: string; // 一句话描述「这是什么/为何学」（倒推时生成；可空）
+  desc?: string; // can-do：在什么条件下能做到什么（倒推时生成；可空）
+  drill?: string; // 怎么刻意练习这一项
+  benchmark?: string; // 量化/可观测的达标线
 }
 
 export interface Card {
