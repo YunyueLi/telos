@@ -4,7 +4,7 @@
 // 节点 → 详情 sheet → 开始学习（分步微课全屏接管）。所有数据来自 useProject 单一真相源。
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
@@ -16,7 +16,15 @@ import { getDeriveUrl } from "@/lib/telos/derive";
 import { EndpointConfig } from "@/components/endpoint-config";
 import { useT, tStatic } from "@/lib/telos/i18n";
 
-const EXAMPLE_KEYS = ["ob.eg1", "ob.eg2", "ob.eg3", "ob.eg4", "ob.eg5"];
+// 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
+const CATS: { domain: string; egKey: string }[] = [
+  { domain: "A", egKey: "ob.catMemory" },
+  { domain: "B", egKey: "ob.eg1" },
+  { domain: "C", egKey: "ob.catCreate" },
+  { domain: "D", egKey: "ob.eg5" },
+  { domain: "E", egKey: "ob.catCompete" },
+  { domain: "F", egKey: "ob.catHabit" },
+];
 
 const DeriveCanvas = dynamic(() => import("@/components/canvas"), {
   ssr: false,
@@ -109,6 +117,7 @@ function Onboarding({
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -120,6 +129,16 @@ function Onboarding({
     setGoal(g);
     void derive(g);
   };
+  // 点分类卡：填入示例目标 + 聚焦输入框（让用户可改后再倒推，仿 ChatGPT 建议卡）
+  const fill = (g: string) => {
+    if (deriving) return;
+    setGoal(g);
+    const ta = taRef.current;
+    if (ta) {
+      ta.focus();
+      ta.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="ob">
@@ -130,62 +149,64 @@ function Onboarding({
             {t("ob.backToLearn")}
           </button>
         )}
-        <div className="eyebrow">{t("ob.eyebrow")}</div>
-          <h1>
-            {t("ob.h1line1")}
-            <br />
-            {t("ob.h1line2")}
-          </h1>
-          <p className="ob-lead">{t("ob.lead")}</p>
+        <h1>
+          {t("ob.h1line1")}
+          <br />
+          {t("ob.h1line2")}
+        </h1>
+        <p className="ob-lead">{t("ob.lead")}</p>
 
-          <div className="ob-box">
-            <textarea
-              rows={3}
-              placeholder={t("ob.placeholder")}
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(goal);
-              }}
-            />
-            <div className="ob-bar">
-              <span className="ob-hint">{t("ob.hintKbd")}</span>
-              <button
-                className="btn btn-ink"
-                style={{ marginLeft: "auto" }}
-                onClick={() => run(goal)}
-                disabled={deriving || !goal.trim()}
-              >
-                {deriving ? t("ob.deriving") : t("ob.derive")} {!deriving && <Icon name="arrow" />}
-              </button>
-            </div>
+        <div className="ob-box">
+          <textarea
+            ref={taRef}
+            rows={3}
+            placeholder={t("ob.placeholder")}
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(goal);
+            }}
+          />
+          <div className="ob-bar">
+            <span className="ob-hint">{t("ob.hintKbd")}</span>
+            <button
+              className="btn btn-ink"
+              style={{ marginLeft: "auto" }}
+              onClick={() => run(goal)}
+              disabled={deriving || !goal.trim()}
+            >
+              {deriving ? t("ob.deriving") : t("ob.derive")} {!deriving && <Icon name="arrow" />}
+            </button>
           </div>
+        </div>
 
-          {deriving && (
-            <div className="loadrow">
-              <span className="spinner" /> {t("ob.derivingLine", { goal })}
-            </div>
-          )}
-          {deriveError && (
-            <div className="errbox" style={{ marginTop: 14 }}>
-              {deriveError}
-            </div>
-          )}
+        {deriving && (
+          <div className="loadrow">
+            <span className="spinner" /> {t("ob.derivingLine", { goal })}
+          </div>
+        )}
+        {deriveError && (
+          <div className="errbox" style={{ marginTop: 14 }}>
+            {deriveError}
+          </div>
+        )}
 
-          <div className="ob-egs">
-            <span className="lab">{t("ob.examplesLab")}</span>
-            {EXAMPLE_KEYS.map((k) => {
-              const eg = t(k);
+        <div className="ob-cats">
+          <span className="lab">{t("ob.examplesLab")}</span>
+          <div className="ob-catgrid">
+            {CATS.map((c) => {
+              const eg = t(c.egKey);
               return (
-                <button key={k} className="ob-eg" onClick={() => run(eg)} disabled={deriving}>
-                  <i />
-                  {eg}
+                <button key={c.domain} className="ob-cat" onClick={() => fill(eg)} disabled={deriving}>
+                  <span className="ob-cat-k">{domainLabel(c.domain, t)}</span>
+                  <span className="ob-cat-g">{eg}</span>
                 </button>
               );
             })}
           </div>
+        </div>
 
-          {mounted && (
+        {mounted && (
             <details className="ob-cfg" open={!cfgUrl}>
               <summary>
                 <span className={`dot ${cfgUrl ? "dot-ok" : "dot-off"}`} />
