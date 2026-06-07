@@ -166,6 +166,11 @@ export default function DeriveCanvas({
         maxZoom={2}
         nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
+        // Mac 触控板 / 无边记习惯：双指拖动=平移，捏合=缩放；空白处拖拽也平移
+        panOnScroll
+        zoomOnPinch
+        panOnDrag
+        zoomOnScroll={false}
         onInit={(inst) => {
           // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用可读比例尺(看不全可拖)
           if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 0.95, duration: 0 });
