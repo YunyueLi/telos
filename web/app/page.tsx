@@ -15,7 +15,6 @@ import { domainLabel } from "@/lib/telos/engine";
 import { getDeriveUrl } from "@/lib/telos/derive";
 import { EndpointConfig } from "@/components/endpoint-config";
 import { useT, tStatic } from "@/lib/telos/i18n";
-import { LangSwitch } from "@/components/lang-switch";
 
 const EXAMPLE_KEYS = ["ob.eg1", "ob.eg2", "ob.eg3", "ob.eg4", "ob.eg5"];
 
@@ -58,13 +57,15 @@ export default function HubPage() {
 
   if (!project || !graph || !view || composing) {
     return (
-      <Onboarding
-        derive={derive}
-        deriving={deriving}
-        deriveError={deriveError}
-        canCancel={!!project || projects.length > 0}
-        onCancel={cancelNew}
-      />
+      <AppShell active="map">
+        <Onboarding
+          derive={derive}
+          deriving={deriving}
+          deriveError={deriveError}
+          canCancel={!!project || projects.length > 0}
+          onCancel={cancelNew}
+        />
+      </AppShell>
     );
   }
 
@@ -121,30 +122,15 @@ function Onboarding({
   };
 
   return (
-    <div className="appshell">
-      <header className="appbar">
-        <div className="appbar-in">
-          <span className="appbrand">
-            <svg className="sk" viewBox="0 0 24 24" aria-hidden="true">
-              <use href="#i-compass" />
-            </svg>
-            <span>Telos</span>
-          </span>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
-            {canCancel && (
-              <button className="appstat" style={{ cursor: "pointer" }} onClick={onCancel}>
-                <Icon name="arrow" style={{ width: 12, height: 12, transform: "rotate(180deg)" }} /> {t("ob.backToLearn")}
-              </button>
-            )}
-            <LangSwitch />
-            <span className="ob-hint" style={{ whiteSpace: "nowrap" }}>{t("ob.tagline")}</span>
-          </div>
-        </div>
-      </header>
-
-      <div className="ob">
-        <div>
-          <div className="eyebrow">{t("ob.eyebrow")}</div>
+    <div className="ob">
+      <div>
+        {canCancel && (
+          <button className="ob-back" onClick={onCancel}>
+            <Icon name="arrow" style={{ width: 12, height: 12, transform: "rotate(180deg)", verticalAlign: -1, marginRight: 5 }} />
+            {t("ob.backToLearn")}
+          </button>
+        )}
+        <div className="eyebrow">{t("ob.eyebrow")}</div>
           <h1>
             {t("ob.h1line1")}
             <br />
@@ -226,7 +212,6 @@ function Onboarding({
           </span>
         </aside>
       </div>
-    </div>
   );
 }
 
