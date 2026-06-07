@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { useProject } from "@/lib/telos/use-project";
+import { projectTitle } from "@/lib/telos/project";
 import { useT } from "@/lib/telos/i18n";
 import { LangSwitch } from "@/components/lang-switch";
 
@@ -55,9 +56,9 @@ export function AppShell({
           </Link>
 
           {project && (
-            <Link className="appgoal" href="/me" title={t("shell.goalTitle")}>
+            <Link className="appgoal" href="/me" title={`${project.goal}　·　${t("shell.goalTitle")}`}>
               <span className="appgoal-l">{t("shell.goalLabel")}</span>
-              {project.goal}
+              {projectTitle(project)}
             </Link>
           )}
 

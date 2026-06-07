@@ -28,6 +28,7 @@ def _graph_to_json(goal: str, g) -> dict:
     """KnowledgeGraph -> 前端 engine.ts 能直接吃的形状（prereqs / isGoal 驼峰）。"""
     return {
         "goal": goal,
+        "title": getattr(g, "title", ""),
         "points": [
             {
                 "id": g[pid].id,

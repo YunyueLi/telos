@@ -109,6 +109,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         const p: Project = {
           id: genId(),
           goal: res.goal,
+          title: res.title,
           points: res.points,
           state: emptyState(),
           createdAt: now,
@@ -123,17 +124,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setDeriving(false);
         return true;
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "倒推失败";
-        setDeriveError(
-          msg === "NO_ENDPOINT"
-            ? "还没配置倒推服务 —— 到「我 · 设置」里填本地或线上端点即可。"
-            : msg,
-        );
+        const msg = e instanceof Error ? e.message : t("err.deriveFailedShort");
+        setDeriveError(msg === "NO_ENDPOINT" ? t("err.noEndpointDerive") : msg);
         setDeriving(false);
         return false;
       }
     },
-    [merge],
+    [merge, t],
   );
 
   const mutateActive = useCallback(

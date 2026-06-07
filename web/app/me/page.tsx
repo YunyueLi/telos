@@ -11,7 +11,7 @@ import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
 import { domainLabel } from "@/lib/telos/engine";
 import { EndpointConfig } from "@/components/endpoint-config";
-import { genId, loadActive, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
+import { genId, loadActive, projectTitle, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -164,12 +164,13 @@ export default function MePage() {
                   <div key={p.id} className={`me-proj ${active ? "on" : ""}`}>
                     <button
                       className="me-proj-main"
+                      title={p.goal}
                       onClick={() => {
                         switchProject(p.id);
                         router.push("/");
                       }}
                     >
-                      <span className="me-proj-goal">{p.goal}</span>
+                      <span className="me-proj-goal">{projectTitle(p)}</span>
                       <span className="me-proj-meta">
                         {active && <i className="me-proj-dot" />}
                         {t("me.projMastered", { m: pr.mastered, t: pr.total })}

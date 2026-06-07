@@ -97,6 +97,7 @@ export interface DerivedPoint {
 
 export interface DerivedGraph {
   goal: string;
+  title?: string; // LLM 概括的简洁主题标题（导航栏显示；缺省回退到 goal）
   points: DerivedPoint[];
 }
 
@@ -140,7 +141,11 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
   if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
   const points = data.points;
   if (!Array.isArray(points) || points.length === 0) throw new Error(tStatic("err.noPoints"));
-  return { goal: String(data.goal ?? goal), points: normalize(points) };
+  return {
+    goal: String(data.goal ?? goal),
+    title: String(data.title ?? "").trim() || undefined,
+    points: normalize(points),
+  };
 }
 
 // ---- 按需微课 ----
