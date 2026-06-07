@@ -79,7 +79,7 @@ cd web  && npm run dev               # :3000
 ## 2. 待办 backlog（按建议顺序）
 
 - ~~**#10 简化 API 配置**~~ ✅ 已完成：新建共用组件 `components/endpoint-config.tsx`（onboarding 与「我」共用）——预设 chip（本地 serve.py / 线上 Worker / 自定义）一键填 + 单字段 + **「测试连接」**（打 `/health` 即时 ✓ 已连接·模型·key 就绪 / ✗ 原因）+ 保存。`derive.ts` 加 `LOCAL_ENDPOINT` + `getDeriveUrl()` 在 localhost 零配置默认指向本地 serve.py + `getHealthUrl()`/`testEndpoint()`。已实测：本地自动绿、chip 切换预填、假地址红。key 仍只在服务端。
-- **#6 一屏 + 移动端重做**（task #31）：桌面已让地图主页锁一屏(`.mh max-height`)；继续收紧其余屏不滚太多 + 按主流手机比例（≈390×844）重做移动端，可参考 `landing/index.html` 的移动稿(06 MOBILE)。检查 onboarding/诊断/复习/我 在窄屏的一屏度与底部 Tab 不挡内容。
+- **#6 一屏 + 移动端**（task #31）：核心已完成 —— 移动端地图主页用 `.mh-rail{display:contents}` + `order` 重排为**「推荐下一步 + 开始学习」置顶可立即行动 → 路径全展开（不再 62vh 裁切隐藏后半截）→ 进度/诊断/复习/连胜**。已实测 375×812：CTA 在首屏内(y≈153)、`.apptabs` 固定底栏、/review 空态正好一屏。桌面本就一屏(`.mh max-height`)。**剩余可选打磨**：onboarding/诊断窄屏细调；/me 是设置中枢（2020px，滚动可接受，如要更紧可折叠分区）。
 - **#8 学习页去浮层**（task #33）：现在微课是全屏覆盖层(lessonFull)。试做**内嵌进产品**（占据 main 区、保留顶栏/返回）看效果，对比是否更连贯。可作为 lesson-runner 的一个布局开关。
 - **#7 多语种 i18n**（task #32）：简中/繁中/英/法/日/韩/西/俄/德 共 9 种。两层：①UI 文案——引入轻量 i18n（建议 `next-intl` 或自建 dict + Context，静态导出友好）；②**LLM 输出语言**——倒推/微课/诊断的 prompt 里带 `output_language`，跟随用户所选。顶栏加语言切换；落 localStorage `telos:lang`。
 - **#17 云同步**（task #17，pending，阻塞）：Supabase 跨设备同步 `telos:projects`。等用户建 Supabase + 给 `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`（见 SUPABASE.md / `web/lib/telos/cloud.ts`）。当前 /me 已有**离线备份码**导出/导入兜底。
@@ -89,5 +89,5 @@ cd web  && npm run dev               # :3000
 ## 3. 注意事项
 - 用户用**自己的 DeepSeek key**（在 core/.env，已明确授权使用，别再提醒轮换）。搜索 key 同理放服务端。
 - 后台进程：serve.py(:8787)、`npm run dev`(:3000) 可能需在新会话重启。
-- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（方案 A，降级已实测、grounded 待 key）、**#10 配置简化**（预设+测试连接+本地零配置，已实测）。
+- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（方案 A，降级已实测、grounded 待 key）、**#10 配置简化**（预设+测试连接+本地零配置，已实测）、**#6 移动端主页重排**（CTA 置顶+路径全展开，已实测 375×812）。
 - 全局工作偏好已写入 `~/.claude/CLAUDE.md`（在 ~/clauderoam，需 `clauderoam push` 同步）与项目 `CLAUDE.md`。
