@@ -184,23 +184,26 @@ export default function LessonRunner({
 
         <div className={styles.lbody}>
           <div className={styles.lmain}>
-            {idx === 0 && lesson.concept && (
-              <div className={styles.lconcept}>
-                <Icon name="spark" style={{ width: 14, height: 14, verticalAlign: -2, marginRight: 5 }} />
-                {lesson.concept}
-              </div>
-            )}
-            <StepBody
-              key={idx}
-              step={step}
-              nav={nav}
-              isGate={idx === gateIdx}
-              onResolveGate={resolveGate}
-              gain={{ startPct, masteryPct, unlocks }}
-            />
+            <div className={styles.lmainIn}>
+              {idx === 0 && lesson.concept && (
+                <div className={styles.lconcept}>
+                  <Icon name="spark" style={{ width: 14, height: 14, verticalAlign: -2, marginRight: 5 }} />
+                  {lesson.concept}
+                </div>
+              )}
+              <StepBody
+                key={idx}
+                step={step}
+                nav={nav}
+                isGate={idx === gateIdx}
+                onResolveGate={resolveGate}
+                gain={{ startPct, masteryPct, unlocks }}
+              />
+            </div>
           </div>
 
           <div className={styles.lside}>
+            <div className={styles.lsideIn}>
             <div className={styles.lsideSec}>
               <h4>{t("lr.whyTitle")}</h4>
               <div className={styles.lwhy}>
@@ -255,6 +258,7 @@ export default function LessonRunner({
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
