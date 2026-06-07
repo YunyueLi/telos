@@ -131,48 +131,60 @@ function Onboarding({
   return (
     <div className="ob">
       <div className="ob-hero">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <span className="pcirc ob-portrait">
-          <img src={asset("/portraits/present.png")} alt="Telos 老师" />
-        </span>
-        <h1>
-          {t("ob.h1line1")}
-          <br />
-          {t("ob.h1line2")}
-        </h1>
-        <p className="ob-lead">{t("ob.lead")}</p>
-      </div>
+        <div className="ob-hero-main">
+          <div className="eyebrow">{t("ob.eyebrow")}</div>
+          <h1>
+            {t("ob.h1line1")}
+            <br />
+            {t("ob.h1line2")}
+          </h1>
+          <p className="ob-lead">{t("ob.lead")}</p>
 
-      <div className="ob-box">
-        <textarea
-          ref={taRef}
-          rows={2}
-          placeholder={t("ob.placeholder")}
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(goal);
-          }}
-        />
-        <div className="ob-bar">
-          <span className="ob-hint">{t("ob.hintKbd")}</span>
-          <button
-            className="btn btn-ink"
-            style={{ marginLeft: "auto" }}
-            onClick={() => run(goal)}
-            disabled={deriving || !goal.trim()}
-          >
-            {deriving ? t("ob.deriving") : t("ob.derive")} {!deriving && <Icon name="arrow" />}
-          </button>
-        </div>
-      </div>
+          <div className="ob-box">
+            <textarea
+              ref={taRef}
+              rows={2}
+              placeholder={t("ob.placeholder")}
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(goal);
+              }}
+            />
+            <div className="ob-bar">
+              <span className="ob-hint">{t("ob.hintKbd")}</span>
+              <button
+                className="btn btn-ink"
+                style={{ marginLeft: "auto" }}
+                onClick={() => run(goal)}
+                disabled={deriving || !goal.trim()}
+              >
+                {deriving ? t("ob.deriving") : t("ob.derive")} {!deriving && <Icon name="arrow" />}
+              </button>
+            </div>
+          </div>
 
-      {deriving && (
-        <div className="loadrow">
-          <span className="spinner" /> {t("ob.derivingLine", { goal })}
+          {deriving && (
+            <div className="loadrow">
+              <span className="spinner" /> {t("ob.derivingLine", { goal })}
+            </div>
+          )}
+          {deriveError && <div className="errbox">{deriveError}</div>}
         </div>
-      )}
-      {deriveError && <div className="errbox">{deriveError}</div>}
+
+        <aside className="ob-art">
+          <svg className="deco skL" viewBox="0 0 330 360" aria-hidden="true">
+            <circle cx="165" cy="176" r="150" strokeDasharray="2 10" />
+            <path d="M295 130l2 8 8 2-8 2-2 8-2-8-8-2 8-2z" />
+            <path d="M32 250l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" />
+            <path d="M270 270c9-6 17-6 24 0" strokeWidth="2.2" />
+          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <span className="pcirc">
+            <img src={asset("/portraits/present.png")} alt="Telos 老师" />
+          </span>
+        </aside>
+      </div>
 
       <div className="ob-cats">
         <span className="lab">{t("ob.examplesLab")}</span>

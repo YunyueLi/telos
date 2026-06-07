@@ -104,12 +104,17 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .apptab-badge{position:absolute;top:-5px;right:-9px;font:600 9px var(--mono);background:var(--ink);color:var(--paper);border-radius:999px;min-width:15px;height:15px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 }
 
-/* —— 引导 / 目标输入：居中单列、紧凑到一屏（参照 ChatGPT/Claude/Gemini/Manus 欢迎页）—— */
-.ob{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:clamp(13px,2.1vh,22px);max-width:680px;width:100%;margin:0 auto;padding:clamp(14px,3vh,30px) 24px 20px}
-.ob-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
-.ob-portrait{width:74px;height:74px;flex:none}
-.ob h1{font-family:var(--serif);font-weight:500;font-size:clamp(27px,3.8vw,40px);letter-spacing:-.022em;line-height:1.1;margin:0}
-.ob-lead{color:var(--ink-2);font-size:15px;line-height:1.55;max-width:440px;margin:0}
+/* —— 引导 / 目标输入：左右 hero（文案+输入 | 大图看板娘）+ 下方全宽六类卡，垂直居中一屏 —— */
+.ob{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(16px,2.8vh,30px);max-width:1080px;width:100%;margin:0 auto;padding:clamp(16px,3vh,34px) 32px}
+.ob-hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.ob-hero-main{min-width:0}
+@media(max-width:900px){.ob-hero{grid-template-columns:1fr;gap:20px}}
+.ob h1{font-family:var(--serif);font-weight:500;font-size:clamp(30px,3.4vw,46px);letter-spacing:-.022em;line-height:1.05;margin:12px 0 14px}
+.ob-lead{color:var(--ink-2);font-size:15.5px;line-height:1.6;max-width:460px;margin:0 0 22px}
+.ob-art{justify-self:center;align-self:center;position:relative;width:340px;height:368px;max-width:100%}
+@media(max-width:900px){.ob-art{display:none}}
+.ob-art .pcirc{width:292px;height:292px;position:absolute;left:24px;top:38px}
+.ob-art .deco{position:absolute;inset:0;width:100%;height:100%;stroke:var(--ink);fill:none}
 .ob-box{width:100%;border:1.6px solid var(--ink);border-radius:18px;padding:14px 16px 12px;background:var(--card)}
 .ob-box textarea{font-size:16px;padding:2px 4px 12px;width:100%;border:0;background:transparent;resize:none;font-family:var(--sans);color:var(--ink);line-height:1.5}
 .ob-box textarea:focus{outline:none}
@@ -118,7 +123,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-hint{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
 /* 六类学习 · 液态玻璃分类卡（一行三个 · 两行）—— 分类用胶囊标签清晰标注 */
 .ob-cats{width:100%}
-.ob-cats .lab{display:block;text-align:center;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
+.ob-cats .lab{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
 .ob-catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .ob-cat{
   display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;cursor:pointer;
