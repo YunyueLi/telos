@@ -12,7 +12,8 @@ import NodePanel from "@/components/node-panel";
 import PathView from "@/components/path-view";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
-import { getDeriveUrl, setDeriveUrl } from "@/lib/telos/derive";
+import { getDeriveUrl } from "@/lib/telos/derive";
+import { EndpointConfig } from "@/components/endpoint-config";
 
 const EXAMPLES = [
   "用 Rust 写一个高性能 HTTP 服务器",
@@ -109,23 +110,16 @@ function Onboarding({
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
-  const [urlDraft, setUrlDraft] = useState("");
 
   useEffect(() => {
     setMounted(true);
-    const u = getDeriveUrl();
-    setCfgUrl(u);
-    setUrlDraft(u);
+    setCfgUrl(getDeriveUrl());
   }, []);
 
   const run = (g: string) => {
     if (!g.trim() || deriving) return;
     setGoal(g);
     void derive(g);
-  };
-  const saveCfg = () => {
-    setDeriveUrl(urlDraft);
-    setCfgUrl(urlDraft.trim());
   };
 
   return (
@@ -212,26 +206,12 @@ function Onboarding({
                 {cfgUrl ? "已配置倒推服务" : "未配置倒推服务 —— 展开设置"}
               </summary>
               <div className="cfgbody">
-                {cfgUrl ? (
+                {!cfgUrl && (
                   <>
-                    端点：<code>{cfgUrl}</code>
-                  </>
-                ) : (
-                  <>
-                    本地三步：① <code>cd core</code> ② <code>python3 serve.py</code> ③ 把端点填成{" "}
-                    <code>http://127.0.0.1:8787/derive</code> 并保存。线上可部署 Cloudflare Worker，见 DERIVE.md。
+                    本地两步：① <code>cd core</code> 后 <code>python3 serve.py</code> ② 选「本地 serve.py」点测试即可。线上用 Cloudflare Worker，见 DERIVE.md。
                   </>
                 )}
-                <div className="cfgrow">
-                  <input
-                    placeholder="http://127.0.0.1:8787/derive"
-                    value={urlDraft}
-                    onChange={(e) => setUrlDraft(e.target.value)}
-                  />
-                  <button className="btn btn-ink" style={{ padding: "9px 15px" }} onClick={saveCfg}>
-                    保存
-                  </button>
-                </div>
+                <EndpointConfig onSaved={setCfgUrl} />
               </div>
             </details>
           )}

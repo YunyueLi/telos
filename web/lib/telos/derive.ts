@@ -8,6 +8,15 @@ import type { DomainClass } from "./engine";
 const LS_KEY = "telos:derive-url";
 const DOMAINS = new Set(["A", "B", "C", "D", "E", "F"]);
 
+// 本地零配置：跑在 localhost 且没配端点时，默认指向本地 serve.py（启动 serve.py 即开箱可用）。
+export const LOCAL_ENDPOINT = "http://127.0.0.1:8787/derive";
+
+function isLocalHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0";
+}
+
 // 剥掉选项文本里 LLM 自带的序号前缀（如 "A. " / "B、" / "1) "），避免和角标重复。
 export function stripOptionLabel(s: string): string {
   return String(s).replace(/^\s*[A-Da-d1-4１-４一二三四][.\．、)）:：]\s*/, "").trim();
@@ -22,7 +31,39 @@ export function getDeriveUrl(): string {
     const override = window.localStorage.getItem(LS_KEY);
     if (override && override.trim()) return override.trim();
   }
-  return envDeriveUrl();
+  const env = envDeriveUrl();
+  if (env) return env;
+  if (isLocalHost()) return LOCAL_ENDPOINT; // 本地零配置
+  return "";
+}
+
+// 健康检查端点（与 derive 同源）：把 /derive|/lesson|/probe 换成 /health。
+export function getHealthUrl(url?: string): string {
+  const u = (url ?? getDeriveUrl()).trim();
+  if (!u) return "";
+  return u.replace(/\/(derive|lesson|probe)\/?$/, "") + "/health";
+}
+
+export interface EndpointStatus {
+  ok: boolean;
+  model?: string;
+  available?: boolean;
+  error?: string;
+}
+
+// 测试端点连通性 + key 是否就绪（打一次 /health，零成本，不调用 LLM）。
+export async function testEndpoint(url?: string): Promise<EndpointStatus> {
+  const health = getHealthUrl(url);
+  if (!health) return { ok: false, error: "请先填写端点地址" };
+  let res: Response;
+  try {
+    res = await fetch(health, { method: "GET" });
+  } catch {
+    return { ok: false, error: "连不上 —— 确认服务在运行、地址与端口正确" };
+  }
+  if (!res.ok) return { ok: false, error: `服务返回 HTTP ${res.status}` };
+  const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  return { ok: true, model: d.model ? String(d.model) : undefined, available: d.available !== false };
 }
 
 export function setDeriveUrl(url: string): void {
