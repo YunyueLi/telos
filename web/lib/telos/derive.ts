@@ -119,3 +119,42 @@ export async function generateLesson(
   if (!data.explain || !check?.options?.length) throw new Error("微课返回不完整");
   return data as unknown as Lesson;
 }
+
+// ---- 起点诊断题（批量客观探针）----
+
+export interface Probe {
+  q: string;
+  options: string[];
+  answer: number;
+  rationale: string;
+}
+
+export function getProbeUrl(): string {
+  const u = getDeriveUrl();
+  return u ? u.replace(/\/derive\/?$/, "/probe") : "";
+}
+
+export async function generateProbes(
+  points: { id: string; name: string; domain?: string }[],
+  goal: string,
+  signal?: AbortSignal,
+): Promise<Record<string, Probe>> {
+  const url = getProbeUrl();
+  if (!url) throw new Error("NO_ENDPOINT");
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ points, goal }),
+      signal,
+    });
+  } catch {
+    throw new Error("连不上诊断服务（确认 serve.py 在运行，或端点正确）");
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(String(data.error || `服务返回 HTTP ${res.status}`));
+  const probes = data.probes as Record<string, Probe> | undefined;
+  if (!probes || !Object.keys(probes).length) throw new Error("诊断题返回为空");
+  return probes;
+}

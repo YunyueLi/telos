@@ -161,6 +161,63 @@ async function lesson(body, env) {
   return toLesson(JSON.parse(content));
 }
 
+// ---- 起点诊断题（批量） ----
+
+const PROBES_SYSTEM =
+  "你是一位诊断测评专家。给定一组知识点，为每个写一道能判断学习者是否真正掌握的单选诊断题，" +
+  "干扰项要反映该点的常见误解(选错能暴露具体问题)。只输出 JSON。";
+
+const PROBES_USER = (items, goal) =>
+  `目标：${goal}\n知识点列表(id ｜ 名称 ｜ 类型)：\n${items}\n\n` +
+  '为每个 id 产出严格 JSON：\n{"probes":{"<id>":{"q":"题干","options":["A","B","C","D"],"answer":0,"rationale":"为何对/其它为何错"}}}\n' +
+  "要求：每题恰 4 个选项、answer 为正确项下标(0-3)、有唯一正确答案、干扰项像样能暴露常见误解；" +
+  "题目简短聚焦该点；动作/习惯类问要领或判断；键必须用给定的 id。只输出 JSON。";
+
+async function probes(body, env) {
+  const key = env.TELOS_LLM_API_KEY;
+  if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
+  const points = Array.isArray(body.points) ? body.points : [];
+  if (!points.length) throw new Error("points 不能为空");
+  const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
+  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const items = points.map((p) => `- ${p.id} ｜ ${p.name || p.id} ｜ ${p.domain || "B"}`).join("\n");
+  const resp = await fetch(base + "/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: PROBES_SYSTEM },
+        { role: "user", content: PROBES_USER(items, String(body.goal || "")) },
+      ],
+      temperature: 0.3,
+      stream: false,
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!resp.ok) throw new Error(`LLM 请求失败 HTTP ${resp.status}（检查 key / base_url / model）`);
+  const data = await resp.json();
+  const spec = JSON.parse(data?.choices?.[0]?.message?.content || "{}");
+  const raw = spec.probes;
+  if (!raw || typeof raw !== "object") throw new Error("诊断题返回缺少 probes");
+  const out = {};
+  for (const [pid, q] of Object.entries(raw)) {
+    if (!q || typeof q !== "object") continue;
+    const options = (q.options || []).map(String).filter((o) => o.trim());
+    if (!String(q.q || "").trim() || options.length < 2) continue;
+    let ans = parseInt(q.answer, 10);
+    if (!Number.isFinite(ans)) ans = 0;
+    out[pid] = {
+      q: String(q.q).trim(),
+      options,
+      answer: Math.max(0, Math.min(ans, options.length - 1)),
+      rationale: String(q.rationale || "").trim(),
+    };
+  }
+  if (!Object.keys(out).length) throw new Error("没有可用的诊断题");
+  return { probes: out };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -197,6 +254,19 @@ export default {
       }
       try {
         return json(await lesson(body, env), 200, env);
+      } catch (e) {
+        return json({ error: String(e.message || e) }, 502, env);
+      }
+    }
+    if (request.method === "POST" && path === "/probe") {
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: "请求体需为 JSON" }, 400, env);
+      }
+      try {
+        return json(await probes(body, env), 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }

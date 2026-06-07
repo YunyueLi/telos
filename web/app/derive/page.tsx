@@ -19,7 +19,14 @@ import {
 } from "@/lib/telos/engine";
 import { buildView } from "@/lib/telos/store";
 import { layeredLayout } from "@/lib/telos/layout";
-import { deriveGraph, getDeriveUrl, setDeriveUrl, type DerivedGraph } from "@/lib/telos/derive";
+import {
+  deriveGraph,
+  generateProbes,
+  getDeriveUrl,
+  setDeriveUrl,
+  type DerivedGraph,
+  type Probe,
+} from "@/lib/telos/derive";
 import NodePanel from "./node-panel";
 
 const EXAMPLES = [
@@ -76,9 +83,14 @@ export default function DerivePage() {
 
   // 诊断
   const dxRef = useRef<Diagnosis | null>(null);
+  const probesRef = useRef<Record<string, Probe>>({});
   const [diagnosing, setDiagnosing] = useState(false);
+  const [dxPhase, setDxPhase] = useState<"intro" | "loading" | "asking">("intro");
   const [dxQ, setDxQ] = useState<string | null>(null);
   const [dxCount, setDxCount] = useState(0);
+  const [dxChoice, setDxChoice] = useState<number | null>(null);
+  const [dxConf, setDxConf] = useState<"low" | "mid" | "high" | null>(null);
+  const [dxErr, setDxErr] = useState<string | null>(null);
 
   // 节点详情抽屉
   const [openNode, setOpenNode] = useState<string | null>(null);
@@ -142,23 +154,61 @@ export default function DerivePage() {
 
   const startDx = () => {
     if (!graph) return;
-    const d = new Diagnosis(graph);
-    dxRef.current = d;
     setDiagnosing(true);
-    setDxCount(0);
-    setDxQ(d.nextQuestion());
+    setDxPhase("intro");
+    setDxErr(null);
   };
+
+  // 跳过没有探针的节点，返回下一个有诊断题、信息量最大的节点
+  const nextProbe = (d: Diagnosis): string | null => {
+    for (;;) {
+      const q = d.nextQuestion();
+      if (q === null) return null;
+      if (probesRef.current[q]) return q;
+      d.asked.add(q);
+    }
+  };
+
+  const beginProbe = async () => {
+    if (!graph || !result) return;
+    setDxPhase("loading");
+    setDxErr(null);
+    try {
+      const pts = graph.ids().map((id) => ({
+        id,
+        name: graph.get(id).name,
+        domain: graph.get(id).domain,
+      }));
+      probesRef.current = await generateProbes(pts, result.goal);
+      const d = new Diagnosis(graph, 14);
+      dxRef.current = d;
+      setDxCount(0);
+      setDxChoice(null);
+      setDxConf(null);
+      setDxQ(nextProbe(d));
+      setDxPhase("asking");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "出题失败";
+      setDxErr(msg === "NO_ENDPOINT" ? "诊断需要端点（与倒推同源，启动 serve.py 即可）。" : msg);
+      setDxPhase("intro");
+    }
+  };
+
   const applyDx = (d: Diagnosis) => {
     if (graph) setState(stateFromDiagnosis(d, graph));
     setDiagnosing(false);
     setDxQ(null);
   };
-  const answerDx = (correct: boolean) => {
+
+  const submitProbe = () => {
     const d = dxRef.current;
-    if (!d || !dxQ) return;
-    d.answer(dxQ, correct);
+    if (!d || !dxQ || dxChoice === null || !dxConf) return;
+    const correct = dxChoice === probesRef.current[dxQ].answer;
+    d.answerConf(dxQ, correct, dxConf);
     setDxCount(d.asked.size);
-    const q = d.nextQuestion();
+    setDxChoice(null);
+    setDxConf(null);
+    const q = nextProbe(d);
     if (q === null) applyDx(d);
     else setDxQ(q);
   };
@@ -443,29 +493,83 @@ export default function DerivePage() {
   }
 
   function renderDiag() {
-    const name = dxQ ? graph!.get(dxQ).name : "";
+    if (dxPhase === "intro") {
+      return (
+        <div className={styles.diagIntro}>
+          <h3>测一测你的起点</h3>
+          <p>
+            这不是考试。几道题帮我搞清楚你已经会哪些，好<b>跳过会的、直接学不会的</b>
+            。答错完全没关系——错得越清楚，我定位越准。每题答完再选一下「有多大把握」，自信地答错比蒙对更说明问题。
+          </p>
+          {dxErr && <div className={styles.drawerErr}>{dxErr}</div>}
+          <div className={styles.diagIntroBtns}>
+            <button className="btn btn-ink" onClick={beginProbe}>
+              开始（{Math.min(graph!.ids().length, 14)} 题内）
+            </button>
+            <button className="btn btn-line" onClick={() => setDiagnosing(false)}>
+              取消
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (dxPhase === "loading") {
+      return (
+        <div className={styles.loading}>
+          <span className={styles.spin} /> 正在为「{result!.goal}」出诊断题…（一次性，稍候）
+        </div>
+      );
+    }
+    const probe = dxQ ? probesRef.current[dxQ] : null;
+    if (!probe) return null;
     return (
       <>
         <div className={styles.diagHead}>
-          <h3>快速诊断</h3>
+          <h3>诊断 · {graph!.get(dxQ!).name}</h3>
           <span className={styles.prog}>已答 {dxCount} 题</span>
         </div>
-        <div className={styles.q}>
-          <div className={styles.qLabel}>你会这个吗？</div>
-          <div className={styles.qName}>{name}</div>
-          <div className={styles.qHint}>
-            凭直觉作答即可 —— 引擎用贝叶斯知识追踪（BKT）+ 信息增益，从最少的问题里推断你其它知识点的掌握度。
-          </div>
-          <div className={styles.qbtns}>
-            <button className={styles.yes} onClick={() => answerDx(true)}>
-              会 ✓
+        <p className={styles.checkQ}>{probe.q}</p>
+        <div className={styles.opts}>
+          {probe.options.map((o, i) => (
+            <button
+              key={i}
+              className={`${styles.opt} ${dxChoice === i ? styles.optSel : ""}`}
+              onClick={() => setDxChoice(i)}
+            >
+              <span className={styles.optMark}>{String.fromCharCode(65 + i)}</span>
+              {o}
             </button>
-            <button onClick={() => answerDx(false)}>不会</button>
-          </div>
+          ))}
         </div>
-        <button className={styles.diagSkip} onClick={() => dxRef.current && applyDx(dxRef.current)}>
-          结束诊断，看结果 →
-        </button>
+        <div className={styles.confRow}>
+          <span className={styles.confLabel}>你多有把握？</span>
+          {([
+            ["low", "不太"],
+            ["mid", "一般"],
+            ["high", "很有把握"],
+          ] as const).map(([v, l]) => (
+            <button
+              key={v}
+              className={`${styles.confBtn} ${dxConf === v ? styles.confSel : ""}`}
+              onClick={() => setDxConf(v)}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        <div className={styles.lessonActions}>
+          <button
+            className="btn btn-ink"
+            style={{ flex: 1, justifyContent: "center" }}
+            disabled={dxChoice === null || !dxConf}
+            onClick={submitProbe}
+          >
+            下一题
+          </button>
+          <button className="btn btn-line" onClick={() => dxRef.current && applyDx(dxRef.current)}>
+            结束看结果
+          </button>
+        </div>
       </>
     );
   }
