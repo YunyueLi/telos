@@ -9,7 +9,7 @@ import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
-import { getDeriveUrl, setDeriveUrl } from "@/lib/telos/derive";
+import { EndpointConfig } from "@/components/endpoint-config";
 import { genId, loadActive, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
 
 function progressOf(p: Project): { mastered: number; total: number } {
@@ -41,23 +41,13 @@ export default function MePage() {
   } = useProject();
 
   const [mounted, setMounted] = useState(false);
-  const [urlDraft, setUrlDraft] = useState("");
-  const [savedUrl, setSavedUrl] = useState("");
   const [backup, setBackup] = useState("");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     setMounted(true);
-    const u = getDeriveUrl();
-    setUrlDraft(u);
-    setSavedUrl(u);
   }, []);
 
-  const saveCfg = () => {
-    setDeriveUrl(urlDraft);
-    setSavedUrl(urlDraft.trim());
-    setMsg("端点已保存");
-  };
   const doExport = () => {
     const p = loadActive();
     if (!p) {
@@ -258,24 +248,9 @@ export default function MePage() {
               </div>
 
               {mounted && (
-                <>
-                  <div className="me-note" style={{ marginTop: 18 }}>
-                    倒推 / 微课 / 诊断的服务端点（本地 serve.py 或线上 Worker）。Key 永远在服务端，不进前端。
-                  </div>
-                  <div className="me-field">
-                    <input
-                      placeholder="http://127.0.0.1:8787/derive"
-                      value={urlDraft}
-                      onChange={(e) => setUrlDraft(e.target.value)}
-                    />
-                    <button className="btn btn-ink" style={{ padding: "9px 15px" }} onClick={saveCfg}>
-                      保存
-                    </button>
-                  </div>
-                  <div className="me-note">
-                    {savedUrl ? `当前：${savedUrl}` : "未配置 —— 倒推与学习需要它，见 DERIVE.md。"}
-                  </div>
-                </>
+                <div style={{ marginTop: 14 }}>
+                  <EndpointConfig />
+                </div>
               )}
             </div>
 
