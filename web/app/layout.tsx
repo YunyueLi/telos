@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SketchDefs } from "@/components/sketch-defs";
+import { ProjectProvider } from "@/lib/telos/use-project";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -36,7 +37,7 @@ export default function RootLayout({
     >
       <body>
         <SketchDefs />
-        {children}
+        <ProjectProvider>{children}</ProjectProvider>
       </body>
     </html>
   );

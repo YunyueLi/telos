@@ -4,7 +4,7 @@
 // 吸顶"下一步"、自动滚到当前节点。点卡片打开节点详情。依据移动地图调研(多邻国 path)。
 import { useEffect, useRef } from "react";
 import { Icon } from "@/components/icon";
-import styles from "./derive.module.css";
+import styles from "./app.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
 import { layeredLayout } from "@/lib/telos/layout";
