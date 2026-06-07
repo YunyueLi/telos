@@ -137,12 +137,12 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-cfg input:focus{outline:none;border-color:var(--ink)}
 
 /* —— 地图主页（map = home）—— */
-.mh{flex:1;min-height:0;display:grid;grid-template-columns:1fr 350px}
-.mh-map{position:relative;min-width:0;min-height:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}
+.mh{flex:1;min-height:0;max-height:calc(100dvh - 59px);display:grid;grid-template-columns:1fr 350px}
+.mh-map{position:relative;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}
 .mh-rail{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--card)}
 @media(max-width:860px){
-  .mh{display:flex;flex-direction:column}
-  .mh-map{border-right:0;border-bottom:1px solid var(--line-soft)}
+  .mh{display:flex;flex-direction:column;max-height:none}
+  .mh-map{border-right:0;border-bottom:1px solid var(--line-soft);height:62vh;min-height:420px}
   .mh-rail{background:var(--paper)}
 }
 .mh-recap{font-size:13px;color:var(--ink-2);line-height:1.55;border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;background:var(--card)}
