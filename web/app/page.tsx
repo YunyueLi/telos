@@ -41,13 +41,11 @@ export default function HubPage() {
     project,
     graph,
     view,
-    projects,
     derive,
     deriving,
     deriveError,
     record,
     composing,
-    cancelNew,
   } = useProject();
   const router = useRouter();
   const { t } = useT();
@@ -66,13 +64,7 @@ export default function HubPage() {
   if (!project || !graph || !view || composing) {
     return (
       <AppShell active="map">
-        <Onboarding
-          derive={derive}
-          deriving={deriving}
-          deriveError={deriveError}
-          canCancel={!!project || projects.length > 0}
-          onCancel={cancelNew}
-        />
+        <Onboarding derive={derive} deriving={deriving} deriveError={deriveError} />
       </AppShell>
     );
   }
@@ -104,14 +96,10 @@ function Onboarding({
   derive,
   deriving,
   deriveError,
-  canCancel,
-  onCancel,
 }: {
   derive: (g: string) => Promise<boolean>;
   deriving: boolean;
   deriveError: string | null;
-  canCancel?: boolean;
-  onCancel?: () => void;
 }) {
   const { t } = useT();
   const [goal, setGoal] = useState("");
@@ -143,12 +131,6 @@ function Onboarding({
   return (
     <div className="ob">
       <div>
-        {canCancel && (
-          <button className="ob-back" onClick={onCancel}>
-            <Icon name="arrow" style={{ width: 12, height: 12, transform: "rotate(180deg)", verticalAlign: -1, marginRight: 5 }} />
-            {t("ob.backToLearn")}
-          </button>
-        )}
         <h1>
           {t("ob.h1line1")}
           <br />
