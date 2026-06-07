@@ -48,12 +48,12 @@ export function AppShell({
     <div className="appshell">
       <header className="appbar">
         <div className="appbar-in">
-          <Link href="/" className="appbrand">
+          <button className="appbrand" onClick={newLearning} title={t("shell.newTitle")} aria-label={t("shell.new")}>
             <svg className="sk" viewBox="0 0 24 24" aria-hidden="true">
               <use href="#i-compass" />
             </svg>
             <span>Telos</span>
-          </Link>
+          </button>
 
           {project && (
             <Link className="appgoal" href="/me" title={`${project.goal}　·　${t("shell.goalTitle")}`}>
