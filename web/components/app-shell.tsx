@@ -47,10 +47,10 @@ export function AppShell({
           </Link>
 
           {project && (
-            <div className="appgoal" title={project.goal}>
+            <Link className="appgoal" href="/me" title="点击管理 / 换目标">
               <span className="appgoal-l">目标</span>
               {project.goal}
-            </div>
+            </Link>
           )}
 
           <nav className="appnav">
