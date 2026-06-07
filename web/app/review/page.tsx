@@ -1,24 +1,14 @@
 "use client";
 
+// 复习（全屏，项目级）：一个数字 + 一个按钮（N 项到期 → 复习），FSRS 评分写回项目。
+// 依据 Anki/Duolingo Practice Hub：把复习收敛成"现在该复习什么"一个清晰入口。
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { SiteHeader } from "@/components/site-header";
+import { useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
-import {
-  AGAIN,
-  EASY,
-  GOOD,
-  HARD,
-  KnowledgeGraph,
-  SEED_GRAPH,
-  dueReviews,
-  newCard,
-  review,
-} from "@/lib/telos/engine";
-import { useLearner } from "@/lib/telos/store";
-import { type Project, loadProject, saveProject } from "@/lib/telos/project";
-import styles from "./review.module.css";
+import { AppShell } from "@/components/app-shell";
+import { useProject } from "@/lib/telos/use-project";
+import { AGAIN, EASY, GOOD, HARD } from "@/lib/telos/engine";
 
 const GRADES = [
   { grade: AGAIN, label: "忘了", ink: false },
@@ -28,183 +18,149 @@ const GRADES = [
 ] as const;
 
 export default function ReviewPage() {
-  const L = useLearner();
+  const { ready, project, view, reviewCard } = useProject();
   const [reviewed, setReviewed] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  // 有倒推项目就复习它（#2 复习闭环），否则回退到 seed 演示
-  const [proj, setProj] = useState<Project | null>(null);
-  useEffect(() => setProj(loadProject()), []);
-  const projGraph = useMemo(() => (proj ? new KnowledgeGraph(proj.points) : null), [proj]);
 
-  const due =
-    projGraph && proj
-      ? dueReviews(projGraph, proj.state).map(([id, r]) => ({ id, name: projGraph.get(id).name, r }))
-      : L.due;
-  const goalLabel = proj?.goal ?? null;
-
+  const due = view?.due ?? [];
   const card = due[0] ?? null;
   const total = reviewed + due.length;
   const pct = total > 0 ? Math.round((reviewed / total) * 100) : 0;
 
   function grade(g: number) {
     if (!card) return;
-    if (projGraph && proj) {
-      const next: Project["state"] = JSON.parse(JSON.stringify(proj.state));
-      const c = next.cards[card.id] ?? newCard();
-      next.cards[card.id] = review(c, g, next.day); // 纯 FSRS 重排
-      next.version += 1;
-      const np: Project = { ...proj, state: next, updatedAt: Date.now() };
-      saveProject(np);
-      setProj(np);
-    } else {
-      L.reviewCard(card.id, g);
-    }
+    reviewCard(card.id, g);
     setReviewed((n) => n + 1);
     setRevealed(false);
   }
-  const nameOf = (id: string) =>
-    projGraph ? projGraph.get(id).name : SEED_GRAPH.get(id).name;
 
-  const shell = (body: React.ReactNode) => (
-    <>
-      <SiteHeader />
-      <div className="wrap">
-        <section>
-          <div className="shead">
-            <span className="no">05</span>
-            <h2>复习</h2>
-            <span className="sub">间隔重复 · 趁还没忘</span>
-          </div>
-          <div className="cap">
-            <span>复习</span>
-            <span>telos.app/review</span>
-          </div>
-          <div className="plate">
-            <div className="ptop">
-              <span className="u">telos.app/review</span>
-              <span className="br">
-                <i />
-                <i />
-                <i />
-              </span>
+  if (!ready) {
+    return (
+      <AppShell active="review">
+        <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
+          <span className="spinner" /> 载入中…
+        </div>
+      </AppShell>
+    );
+  }
+
+  // 还没有目标项目
+  if (!project) {
+    return (
+      <AppShell active="review">
+        <div className="rv">
+          <div className="rv-done">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="pcirc">
+              <img src={asset("/portraits/empty.png")} alt="Telos 老师" />
+            </span>
+            <h2>还没有要复习的</h2>
+            <p>先说一个目标，倒推出学习地图、学几个能力点，它们就会进入这里的间隔复习。</p>
+            <div className="rv-cta">
+              <Link className="btn btn-ink" href="/">
+                去定个目标 <Icon name="arrow" />
+              </Link>
             </div>
-            {body}
           </div>
-        </section>
-      </div>
-      <footer>
-        <div className="wrap">TELOS — 从结果倒推，学会任何事 · 开源 Demo</div>
-      </footer>
-    </>
-  );
-
-  // Empty — nothing due, nothing reviewed yet today.
-  if (due.length === 0 && reviewed === 0) {
-    return shell(
-      <div className={styles.done}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <span className={`pcirc ${styles.doneart}`}>
-          <img src={asset("/portraits/empty.png")} alt="Telos 老师" />
-        </span>
-        <div className="eye mono">复习</div>
-        <h2>今日已清空</h2>
-        <p>没有要复习的——保持节奏就好。</p>
-        <div className={styles.cta}>
-          <Link className="btn btn-ink" href="/home">
-            回到首页 <Icon name="arrow" />
-          </Link>
         </div>
-      </div>,
+      </AppShell>
     );
   }
 
-  // Completion — finished a session this visit.
-  if (due.length === 0 && reviewed > 0) {
-    return shell(
-      <div className={styles.done}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <span className={`pcirc ${styles.doneart}`}>
-          <img src={asset("/portraits/cheer.png")} alt="Telos 老师" />
-        </span>
-        <div className="eye mono">复习</div>
-        <h2>复习完成</h2>
-        <p>你复习了 {reviewed} 个知识点，记忆又被推远了一点。</p>
-        <div className={styles.cta}>
-          <Link className="btn btn-ink" href="/home">
-            回到首页 <Icon name="arrow" />
-          </Link>
-          <Link className="btn btn-line" href="/map">
-            <Icon name="map" /> 查看地图
-          </Link>
+  // 今日清空
+  if (due.length === 0) {
+    const didSome = reviewed > 0;
+    return (
+      <AppShell active="review">
+        <div className="rv">
+          <div className="rv-done">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="pcirc">
+              <img src={asset(didSome ? "/portraits/cheer.png" : "/portraits/empty.png")} alt="Telos 老师" />
+            </span>
+            <h2>{didSome ? "复习完成" : "今日已清空"}</h2>
+            <p>
+              {didSome
+                ? `你复习了 ${reviewed} 个能力点，记忆又被推远了一点。`
+                : "没有到期的卡片——保持节奏就好。学完新的能力点会按 FSRS 安排回这里。"}
+            </p>
+            <div className="rv-cta">
+              <Link className="btn btn-ink" href="/">
+                <Icon name="map" /> 回地图
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>,
+      </AppShell>
     );
   }
 
-  // Active session — always show the current most-urgent due card.
-  const hintName = card ? nameOf(card.id) : "";
-
-  return shell(
-    <>
-      <div className={styles.bar}>
-        <span className={styles.barn}>已复习 {reviewed}</span>
-        <div className={styles.track}>
-          <i style={{ width: `${pct}%` }} />
-        </div>
-        <span className={styles.barloc}>剩 {due.length}</span>
-      </div>
-
-      {card && (
-        <div className={styles.card}>
-          <div className={styles.topic}>
-            <Icon name="refresh" /> 间隔重复 · {goalLabel ?? "趁还没忘"}
+  return (
+    <AppShell active="review">
+      <div className="rv">
+        <div className="rv-in">
+          <div className="rv-lead">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="pmini">
+              <img src={asset("/portraits/notify.png")} alt="" />
+            </span>
+            <div className="lt">
+              <span className="big">{due.length}</span>
+              <span className="sub" style={{ display: "inline", marginLeft: 8 }}>
+                项到期
+              </span>
+              <div className="sub">间隔重复 · {project.goal}</div>
+            </div>
           </div>
-          <h3 className={styles.name}>{card.name}</h3>
 
-          {!revealed ? (
-            <>
-              <p className={styles.prompt}>
-                回想一下：「{card.name}」的要点是什么？
-              </p>
-              <button
-                className={`btn btn-line ${styles.revealbtn}`}
-                onClick={() => setRevealed(true)}
-              >
-                <Icon name="spark" /> 显示要点
-              </button>
-            </>
-          ) : (
-            <>
-              <div className={`dark ${styles.hint}`}>
-                <svg className="contour skL" viewBox="0 0 600 180" preserveAspectRatio="none">
-                  <g stroke="currentColor" fill="none" strokeWidth="1.4" opacity="0.13">
-                    <path d="M-10 40C160 20 320 60 610 30" />
-                    <path d="M-10 90C160 70 320 110 610 80" />
-                    <path d="M-10 140C160 120 320 160 610 130" />
-                  </g>
-                </svg>
-                <div className={styles.hintl}>这个知识点</div>
-                <div className={styles.hintkey}>{hintName}</div>
-                <div className={styles.hintd}>
-                  对照你的记忆，如实评估掌握程度——评得越准，下次复习的时机越合适。
-                </div>
+          {reviewed > 0 && (
+            <div className="rv-bar">
+              <span className="n">已复习 {reviewed}</span>
+              <div className="rv-track">
+                <i style={{ width: `${pct}%` }} />
               </div>
-              <div className={`${styles.gradelab} mono`}>你记得多牢？</div>
-              <div className={styles.grades}>
-                {GRADES.map((g) => (
-                  <button
-                    key={g.grade}
-                    className={`btn ${g.ink ? "btn-ink" : "btn-line"}`}
-                    onClick={() => grade(g.grade)}
-                  >
-                    {g.label}
+              <span className="n">剩 {due.length}</span>
+            </div>
+          )}
+
+          {card && (
+            <div className="rv-card">
+              <div className="rv-topic">
+                <Icon name="refresh" /> 趁还没忘，回想一下
+              </div>
+              <h3 className="rv-name">{card.name}</h3>
+
+              {!revealed ? (
+                <>
+                  <p className="rv-prompt">先在心里回想「{card.name}」的要点，再翻面如实评估。</p>
+                  <button className="btn btn-line" onClick={() => setRevealed(true)}>
+                    <Icon name="spark" /> 我想好了，翻面
                   </button>
-                ))}
-              </div>
-            </>
+                </>
+              ) : (
+                <>
+                  <p className="rv-prompt">
+                    对照你的记忆，如实评估掌握程度——评得越准，下次复习的时机越合适。
+                  </p>
+                  <div className="rv-gradelab">你记得多牢？</div>
+                  <div className="rv-grades">
+                    {GRADES.map((g) => (
+                      <button
+                        key={g.grade}
+                        className={`btn ${g.ink ? "btn-ink" : "btn-line"}`}
+                        style={{ justifyContent: "center" }}
+                        onClick={() => grade(g.grade)}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
-    </>,
+      </div>
+    </AppShell>
   );
 }

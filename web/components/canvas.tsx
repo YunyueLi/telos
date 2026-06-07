@@ -16,7 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Icon } from "@/components/icon";
-import styles from "./derive.module.css";
+import styles from "./app.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
 import { layeredLayout, type Direction } from "@/lib/telos/layout";

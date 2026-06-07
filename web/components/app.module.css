@@ -559,6 +559,19 @@
 .gaugeFg { stroke: var(--ink); stroke-linecap: round; }
 .gaugeV { font-family: var(--serif); font-size: 17px; font-weight: 500; }
 
+/* stepped lesson additions */
+.lprogress { height: 4px; background: var(--line-soft); }
+.lprogress i { display: block; height: 100%; background: var(--ink); transition: width .4s cubic-bezier(.2,.7,.2,1); }
+.lstepLabel { font: 600 10.5px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); margin-bottom: 9px; }
+.lstepLead { color: #2c2a25; font-size: 16px; line-height: 1.65; margin-bottom: 14px; }
+.lgain { margin-top: 14px; border: 1px solid var(--ink); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: repeating-linear-gradient(45deg, transparent 0 7px, rgba(20,19,16,.04) 7px 8px); }
+.lgain b { font: 600 13px var(--mono); }
+.lgainArrow { font-family: var(--mono); font-size: 13px; color: var(--ink-2); }
+.lcloseRow { display: flex; align-items: center; gap: 10px; padding: 13px 22px; border-bottom: 1px solid var(--line-soft); }
+.lcloseBtn { background: none; border: 0; display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px var(--sans); color: var(--ink-2); cursor: pointer; }
+.lcloseBtn:hover { color: var(--ink); }
+.lcrumb { margin-left: auto; font: 500 11px var(--mono); color: var(--ink-3); }
+
 /* ===== mobile winding path (≤640) ===== */
 .pathWrap { display: flex; flex-direction: column; height: 70vh; min-height: 440px; }
 .pathSticky {
