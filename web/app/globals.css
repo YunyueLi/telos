@@ -84,6 +84,20 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .appavatar{width:34px;height:34px;border-radius:11px;overflow:hidden;border:1.5px solid var(--line-soft);flex:none}
 .appavatar.on{border-color:var(--ink)}
 .appavatar img{width:100%;height:100%;object-fit:cover;object-position:50% 16%}
+/* 顶栏齿轮 → 独立设置页 */
+.appgear{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;color:var(--ink-2);border:1.5px solid transparent;flex:none}
+.appgear:hover{color:var(--ink);background:var(--paper)}
+.appgear.on{color:var(--ink);border-color:var(--ink)}
+.appgear .ic{width:18px;height:18px}
+/* 欢迎页：未配置端点时的轻提示（取代内嵌配置面板） */
+.ob-cfglink{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;text-decoration:none;background:var(--card)}
+.ob-cfglink:hover{border-color:var(--ink);color:var(--ink)}
+.ob-cfglink .ic{width:12px;height:12px}
+/* 设置页：语言按钮组 */
+.set-langs{display:flex;flex-wrap:wrap;gap:8px}
+.set-lang{font:500 13px var(--sans);color:var(--ink-2);background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;cursor:pointer}
+.set-lang:hover{border-color:var(--ink);color:var(--ink)}
+.set-lang.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .appnew{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);color:var(--paper);background:var(--ink);border:0;border-radius:999px;padding:7px 13px;cursor:pointer;flex:none}
 .appnew:hover{background:#000}
 .appnew .ic{width:13px;height:13px}
