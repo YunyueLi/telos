@@ -411,7 +411,8 @@
   color: rgba(240, 238, 233, 0.85);
   border-color: rgba(240, 238, 233, 0.3);
 }
-.rfNode { overflow: hidden; }
+/* 节点本身不裁切：角标(.rfBadge)探出在节点上沿，长名靠 .rfName 自身的 line-clamp 收口 */
+.rfNode { overflow: visible; }
 .rfName {
   display: -webkit-box;
   -webkit-line-clamp: 3;
