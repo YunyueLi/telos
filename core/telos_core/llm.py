@@ -478,7 +478,7 @@ def probes(points, goal: str = "", timeout: float = 90.0, lang: str = "") -> dic
         "model": model,
         "messages": [
             {"role": "system", "content": _PROBES_SYSTEM},
-            {"role": "user", "content": _PROBES_USER.format(goal=goal, items=items) + _lang_directive(lang)},
+            {"role": "user", "content": _PROBES_USER.format(goal=goal, items=items) + _derive_context(goal) + _lang_directive(lang)},
         ],
         "temperature": 0.3,
         "stream": False,

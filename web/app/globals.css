@@ -342,6 +342,15 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .dx-intro h2,.dx-result h2{font-family:var(--serif);font-weight:500;font-size:31px;letter-spacing:-.02em;margin:8px 0 14px;line-height:1.08}
 .dx-intro p,.dx-result p{font-size:15px;color:var(--ink-2);line-height:1.65;margin-bottom:14px;text-align:left}
 .dx-intro p b,.dx-result p b{color:var(--ink);font-weight:600}
+.dx-score{display:flex;align-items:baseline;gap:12px;justify-content:center;padding:16px;border:1px solid var(--ink);border-radius:16px;background:var(--card);margin:18px 0 14px}
+.dx-score .big{font-family:var(--serif);font-weight:500;font-size:38px;line-height:1;color:var(--ink)}
+.dx-score .lab{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.02em}
+.dx-review{text-align:left;margin:8px 0 22px}
+.dx-review-h{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
+.dx-wrong{border:1px solid var(--line-soft);border-left:3px solid var(--ink);border-radius:10px;padding:11px 13px;margin-bottom:9px;background:var(--card)}
+.dx-wq{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.45}
+.dx-wa{font-size:12.5px;color:#2f7d4f;margin-top:6px;line-height:1.45}
+.dx-wr{font-size:12.5px;color:var(--ink-2);margin-top:5px;line-height:1.55}
 .dx-sum{display:flex;border:1px solid var(--line-soft);border-radius:16px;overflow:hidden;margin:24px 0}
 .dx-sum .s{flex:1;padding:18px 12px;border-left:1px solid var(--line-soft)}
 .dx-sum .s:first-child{border-left:0}

@@ -34,15 +34,19 @@ export default function DiagnosePage() {
 
   const dxRef = useRef<Diagnosis | null>(null);
   const probesRef = useRef<Record<string, Probe>>({});
+  // 每题作答记录：用于结果页的正确率 + 错题解析
+  const answersRef = useRef<
+    { name: string; q: string; options: string[]; answer: number; chosen: number; correct: boolean; rationale: string }[]
+  >([]);
   const [phase, setPhase] = useState<Phase>("intro");
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState<string | null>(null);
   const [count, setCount] = useState(0);
   const [choice, setChoice] = useState<number | null>(null);
   const [conf, setConf] = useState<"low" | "mid" | "high" | null>(null);
-  const [summary, setSummary] = useState<{ located: number; known: number; start: string } | null>(
-    null,
-  );
+  const [summary, setSummary] = useState<
+    { located: number; known: number; start: string; answered: number; correctN: number; rate: number } | null
+  >(null);
 
   useEffect(() => {
     if (ready && !project) router.replace("/");
@@ -83,6 +87,7 @@ export default function DiagnosePage() {
       probesRef.current = await generateProbes(pts, project.goal);
       const d = new Diagnosis(graph, 14);
       dxRef.current = d;
+      answersRef.current = [];
       setCount(0);
       setChoice(null);
       setConf(null);
@@ -107,14 +112,27 @@ export default function DiagnosePage() {
     const known = graph.ids().filter((id) => d.belief[id] >= 0.6).length;
     const f = learningFrontier(graph, s)[0];
     const start = f ? graph.get(f[0]).name : "—";
-    setSummary({ located: d.asked.size, known, start });
+    const ans = answersRef.current;
+    const correctN = ans.filter((a) => a.correct).length;
+    const rate = ans.length ? Math.round((correctN / ans.length) * 100) : 0;
+    setSummary({ located: d.asked.size, known, start, answered: ans.length, correctN, rate });
     setPhase("result");
   }
 
   function submit() {
     const d = dxRef.current;
-    if (!d || !q || choice === null || !conf) return;
-    const correct = choice === probesRef.current[q].answer;
+    if (!d || !q || choice === null || !conf || !graph) return;
+    const probe = probesRef.current[q];
+    const correct = choice === probe.answer;
+    answersRef.current.push({
+      name: graph.get(q).name,
+      q: probe.q,
+      options: probe.options,
+      answer: probe.answer,
+      chosen: choice,
+      correct,
+      rationale: probe.rationale,
+    });
     d.answerConf(q, correct, conf);
     setCount(d.asked.size);
     setChoice(null);
@@ -227,6 +245,14 @@ export default function DiagnosePage() {
                 skip: summary.known > 0 ? t("dx.resultSkip", { n: summary.known }) : "",
               })}
             </p>
+            {summary.answered > 0 && (
+              <div className="dx-score">
+                <span className="big">{summary.rate}%</span>
+                <span className="lab">
+                  {t("dx.correctRate")} · {t("dx.answeredOf", { m: summary.correctN, n: summary.answered })}
+                </span>
+              </div>
+            )}
             <div className="dx-sum">
               <div className="s">
                 <span className="num">{summary.located}</span>
@@ -241,6 +267,22 @@ export default function DiagnosePage() {
                 <span className="lab">{t("dx.toLearn")}</span>
               </div>
             </div>
+            {answersRef.current.some((a) => !a.correct) && (
+              <div className="dx-review">
+                <div className="dx-review-h">{t("dx.wrongReview")}</div>
+                {answersRef.current
+                  .filter((a) => !a.correct)
+                  .map((a, i) => (
+                    <div key={i} className="dx-wrong">
+                      <div className="dx-wq">{a.q}</div>
+                      <div className="dx-wa">
+                        {t("dx.correctAnswer")}：{String.fromCharCode(65 + a.answer)}. {a.options[a.answer]}
+                      </div>
+                      {a.rationale && <div className="dx-wr">{a.rationale}</div>}
+                    </div>
+                  ))}
+              </div>
+            )}
             <div className="dx-cta">
               <button className="btn btn-ink" onClick={() => router.push("/")}>
                 {t("dx.goMap")} <Icon name="arrow" />

@@ -382,6 +382,7 @@ async function probes(body, env) {
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const model = env.TELOS_LLM_MODEL || "deepseek-chat";
   const items = points.map((p) => `- ${p.id} ｜ ${p.name || p.id} ｜ ${p.domain || "B"}`).join("\n");
+  const ctx = await deriveContext(String(body.goal || ""), env);
   const resp = await fetch(base + "/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -389,7 +390,7 @@ async function probes(body, env) {
       model,
       messages: [
         { role: "system", content: PROBES_SYSTEM },
-        { role: "user", content: PROBES_USER(items, String(body.goal || "")) + langDirective(body.lang) },
+        { role: "user", content: PROBES_USER(items, String(body.goal || "")) + ctx + langDirective(body.lang) },
       ],
       temperature: 0.3,
       stream: false,
