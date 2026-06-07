@@ -98,6 +98,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .set-lang{font:500 13px var(--sans);color:var(--ink-2);background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;cursor:pointer}
 .set-lang:hover{border-color:var(--ink);color:var(--ink)}
 .set-lang.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* 设置页：备份子区（紧随「我的学习」项目，虚线分隔同属「数据」范畴） */
+.set-backup{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line-soft)}
+.me-subh{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:8px}
 .appnew{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);color:var(--paper);background:var(--ink);border:0;border-radius:999px;padding:7px 13px;cursor:pointer;flex:none}
 .appnew:hover{background:#000}
 .appnew .ic{width:13px;height:13px}
