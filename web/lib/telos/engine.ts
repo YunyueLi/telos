@@ -339,9 +339,23 @@ export class Diagnosis {
     return best;
   }
   answer(id: string, correct: boolean): void {
+    this.answerConf(id, correct, "high");
+  }
+
+  // CBM（信心加权）：用信心档调制 slip/guess —— 见 docs 研究。
+  // 自信地答错 → slip→0，强力下拉信念（暴露误解）；没把握地答对 → guess 维持，弱上调（可能蒙对）。
+  answerConf(id: string, correct: boolean, confidence: "low" | "mid" | "high"): void {
     this.asked.add(id);
     this.answers[id] = correct;
-    this.belief[id] = bktUpdate(this.belief[id], correct, this.prmOf[id]);
+    const base = this.prmOf[id];
+    const fG = confidence === "high" ? 0.2 : confidence === "mid" ? 0.6 : 1.3;
+    const fS = confidence === "high" ? 0.2 : confidence === "mid" ? 0.6 : 1.6;
+    const prm: BktParams = {
+      ...base,
+      pG: Math.min(0.9, base.pG * fG),
+      pS: Math.min(0.9, base.pS * fS),
+    };
+    this.belief[id] = bktUpdate(this.belief[id], correct, prm);
     if (correct) {
       for (const a of this.g.ancestors(id))
         this.belief[a] = Math.max(this.belief[a], bktPosterior(this.belief[a], true, this.prmOf[a]));

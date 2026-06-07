@@ -76,7 +76,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802
         path = self.path.rstrip("/")
-        if path not in ("/derive", "/lesson"):
+        if path not in ("/derive", "/lesson", "/probe"):
             self._json(404, {"error": "not found"})
             return
         if not llm.available():
@@ -99,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(502, {"error": str(e)})
                 return
             self._json(200, _graph_to_json(goal, g))
-        else:  # /lesson —— 按需微课
+        elif path == "/lesson":  # 按需微课
             name = str(data.get("name", "")).strip()
             if not name:
                 self._json(400, {"error": "name 不能为空"})
@@ -107,6 +107,17 @@ class Handler(BaseHTTPRequestHandler):
             prereqs = [str(p) for p in (data.get("prereqs") or [])]
             try:
                 out = llm.lesson(name, str(data.get("domain", "B")), prereqs, str(data.get("goal", "")))
+            except Exception as e:  # noqa: BLE001
+                self._json(502, {"error": str(e)})
+                return
+            self._json(200, out)
+        else:  # /probe —— 起点诊断题（批量）
+            points = data.get("points") or []
+            if not isinstance(points, list) or not points:
+                self._json(400, {"error": "points 不能为空"})
+                return
+            try:
+                out = llm.probes(points, str(data.get("goal", "")))
             except Exception as e:  # noqa: BLE001
                 self._json(502, {"error": str(e)})
                 return

@@ -194,3 +194,74 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
         raise RuntimeError(f"LLM 请求失败 HTTP {e.code}（检查 key / base_url / model）") from e
     content = data["choices"][0]["message"]["content"]
     return _validate_lesson(json.loads(content))
+
+
+# ---- 起点诊断：一次性为一组知识点各生成一道诊断单选题（客观探针）----
+
+_PROBES_SYSTEM = (
+    "你是一位诊断测评专家。给定一组知识点，为每个写一道能判断学习者是否真正掌握的单选诊断题，"
+    "干扰项要反映该点的常见误解(选错能暴露具体问题)。只输出 JSON。"
+)
+
+_PROBES_USER = (
+    "目标：{goal}\n知识点列表(id ｜ 名称 ｜ 类型)：\n{items}\n\n"
+    "为每个 id 产出严格 JSON：\n"
+    '{{"probes":{{"<id>":{{"q":"题干","options":["A","B","C","D"],"answer":0,"rationale":"为何对/其它为何错"}}}}}}\n'
+    "要求：每题恰 4 个选项、answer 为正确项下标(0-3)、有唯一正确答案、干扰项像样能暴露常见误解；"
+    "题目简短聚焦该点；动作/习惯类问要领或判断而非操作；键必须用给定的 id。只输出 JSON。"
+)
+
+
+def probes(points, goal: str = "", timeout: float = 90.0) -> dict:
+    """一次性为一组知识点各生成一道诊断单选题。points: [{'id','name','domain'}, ...]。"""
+    key, base, model = _config()
+    if not key:
+        raise RuntimeError("未配置 LLM API key（见 core/.env.example）。")
+    items = "\n".join(
+        f"- {p.get('id')} ｜ {p.get('name', p.get('id'))} ｜ {p.get('domain', 'B')}" for p in points
+    )
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": _PROBES_SYSTEM},
+            {"role": "user", "content": _PROBES_USER.format(goal=goal, items=items)},
+        ],
+        "temperature": 0.3,
+        "stream": False,
+        "response_format": {"type": "json_object"},
+    }
+    req = urllib.request.Request(
+        base + "/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"LLM 请求失败 HTTP {e.code}（检查 key / base_url / model）") from e
+    spec = json.loads(data["choices"][0]["message"]["content"])
+    raw = spec.get("probes") if isinstance(spec, dict) else None
+    if not isinstance(raw, dict):
+        raise RuntimeError("诊断题返回缺少 probes")
+    out: dict = {}
+    for pid, q in raw.items():
+        if not isinstance(q, dict):
+            continue
+        options = [str(o) for o in (q.get("options") or []) if str(o).strip()]
+        if not str(q.get("q", "")).strip() or len(options) < 2:
+            continue
+        try:
+            ans = int(q.get("answer", 0))
+        except (TypeError, ValueError):
+            ans = 0
+        out[str(pid)] = {
+            "q": str(q["q"]).strip(),
+            "options": options,
+            "answer": max(0, min(ans, len(options) - 1)),
+            "rationale": str(q.get("rationale", "")).strip(),
+        }
+    if not out:
+        raise RuntimeError("没有可用的诊断题")
+    return {"probes": out}
