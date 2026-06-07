@@ -70,6 +70,8 @@ function toGraph(spec, goal) {
       desc: String(p.desc ?? "").trim(),
       drill: String(p.drill ?? "").trim(),
       benchmark: String(p.benchmark ?? "").trim(),
+      module: String(p.module ?? "").trim(),
+      moduleTitle: String(p.moduleTitle ?? p.module_title ?? "").trim(),
     };
   });
   // 无环校验（Kahn 拓扑排序）
@@ -102,22 +104,23 @@ async function deriveContext(goal, env) {
   );
 }
 
-async function derive(goal, env, lang) {
+// ===== 层级化倒推（多段 + 并行 fan-out）——镜像 core/telos_core/llm.py =====
+// 单发 LLM 只产 10-16 节点、易截断、无层级 → 框架稀疏。改为「蓝图→并行模块展开→合并/断环」。
+
+async function chatJSON(system, user, env, temperature = 0.2) {
   const key = env.TELOS_LLM_API_KEY;
-  if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const model = env.TELOS_LLM_MODEL || "deepseek-chat";
-  const ctx = await deriveContext(goal, env);
   const resp = await fetch(base + "/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: USER(goal) + ctx + langDirective(lang) },
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
-      temperature: 0.2,
+      temperature,
       stream: false,
       response_format: { type: "json_object" },
     }),
@@ -126,7 +129,295 @@ async function derive(goal, env, lang) {
   const data = await resp.json();
   const content = data?.choices?.[0]?.message?.content;
   if (!content) throw new Error("LLM 返回为空");
-  return toGraph(JSON.parse(content), goal);
+  return JSON.parse(content);
+}
+
+const BLUEPRINT_SYSTEM =
+  "你是精通逆向课程设计(backward design)、胜任力框架(CEFR/Bloom/EPA)与知识空间理论的总架构师。" +
+  "给定目标，你先判断它的广度，再把它倒推成一份有序的【模块/阶段大纲】(像一门课的章节路线图)，" +
+  "为后续逐模块展开可训练能力搭好骨架。模块要把这门学习【完整覆盖】、相邻模块递进。只输出 JSON。";
+
+const BLUEPRINT_USER = (goal) =>
+  `目标：${goal}\n\n` +
+  "第一步，判断广度档位 scope 并据此定模块数：\n" +
+  "- narrow 很窄的单项技能(如『练好CSGO准星拉枪』)→ 3-5 个模块、每模块 4-6 个能力\n" +
+  "- skill 一项成形技能/一个单元(如『入门React』『人像布光』)→ 5-7 个模块、每模块 6-8 个\n" +
+  "- course 一门课/较完整能力(如『半马完赛』『写出可发表短篇』)→ 6-8 个模块、每模块 7-9 个\n" +
+  "- subject 一门学科/大领域(如『掌握机器学习』『精通哈利波特研究』)→ 7-9 个模块、每模块 8-10 个\n\n" +
+  "第二步，把目标倒推成有序模块(由基础到综合)，并给出终点目标节点。严格输出 JSON：\n" +
+  '{"title":"简洁主题标题(导航用,中文≤12字/英文≤4词,提炼核心、不照抄整句)","domain":"主导学习类型A-F(A陈述记忆/B良构程序/C创造/D动作/E对抗/F习惯)","scope":"narrow|skill|course|subject","modules":[{"id":"英文slug","title":"模块名(名词短语)","summary":"这个模块覆盖什么(一句话)","target":本模块能力数,"order":1}],"goal":{"id":"英文slug","name":"终点能力(动宾短语,即目标本身)","domain":"E","desc":"can-do：在什么条件下能做到什么、到什么标准","drill":"怎么综合演练","benchmark":"量化达标线(分新手/进阶/精英)","module":"它所属的最后一个模块id"}}\n' +
+  "要求：1)模块数与 target 按 scope 选，总能力数 ~15(窄)到 ~75(学科)；2)模块覆盖完整(基础/核心/进阶/综合/实战等关键阶段不缺)、相邻递进；3)模块是『阶段/主题』而非单个能力；goal 是整门学习的综合产出(像 EPA：能独立完成的真实任务)；4)id 唯一英文 slug。只输出 JSON。";
+
+const MODULE_SYSTEM =
+  "你是精通刻意练习(deliberate practice)与胜任力分解的世界级教练。给定一门学习的某个模块，" +
+  "你把它展开成若干【可训练能力节点】——每个都可观测、可反复练习且能渐进加难、有量化达标线，" +
+  "是『能做到的事』而不是知识名词。只输出 JSON。";
+
+const MODULE_USER = (goal, modlist, goalName, mid, mtitle, msum, target) =>
+  `总目标：${goal}\n这门学习的全部模块(顺序)：${modlist}\n终点产出：${goalName}\n\n` +
+  `现在只展开这一个模块：【${mid}】${mtitle} —— ${msum}\n` +
+  `把它展开成约 ${target} 个可训练能力节点，严格输出 JSON：\n` +
+  '{"nodes":[{"id":"模块内唯一英文slug","name":"能做到的事(动宾短语,用Bloom动词)","domain":"A-F","minutes":40,"desc":"can-do：在什么条件下能做到什么、到什么标准","drill":"怎么刻意练习(方法/反馈来源/如何加难)","benchmark":"量化或可观测达标线(分新手/进阶/精英更好)","prereq_ids":["本模块内更基础节点的id"],"prereq_hints":["需要先掌握但属于其它模块的能力(用自然语言短语,不要编id)"]}]}\n' +
+  "硬性要求：1)节点是能力/可练单元，name 用动宾短语(如『把补刀稳定到14分钟120刀』)；禁止『了解/熟悉/理解X基础/综合能力/心理素质』这类不可观测的词。2)每个节点可观测、能设计反复且渐进加难的 drill、benchmark 给量化或行为达标线(体现高手与新手差距)。3)按 domain 调整：E对抗/D动作→带动态对手/时间压力的情境技能、drill用复盘(VOD)/陪练、benchmark用表现数据；C创造→作品+rubric维度；A/B→在新情境中运用而非死记。4)prereq_ids 只引用本模块内 id；跨模块前置写进 prereq_hints(自然语言)。由易到难。只输出 JSON。";
+
+// 注意：JS 的 \w 不含 CJK，必须用 \p{L}\p{N}+u flag，否则中文名会被清空 → 去重/匹配失效。
+function nrm(s) {
+  return String(s || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+function bigrams(s) {
+  const a = [];
+  for (let i = 0; i < s.length - 1; i++) a.push(s.slice(i, i + 2));
+  return s.length >= 2 ? a : s ? [s] : [];
+}
+function cleanNode(n) {
+  return {
+    id: n.id, name: n.name, prereqs: n.prereqs, is_goal: n.isGoal, minutes: n.minutes,
+    domain: n.domain, desc: n.desc, drill: n.drill, benchmark: n.benchmark, module: n.module, moduleTitle: n.moduleTitle,
+  };
+}
+function breakCycles(nodes) {
+  function findBack() {
+    const color = {};
+    for (const g in nodes) color[g] = 0;
+    let res = null;
+    function dfs(u) {
+      color[u] = 1;
+      for (const v of nodes[u].prereqs.slice()) {
+        if (!nodes[v]) continue;
+        if (color[v] === 1) { res = [u, v]; return true; }
+        if (color[v] === 0 && dfs(v)) return true;
+      }
+      color[u] = 2;
+      return false;
+    }
+    for (const g in nodes) if (color[g] === 0 && dfs(g)) return res;
+    return null;
+  }
+  for (let i = 0; i < 5000; i++) {
+    const be = findBack();
+    if (!be) break;
+    const idx = nodes[be[0]].prereqs.indexOf(be[1]);
+    if (idx >= 0) nodes[be[0]].prereqs.splice(idx, 1);
+  }
+}
+function capNodes(nodes, goalGid, limit) {
+  while (Object.keys(nodes).length > limit) {
+    const hasDep = new Set();
+    for (const g in nodes) for (const p of nodes[g].prereqs) hasDep.add(p);
+    const cands = Object.keys(nodes).filter((g) => g !== goalGid && !hasDep.has(g) && !nodes[g].isGoal);
+    if (!cands.length) break;
+    cands.sort((a, b) => nodes[b].prereqs.length - nodes[a].prereqs.length || (a < b ? -1 : 1));
+    const drop = cands[0];
+    delete nodes[drop];
+    for (const g in nodes) {
+      const i = nodes[g].prereqs.indexOf(drop);
+      if (i >= 0) nodes[g].prereqs.splice(i, 1);
+    }
+  }
+}
+
+async function blueprint(goal, ctx, env, lang) {
+  const spec = await chatJSON(BLUEPRINT_SYSTEM, BLUEPRINT_USER(goal) + ctx + langDirective(lang), env, 0.2);
+  let mods = Array.isArray(spec?.modules)
+    ? spec.modules.filter((m) => m && String(m.id || "").trim() && String(m.title || "").trim())
+    : [];
+  if (mods.length < 2) throw new Error("蓝图模块过少");
+  const seen = new Set();
+  const clean = [];
+  mods.slice(0, 9).forEach((m, i) => {
+    const mid = String(m.id).trim();
+    if (seen.has(mid)) return;
+    seen.add(mid);
+    m.id = mid;
+    const o = parseInt(m.order, 10);
+    m.order = Number.isFinite(o) ? o : i + 1;
+    clean.push(m);
+  });
+  spec.modules = clean;
+  return spec;
+}
+
+async function expandModule(goal, bp, module, env, lang) {
+  let target = parseInt(module.target, 10);
+  if (!Number.isFinite(target)) target = 8;
+  target = Math.max(4, Math.min(target, 12));
+  const modlist = bp.modules.map((m) => String(m.title || "")).join("、");
+  const goalName = String((bp.goal || {}).name || goal);
+  const user =
+    MODULE_USER(goal, modlist, goalName, String(module.id), String(module.title || ""), String(module.summary || ""), target) +
+    langDirective(lang);
+  const spec = await chatJSON(MODULE_SYSTEM, user, env, 0.3);
+  return Array.isArray(spec?.nodes) ? spec.nodes : [];
+}
+
+async function parallelExpand(goal, bp, env, lang) {
+  const out = {};
+  await Promise.all(
+    bp.modules.map(async (m) => {
+      try {
+        out[m.id] = await expandModule(goal, bp, m, env, lang);
+      } catch {
+        out[m.id] = [];
+      }
+    }),
+  );
+  return out;
+}
+
+function assemble(goal, bp, expansions) {
+  const mods = bp.modules.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const orderOf = {};
+  mods.forEach((m, i) => (orderOf[m.id] = i));
+  const nodes = {};
+  const nameIndex = {};
+  const remap = {};
+  const modNodes = {};
+  mods.forEach((m) => (modNodes[m.id] = []));
+
+  for (const m of mods) {
+    const mid = m.id, mtitle = String(m.title || "");
+    for (const raw of expansions[mid] || []) {
+      if (!raw || typeof raw !== "object") continue;
+      const lid = String(raw.id || "").trim() || nrm(raw.name).slice(0, 24);
+      const name = String(raw.name || lid).trim();
+      if (!lid || !name) continue;
+      let gid = `${mid}.${lid}`;
+      if (nodes[gid]) gid = `${gid}~${Object.keys(nodes).length}`;
+      const nm = nrm(name);
+      if (nm && nameIndex[nm]) { remap[gid] = nameIndex[nm]; continue; }
+      let mins = parseInt(raw.minutes, 10);
+      if (!Number.isFinite(mins)) mins = 30;
+      mins = Math.max(5, Math.min(mins, 180));
+      nodes[gid] = {
+        id: gid, name,
+        domain: String(raw.domain || m.domain || bp.domain || "B"),
+        minutes: mins,
+        desc: String(raw.desc || "").trim().replace(/^\s*can-?do\s*[:：]\s*/i, ""),
+        drill: String(raw.drill || "").trim(),
+        benchmark: String(raw.benchmark || "").trim(),
+        module: mid, moduleTitle: mtitle,
+        _pids: (raw.prereq_ids || []).map((x) => String(x).trim()).filter(Boolean).map((x) => `${mid}.${x}`),
+        _hints: (raw.prereq_hints || []).map((x) => String(x).trim()).filter(Boolean),
+        isGoal: false,
+      };
+      if (nm) nameIndex[nm] = gid;
+      modNodes[mid].push(gid);
+    }
+  }
+
+  const gspec = bp.goal || {};
+  let gmid = String(gspec.module || "").trim();
+  if (!(gmid in orderOf)) gmid = mods[mods.length - 1].id;
+  let ggid = `${gmid}.${String(gspec.id || "goal").trim() || "goal"}`;
+  while (nodes[ggid]) ggid += "_g";
+  const gmtitle = (mods.find((m) => m.id === gmid) || {}).title || "";
+  nodes[ggid] = {
+    id: ggid, name: String(gspec.name || goal).trim(),
+    domain: String(gspec.domain || bp.domain || "B"),
+    minutes: 45,
+    desc: String(gspec.desc || "").trim().replace(/^\s*can-?do\s*[:：]\s*/i, ""),
+    drill: String(gspec.drill || "").trim(),
+    benchmark: String(gspec.benchmark || "").trim(),
+    module: gmid, moduleTitle: String(gmtitle),
+    _pids: [], _hints: [], isGoal: true,
+  };
+  (modNodes[gmid] = modNodes[gmid] || []).push(ggid);
+
+  const fix = (ids) => {
+    const out = [];
+    for (let x of ids) {
+      x = remap[x] || x;
+      if (nodes[x] && !out.includes(x)) out.push(x);
+    }
+    return out;
+  };
+  for (const gid of Object.keys(nodes)) nodes[gid].prereqs = fix(nodes[gid]._pids || []);
+
+  // 跨模块 hint → 真边（名字 bigram 重合度，阈值 0.5）
+  const nameNorm = {};
+  for (const gid of Object.keys(nodes)) nameNorm[gid] = nrm(nodes[gid].name);
+  for (const gid of Object.keys(nodes)) {
+    const n = nodes[gid];
+    for (const hint of n._hints || []) {
+      const h = nrm(hint);
+      if (h.length < 2) continue;
+      const hb = new Set(bigrams(h));
+      let best = null, bestScore = 0;
+      for (const cand of Object.keys(nodes)) {
+        if (cand === gid || nodes[cand].module === n.module) continue;
+        const cnm = nameNorm[cand];
+        if (!cnm) continue;
+        let score;
+        if (h.includes(cnm) || cnm.includes(h)) score = Math.min(h.length, cnm.length) / Math.max(h.length, cnm.length);
+        else {
+          const cb = new Set(bigrams(cnm));
+          let inter = 0;
+          for (const x of hb) if (cb.has(x)) inter++;
+          const uni = new Set([...hb, ...cb]).size;
+          score = uni ? inter / uni : 0;
+        }
+        if (score > bestScore) { best = cand; bestScore = score; }
+      }
+      if (best && bestScore >= 0.5 && !n.prereqs.includes(best)) n.prereqs.push(best);
+    }
+  }
+
+  const rep = {};
+  for (const m of mods) {
+    const members = (modNodes[m.id] || []).filter((g) => !nodes[g].isGoal);
+    if (members.length) rep[m.id] = members[members.length - 1];
+  }
+  for (const m of mods) {
+    const idx = orderOf[m.id];
+    if (idx === 0) continue;
+    const prev = rep[mods[idx - 1].id];
+    if (!prev) continue;
+    for (const gid of modNodes[m.id] || []) {
+      if (!nodes[gid].isGoal && nodes[gid].prereqs.length === 0) nodes[gid].prereqs = [prev];
+    }
+  }
+
+  const hasDep = new Set();
+  for (const gid of Object.keys(nodes)) for (const p of nodes[gid].prereqs) hasDep.add(p);
+  const lastMembers = (modNodes[gmid] || []).filter((g) => g !== ggid);
+  const lastSinks = lastMembers.filter((g) => !hasDep.has(g));
+  let gpre = fix(lastSinks.length ? lastSinks : lastMembers);
+  if (!gpre.length) gpre = mods.map((m) => rep[m.id]).filter((r) => r && r !== ggid);
+  nodes[ggid].prereqs = gpre.filter((p) => p !== ggid);
+
+  breakCycles(nodes);
+  capNodes(nodes, ggid, 82);
+
+  const points = [];
+  const seen = new Set();
+  for (const m of mods) for (const gid of modNodes[m.id] || []) if (nodes[gid] && !seen.has(gid)) { points.push(cleanNode(nodes[gid])); seen.add(gid); }
+  for (const gid of Object.keys(nodes)) if (!seen.has(gid)) { points.push(cleanNode(nodes[gid])); seen.add(gid); }
+  return { title: String(bp.title || "").trim(), points };
+}
+
+// 回退：单发倒推（老逻辑），产 ~10-16 节点。
+async function deriveSingleSpec(goal, ctx, env, lang) {
+  return await chatJSON(SYSTEM, USER(goal) + ctx + langDirective(lang), env, 0.2);
+}
+
+async function derive(goal, env, lang) {
+  const key = env.TELOS_LLM_API_KEY;
+  if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
+  const ctx = await deriveContext(goal, env);
+  let spec = null;
+  try {
+    const bp = await blueprint(goal, ctx, env, lang);
+    const expansions = await parallelExpand(goal, bp, env, lang);
+    const total = Object.values(expansions).reduce((s, a) => s + a.length, 0);
+    if (total >= 6) {
+      const cand = assemble(goal, bp, expansions);
+      if (cand.points.length >= 6) spec = cand;
+    }
+  } catch {
+    spec = null;
+  }
+  if (!spec) spec = await deriveSingleSpec(goal, ctx, env, lang);
+  return toGraph(spec, goal);
 }
 
 // 概括标题（给旧项目补标题，轻量纯文本）。失败/未配 → ''（前端回退到原目标）。
