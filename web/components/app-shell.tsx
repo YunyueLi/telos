@@ -12,7 +12,7 @@ import { projectTitle } from "@/lib/telos/project";
 import { useT } from "@/lib/telos/i18n";
 import { LangSwitch } from "@/components/lang-switch";
 
-type Tab = "map" | "review" | "me";
+type Tab = "map" | "review" | "me" | "settings";
 
 const TABS: { key: Tab; href: string; icon: IconName; labelKey: string }[] = [
   { key: "map", href: "/", icon: "map", labelKey: "nav.map" },
@@ -39,11 +39,13 @@ export function AppShell({
   const leaveCompose = () => cancelNew();
   const tab: Tab =
     active ??
-    (pathname.startsWith("/review")
-      ? "review"
-      : pathname.startsWith("/me")
-        ? "me"
-        : "map");
+    (pathname.startsWith("/settings")
+      ? "settings"
+      : pathname.startsWith("/review")
+        ? "review"
+        : pathname.startsWith("/me")
+          ? "me"
+          : "map");
   const due = view?.due.length ?? 0;
 
   return (
@@ -87,6 +89,14 @@ export function AppShell({
             <span className="appstat" title={t("shell.xpTitle")}>
               {xp} XP
             </span>
+            <Link
+              href="/settings"
+              className={`appgear ${tab === "settings" ? "on" : ""}`}
+              aria-label={t("nav.settings")}
+              title={t("nav.settings")}
+            >
+              <Icon name="settings" />
+            </Link>
             <Link href="/me" className={`appavatar ${tab === "me" ? "on" : ""}`} aria-label={t("nav.me")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={asset("/portraits/avatar.png")} alt="" />

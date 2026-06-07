@@ -3,6 +3,7 @@
 // 入口 = 真实产品。无项目 → 全屏目标引导；有项目 → 地图主页（map = home）。
 // 节点 → 详情 sheet → 开始学习（分步微课全屏接管）。所有数据来自 useProject 单一真相源。
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
@@ -13,7 +14,6 @@ import PathView from "@/components/path-view";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
 import { getDeriveUrl } from "@/lib/telos/derive";
-import { EndpointConfig } from "@/components/endpoint-config";
 import { useT, tStatic } from "@/lib/telos/i18n";
 
 // 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
@@ -213,17 +213,11 @@ function Onboarding({
         </div>
       </div>
 
-      {mounted && (
-        <details className="ob-cfg" open={!cfgUrl}>
-          <summary>
-            <span className={`dot ${cfgUrl ? "dot-ok" : "dot-off"}`} />
-            {cfgUrl ? t("ob.cfgConfigured") : t("ob.cfgUnconfigured")}
-          </summary>
-          <div className="cfgbody">
-            {!cfgUrl && <>{t("ob.cfgHelp")}</>}
-            <EndpointConfig onSaved={setCfgUrl} />
-          </div>
-        </details>
+      {mounted && !cfgUrl && (
+        <Link href="/settings" className="ob-cfglink">
+          <span className="dot dot-off" /> {t("ob.cfgNeed")}
+          <Icon name="arrow" style={{ width: 12, height: 12 }} />
+        </Link>
       )}
     </div>
   );
