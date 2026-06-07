@@ -52,6 +52,86 @@ def available() -> bool:
     return bool(_config()[0])
 
 
+# ---- 联网检索（agentic grounding）：拿真实来源喂给模型，杜绝模型编造 URL ----
+# 默认 provider=none（不联网，优雅降级回平台搜索链接）。配 TELOS_SEARCH_PROVIDER=tavily|youtube 启用。
+
+
+def _search_config() -> tuple[str, str]:
+    _load_env_file()
+    provider = (os.environ.get("TELOS_SEARCH_PROVIDER") or "none").strip().lower()
+    key = (os.environ.get("TELOS_SEARCH_API_KEY") or "").strip()
+    if key.startswith("your") or key in ("", "changeme", "tvly-your-key-here"):
+        key = ""
+    return provider, key
+
+
+def _domain_of(url: str) -> str:
+    try:
+        from urllib.parse import urlparse
+
+        host = urlparse(url).netloc.lower()
+        return host[4:] if host.startswith("www.") else host
+    except Exception:
+        return ""
+
+
+def _search_tavily(query: str, key: str, k: int) -> list:
+    body = json.dumps(
+        {"api_key": key, "query": query, "max_results": max(1, min(k, 8)), "search_depth": "basic"}
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.tavily.com/search", data=body, headers={"Content-Type": "application/json"}, method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=12) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    out = []
+    for r in (data.get("results") or [])[:k]:
+        url, title = str(r.get("url", "")).strip(), str(r.get("title", "")).strip()
+        if url and title:
+            out.append(
+                {"title": title, "url": url, "snippet": str(r.get("content", "")).strip()[:200], "domain": _domain_of(url)}
+            )
+    return out
+
+
+def _search_youtube(query: str, key: str, k: int) -> list:
+    from urllib.parse import urlencode
+
+    qs = urlencode(
+        {"part": "snippet", "q": query, "type": "video", "maxResults": max(1, min(k, 8)),
+         "key": key, "relevanceLanguage": "zh", "safeSearch": "moderate"}
+    )
+    req = urllib.request.Request("https://www.googleapis.com/youtube/v3/search?" + qs, method="GET")
+    with urllib.request.urlopen(req, timeout=12) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    out = []
+    for it in data.get("items") or []:
+        vid = (it.get("id") or {}).get("videoId")
+        sn = it.get("snippet") or {}
+        title = str(sn.get("title", "")).strip()
+        if vid and title:
+            out.append(
+                {"title": title, "url": f"https://www.youtube.com/watch?v={vid}",
+                 "snippet": str(sn.get("description", "")).strip()[:200], "domain": "youtube.com"}
+            )
+    return out
+
+
+def web_search(query: str, k: int = 5) -> list:
+    """联网检索真实来源，返回 [{title,url,snippet,domain}]；未配置/出错 → []（优雅降级，绝不抛错）。"""
+    provider, key = _search_config()
+    if not key or provider in ("", "none"):
+        return []
+    try:
+        if provider == "tavily":
+            return _search_tavily(query, key, k)
+        if provider == "youtube":
+            return _search_youtube(query, key, k)
+    except Exception:
+        return []
+    return []
+
+
 _SYSTEM = (
     "你是一位精通刻意练习(deliberate practice)、胜任力框架(EPA/CEFR/ACS)与逆向设计的世界级教练。"
     "给定一个目标，你倒推出达成它真正需要的【可训练能力】——不是知识点清单。"
@@ -145,7 +225,8 @@ _LESSON_SYSTEM = (
 _LESSON_HEADER = (
     "知识点：{name}\n所属目标：{goal}\n学习类型(domain)：{domain}\n学习者已掌握的前置：{prereqs}\n\n"
 )
-_LESSON_BODY = (
+# 步骤模板（concept + 6 步），结尾停在 steps 数组之后，便于拼接两种 resources 指令。
+_LESSON_STEPS = (
     "设计一节交互式微课，严格输出如下 JSON（steps 必须正好按此 6 步顺序、kind 用英文小写）：\n"
     '{\n'
     ' "concept":"一句话点出这个知识点的核心要义 / 高手的关键认知",\n'
@@ -157,17 +238,38 @@ _LESSON_BODY = (
     '  {"kind":"faded","problem":"与范例同类型的新题","given":["已替学习者写好的前几步（文字）"],"prompt":"最后一步该怎么做？","options":["..4 项.."],"answer":0,"hints":["提示1：方向","提示2：更具体","提示3：几乎点破但不给答案"],"rationale":"为什么"},\n'
     '  {"kind":"retrieve","prompt":"一道全新的、无任何脚手架的应用/情境判断题（掌握闸门）","options":["..4 项.."],"answer":0,"hints":["提示1","提示2"],"rationale":"为什么对、其它为何错"}\n'
     ' ],\n'
-    ' "resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]\n'
-    '}\n'
+)
+_LESSON_REQS = (
     "硬性要求：\n"
     "- 每道选择题恰 4 个选项，answer 为正确项下标(0-3)，唯一正确；错项要对应进阶者真实会犯的误解，禁止送分题。\n"
     "- worked.steps 给 3-5 步，每步含 do+why，能照着做一遍。\n"
     "- faded 是『完成式问题』：given 写好前几步、把最后一步留空让学习者补；hints 是【提示阶梯】2-3 条，由浅入深、最后一条几乎点破但仍不直接给答案。\n"
     "- retrieve 是无脚手架的迁移题，作为掌握闸门。\n"
     "- 按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric 要点；D 动作=分解练习+达标反馈；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励设计。\n"
-    "- resources 给 2-3 个真实存在、口碑最好的公开课/视频（只写课程名+平台，绝不编造 URL）。\n"
-    "只输出 JSON。"
 )
+
+
+def _lesson_user(name: str, domain: str, prereqs, goal: str, sources: list) -> str:
+    pre = "、".join(prereqs) if prereqs else "（无）"
+    head = _LESSON_HEADER.format(name=name, domain=domain, prereqs=pre, goal=goal)
+    body = _LESSON_STEPS
+    if sources:
+        # 联网 grounding：模型只能从真实来源里挑，用 ref 写下标，绝不编造 URL
+        body += ' "resources":[{"ref":0,"name":"该来源的简短中文标题(8-18字)"}]\n}\n'
+        body += _LESSON_REQS
+        lines = "\n".join(f"[{i}] {s['title']}（{s['domain']}）" for i, s in enumerate(sources))
+        body += (
+            "- resources：从下面【真实来源】里挑 2-3 个与本知识点最相关、最权威/口碑最好的，"
+            "用 ref 写它在列表中的下标(整数)、name 写简短标题；"
+            "**只能引用下面列出的来源，ref 必须是真实下标，绝对禁止编造 URL 或不在列表里的来源**。\n"
+            "只输出 JSON。\n\n"
+            f"真实来源（已联网检索，可直接引用，ref=下标）：\n{lines}\n"
+        )
+    else:
+        body += ' "resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]\n}\n'
+        body += _LESSON_REQS
+        body += "- resources 给 2-3 个真实存在、口碑最好的公开课/视频（只写课程名+平台，绝不编造 URL）。\n只输出 JSON。"
+    return head + body
 
 _MCQ_KINDS = ("predict", "self_explain", "faded", "retrieve")
 
@@ -185,7 +287,44 @@ def _mcq_fields(s: dict):
     return options, answer, hints
 
 
-def _validate_lesson(spec: dict) -> dict:
+def _resolve_resources(spec: dict, sources: list) -> list:
+    """把模型返回的 resources 规整为 [{name, platform, url?, domain?, snippet?}]。
+    grounded 模式下 ref → 回填真实 url/domain/snippet；否则退回 name/platform。"""
+    out, seen = [], set()
+    for r in (spec.get("resources") or [])[:6]:
+        if not isinstance(r, dict):
+            continue
+        res = None
+        if sources and r.get("ref") is not None:
+            try:
+                ix = int(r["ref"])
+            except (TypeError, ValueError):
+                ix = -1
+            if 0 <= ix < len(sources):
+                s = sources[ix]
+                res = {
+                    "name": (str(r.get("name", "")).strip() or s["title"])[:80],
+                    "url": s["url"],
+                    "domain": s.get("domain", ""),
+                    "platform": s.get("domain", ""),
+                    "snippet": s.get("snippet", ""),
+                }
+        if res is None:
+            name = str(r.get("name", "")).strip()
+            if not name:
+                continue
+            res = {"name": name, "platform": str(r.get("platform", "")).strip()}
+        key = res.get("url") or res["name"]
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(res)
+        if len(out) >= 3:
+            break
+    return out
+
+
+def _validate_lesson(spec: dict, sources: list | None = None) -> dict:
     if not isinstance(spec, dict):
         raise RuntimeError("微课返回格式错误")
     out_steps = []
@@ -228,10 +367,7 @@ def _validate_lesson(spec: dict) -> dict:
     graded = [st for st in out_steps if st["kind"] in ("retrieve", "faded", "self_explain")]
     if not out_steps or not graded:
         raise RuntimeError("微课内容不完整")
-    resources = []
-    for r in (spec.get("resources") or [])[:4]:
-        if isinstance(r, dict) and str(r.get("name", "")).strip():
-            resources.append({"name": str(r["name"]).strip(), "platform": str(r.get("platform", "")).strip()})
+    resources = _resolve_resources(spec, sources or [])
     return {"concept": str(spec.get("concept", "")).strip(), "steps": out_steps, "resources": resources}
 
 
@@ -240,12 +376,14 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
     key, base, model = _config()
     if not key:
         raise RuntimeError("未配置 LLM API key（见 core/.env.example）。")
-    pre = "、".join(prereqs) if prereqs else "（无）"
+    # 先联网检索真实来源（未配检索 key → 返回 []，自动降级回平台搜索链接）
+    topic = (f"{goal} " if goal else "") + name
+    sources = web_search(f"{topic} 教程 公开课".strip())
     body = {
         "model": model,
         "messages": [
             {"role": "system", "content": _LESSON_SYSTEM},
-            {"role": "user", "content": _LESSON_HEADER.format(name=name, domain=domain, prereqs=pre, goal=goal) + _LESSON_BODY},
+            {"role": "user", "content": _lesson_user(name, domain, prereqs, goal, sources)},
         ],
         "temperature": 0.3,
         "stream": False,
@@ -263,7 +401,7 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"LLM 请求失败 HTTP {e.code}（检查 key / base_url / model）") from e
     content = data["choices"][0]["message"]["content"]
-    return _validate_lesson(json.loads(content))
+    return _validate_lesson(json.loads(content), sources)
 
 
 # ---- 起点诊断：一次性为一组知识点各生成一道诊断单选题（客观探针）----

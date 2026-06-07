@@ -105,6 +105,75 @@ async function derive(goal, env) {
   return toGraph(JSON.parse(content), goal);
 }
 
+// ---- 联网检索（agentic grounding）：拿真实来源喂给模型，杜绝模型编造 URL ----
+// 默认不联网（优雅降级回平台搜索链接）。配 TELOS_SEARCH_PROVIDER=tavily|youtube + TELOS_SEARCH_API_KEY 启用。
+
+function searchConfig(env) {
+  const provider = String(env.TELOS_SEARCH_PROVIDER || "none").trim().toLowerCase();
+  let key = String(env.TELOS_SEARCH_API_KEY || "").trim();
+  if (key.startsWith("your") || ["", "changeme", "tvly-your-key-here"].includes(key)) key = "";
+  return { provider, key };
+}
+
+function domainOf(url) {
+  try {
+    const h = new URL(url).hostname.toLowerCase();
+    return h.startsWith("www.") ? h.slice(4) : h;
+  } catch {
+    return "";
+  }
+}
+
+async function searchTavily(query, key, k) {
+  const resp = await fetch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api_key: key, query, max_results: Math.max(1, Math.min(k, 8)), search_depth: "basic" }),
+  });
+  if (!resp.ok) return [];
+  const data = await resp.json();
+  return (data.results || [])
+    .slice(0, k)
+    .map((r) => ({
+      title: String(r.title || "").trim(),
+      url: String(r.url || "").trim(),
+      snippet: String(r.content || "").trim().slice(0, 200),
+      domain: domainOf(String(r.url || "")),
+    }))
+    .filter((r) => r.title && r.url);
+}
+
+async function searchYoutube(query, key, k) {
+  const qs = new URLSearchParams({
+    part: "snippet", q: query, type: "video", maxResults: String(Math.max(1, Math.min(k, 8))),
+    key, relevanceLanguage: "zh", safeSearch: "moderate",
+  });
+  const resp = await fetch("https://www.googleapis.com/youtube/v3/search?" + qs);
+  if (!resp.ok) return [];
+  const data = await resp.json();
+  return (data.items || [])
+    .map((it) => ({
+      videoId: it?.id?.videoId,
+      title: String(it?.snippet?.title || "").trim(),
+      desc: String(it?.snippet?.description || "").trim().slice(0, 200),
+    }))
+    .filter((r) => r.videoId && r.title)
+    .map((r) => ({ title: r.title, url: `https://www.youtube.com/watch?v=${r.videoId}`, snippet: r.desc, domain: "youtube.com" }));
+}
+
+// 返回 [{title,url,snippet,domain}]；未配置/出错 → []（优雅降级，绝不抛错）。
+async function webSearch(query, env, k = 5) {
+  const { provider, key } = searchConfig(env);
+  if (!key || provider === "none" || provider === "") return [];
+  try {
+    if (provider === "tavily") return await searchTavily(query, key, k);
+    if (provider === "youtube") return await searchYoutube(query, key, k);
+  } catch {
+    return [];
+  }
+  return [];
+}
+
 // ---- 按需微课 ----
 
 const LESSON_SYSTEM =
@@ -113,10 +182,7 @@ const LESSON_SYSTEM =
   "遵循：预测先行 → 直觉讲解 → 分步范例 → 自我解释 → 渐隐填空 → 无脚手架检索(掌握闸门)；" +
   "答错给【提示阶梯】，逐步逼近但绝不直接给答案。只输出 JSON。";
 
-const LESSON_USER = (name, domain, prereqs, goal) =>
-  `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n学习者已掌握的前置：${
-    prereqs.length ? prereqs.join("、") : "（无）"
-  }\n\n` +
+const LESSON_STEPS_JSON =
   "设计一节交互式微课，严格输出如下 JSON（steps 必须正好按此 6 步顺序、kind 用英文小写）：\n" +
   '{"concept":"一句话点出核心要义/高手的关键认知","steps":[' +
   '{"kind":"predict","prompt":"讲解前先抛出的核心问题，让学习者先猜（低风险、不计分）","options":["..4 项.."],"answer":0,"reveal":"揭示正确项并一句话点出为何"},' +
@@ -124,12 +190,37 @@ const LESSON_USER = (name, domain, prereqs, goal) =>
   '{"kind":"worked","problem":"带具体情境/数字、能照着做一遍的真实范例","steps":[{"do":"做什么","why":"为什么/关键点"}]},' +
   '{"kind":"self_explain","prompt":"针对范例某一步问『为什么这样做』","options":["..4 项.."],"answer":0,"rationale":"为什么对"},' +
   '{"kind":"faded","problem":"同类型新题","given":["已写好的前几步"],"prompt":"最后一步该怎么做？","options":["..4 项.."],"answer":0,"hints":["提示1:方向","提示2:更具体","提示3:几乎点破"],"rationale":"为什么"},' +
-  '{"kind":"retrieve","prompt":"全新、无脚手架的应用/情境判断题（掌握闸门）","options":["..4 项.."],"answer":0,"hints":["提示1","提示2"],"rationale":"为什么对、其它为何错"}' +
-  '],"resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]}\n' +
+  '{"kind":"retrieve","prompt":"全新、无脚手架的应用/情境判断题（掌握闸门）","options":["..4 项.."],"answer":0,"hints":["提示1","提示2"],"rationale":"为什么对、其它为何错"}],';
+
+const LESSON_REQS =
   "硬性要求：每题恰 4 选项、answer 为正确项下标(0-3)、唯一正确、错项对应进阶者真实误解、禁止送分题；" +
   "worked.steps 给 3-5 步(每步 do+why)；faded 是完成式问题(given 写好前几步、留空最后一步)，hints 提示阶梯 2-3 条由浅入深、最后一条几乎点破但不给答案；retrieve 无脚手架作为掌握闸门；" +
-  "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric；D 动作=分解练习+达标；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励；" +
-  "resources 给 2-3 个真实存在、口碑最好的公开课/视频(只写名+平台，绝不编造 URL)。只输出 JSON。";
+  "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric；D 动作=分解练习+达标；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励；";
+
+const LESSON_USER = (name, domain, prereqs, goal, sources) => {
+  const head = `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n学习者已掌握的前置：${
+    prereqs.length ? prereqs.join("、") : "（无）"
+  }\n\n`;
+  if (sources && sources.length) {
+    const lines = sources.map((s, i) => `[${i}] ${s.title}（${s.domain}）`).join("\n");
+    return (
+      head +
+      LESSON_STEPS_JSON +
+      '"resources":[{"ref":0,"name":"该来源的简短中文标题(8-18字)"}]}\n' +
+      LESSON_REQS +
+      "resources：从下面【真实来源】里挑 2-3 个与本知识点最相关、最权威/口碑最好的，用 ref 写它在列表中的下标(整数)、name 写简短标题；" +
+      "只能引用下面列出的来源，ref 必须是真实下标，绝对禁止编造 URL 或不在列表里的来源。只输出 JSON。\n\n" +
+      `真实来源（已联网检索，可直接引用，ref=下标）：\n${lines}\n`
+    );
+  }
+  return (
+    head +
+    LESSON_STEPS_JSON +
+    '"resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]}\n' +
+    LESSON_REQS +
+    "resources 给 2-3 个真实存在、口碑最好的公开课/视频(只写名+平台，绝不编造 URL)。只输出 JSON。"
+  );
+};
 
 function mcqFields(s) {
   const options = (s.options || []).map(String).filter((o) => o.trim());
@@ -175,11 +266,41 @@ function toLesson(spec) {
   }
   const graded = out.filter((st) => ["retrieve", "faded", "self_explain"].includes(st.kind));
   if (!out.length || !graded.length) throw new Error("微课内容不完整");
-  const resources = (Array.isArray(spec?.resources) ? spec.resources : [])
-    .filter((r) => r && String(r.name || "").trim())
-    .slice(0, 4)
-    .map((r) => ({ name: String(r.name).trim(), platform: String(r.platform || "").trim() }));
-  return { concept: String(spec?.concept || "").trim(), steps: out, resources };
+  return { concept: String(spec?.concept || "").trim(), steps: out, resources: resolveResources(spec, sources || []) };
+}
+
+// resources 规整：grounded 下 ref→回填真实 url/domain/snippet；否则退回 name/platform。
+function resolveResources(spec, sources) {
+  const out = [];
+  const seen = new Set();
+  for (const r of (Array.isArray(spec?.resources) ? spec.resources : []).slice(0, 6)) {
+    if (!r || typeof r !== "object") continue;
+    let res = null;
+    if (sources.length && r.ref != null) {
+      const ix = parseInt(r.ref, 10);
+      if (Number.isFinite(ix) && ix >= 0 && ix < sources.length) {
+        const s = sources[ix];
+        res = {
+          name: (String(r.name || "").trim() || s.title).slice(0, 80),
+          url: s.url,
+          domain: s.domain || "",
+          platform: s.domain || "",
+          snippet: s.snippet || "",
+        };
+      }
+    }
+    if (!res) {
+      const name = String(r.name || "").trim();
+      if (!name) continue;
+      res = { name, platform: String(r.platform || "").trim() };
+    }
+    const key = res.url || res.name;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(res);
+    if (out.length >= 3) break;
+  }
+  return out;
 }
 
 async function lesson(body, env) {
@@ -190,6 +311,10 @@ async function lesson(body, env) {
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
   const model = env.TELOS_LLM_MODEL || "deepseek-chat";
   const prereqs = (body.prereqs || []).map(String);
+  const goal = String(body.goal || "");
+  // 先联网检索真实来源（未配检索 key → []，自动降级回平台搜索链接）
+  const topic = (goal ? goal + " " : "") + name;
+  const sources = await webSearch(`${topic} 教程 公开课`.trim(), env);
   const resp = await fetch(base + "/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -197,7 +322,7 @@ async function lesson(body, env) {
       model,
       messages: [
         { role: "system", content: LESSON_SYSTEM },
-        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, String(body.goal || "")) },
+        { role: "user", content: LESSON_USER(name, String(body.domain || "B"), prereqs, goal, sources) },
       ],
       temperature: 0.3,
       stream: false,
@@ -208,7 +333,7 @@ async function lesson(body, env) {
   const data = await resp.json();
   const content = data?.choices?.[0]?.message?.content;
   if (!content) throw new Error("LLM 返回为空");
-  return toLesson(JSON.parse(content));
+  return toLesson(JSON.parse(content), sources);
 }
 
 // ---- 起点诊断题（批量） ----

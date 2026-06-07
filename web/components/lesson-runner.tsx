@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import styles from "./app.module.css";
-import type { Lesson, LessonStep } from "@/lib/telos/derive";
+import type { Lesson, LessonResource, LessonStep } from "@/lib/telos/derive";
 
 const KIND_LABEL: Record<string, string> = {
   predict: "预测",
@@ -18,6 +18,7 @@ const KIND_LABEL: Record<string, string> = {
   retrieve: "检验",
 };
 
+// 降级（无真实 url）时按平台拼一个搜索链接，仍是真实可点的页面、不编造具体视频地址。
 function resourceUrl(name: string, platform: string): string {
   const q = encodeURIComponent(name);
   const p = (platform || "").toLowerCase();
@@ -26,6 +27,64 @@ function resourceUrl(name: string, platform: string): string {
   if (p.includes("coursera")) return `https://www.coursera.org/search?query=${q}`;
   if (p.includes("mooc") || p.includes("中国大学")) return `https://www.icourse163.org/search.htm?search=${q}`;
   return `https://www.bing.com/search?q=${q}`;
+}
+
+function domainOf(url: string): string {
+  try {
+    const h = new URL(url).hostname.toLowerCase();
+    return h.startsWith("www.") ? h.slice(4) : h;
+  } catch {
+    return "";
+  }
+}
+
+// 降级态把平台名映射到真实域名，让 favicon 仍可显示（grounded 态直接用真实 domain）。
+function platformDomain(platform: string): string {
+  const p = (platform || "").toLowerCase();
+  if (p.includes("youtube")) return "youtube.com";
+  if (p.includes("bili") || p.includes("b站") || p.includes("哔哩")) return "bilibili.com";
+  if (p.includes("coursera")) return "coursera.org";
+  if (p.includes("mooc") || p.includes("中国大学") || p.includes("icourse")) return "icourse163.org";
+  if (p.includes("khan")) return "khanacademy.org";
+  if (p.includes("react")) return "react.dev";
+  if (p.includes("mdn")) return "developer.mozilla.org";
+  if (/[a-z0-9-]+\.[a-z]{2,}/.test(p)) return p; // 本身就是个域名
+  return "";
+}
+
+// 引用卡片：真实来源(联网检索)→favicon + 标题 + 域名，直达；降级→平台搜索链接，标注「搜索」。
+function ResourceCard({ r }: { r: LessonResource }) {
+  const [favOk, setFavOk] = useState(true);
+  const real = !!r.url;
+  const href = r.url || resourceUrl(r.name, r.platform || "");
+  const domain = r.domain || (r.url ? domainOf(r.url) : "");
+  const favDomain = domain || platformDomain(r.platform || "");
+  const meta = (domain || r.platform || "来源") + (real ? "" : " · 搜索");
+  return (
+    <a className={styles.resCard} href={href} target="_blank" rel="noopener noreferrer" title={r.snippet || r.name}>
+      {favDomain && favOk ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className={styles.resFav}
+          src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(favDomain)}&sz=64`}
+          alt=""
+          loading="lazy"
+          onError={() => setFavOk(false)}
+        />
+      ) : (
+        <span className={`${styles.resFav} ${styles.resFavDot}`} aria-hidden>
+          {(domain || r.platform || "?").slice(0, 1).toUpperCase()}
+        </span>
+      )}
+      <span className={styles.resCardBody}>
+        <span className={styles.resCardName}>{r.name}</span>
+        <span className={styles.resCardMeta}>{meta}</span>
+      </span>
+      <span className={styles.resGo} aria-hidden>
+        ↗
+      </span>
+    </a>
+  );
 }
 
 interface Nav {
@@ -194,19 +253,10 @@ export default function LessonRunner({
             )}
             {lesson.resources && lesson.resources.length > 0 && (
               <div className={styles.lsideSec}>
-                <h4>优质公开课</h4>
-                <div className={styles.resRow}>
+                <h4>延伸学习 · 真实来源</h4>
+                <div className={styles.resCards}>
                   {lesson.resources.map((r, i) => (
-                    <a
-                      key={i}
-                      className={styles.resLink}
-                      href={resourceUrl(r.name, r.platform)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {r.name}
-                      {r.platform ? ` · ${r.platform}` : ""} ↗
-                    </a>
+                    <ResourceCard key={r.url || r.name + i} r={r} />
                   ))}
                 </div>
               </div>
