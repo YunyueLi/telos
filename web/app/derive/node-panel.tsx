@@ -238,7 +238,14 @@ export default function NodePanel({
                   ) : (
                     <>
                       <div className={chChoice === chProbe.answer ? styles.outcomeOk : styles.outcomeNo}>
-                        {chChoice === chProbe.answer ? "已确认掌握 ✓" : "看来还需要学一下。"}
+                        {chChoice === chProbe.answer ? (
+                          <>
+                            <Icon name="check" style={{ width: 14, height: 14, verticalAlign: -2, marginRight: 4 }} />
+                            已确认掌握
+                          </>
+                        ) : (
+                          "看来还需要学一下。"
+                        )}
                         {chProbe.rationale && <span> {chProbe.rationale}</span>}
                       </div>
                       <div className={styles.lessonActions}>
@@ -260,7 +267,11 @@ export default function NodePanel({
         ) : (
           <div className={styles.detailBody}>
             <h3 className={styles.drawerName}>
-              {node.isGoal && <span className={styles.star}>★</span>}
+              {node.isGoal && (
+                <span className={styles.star}>
+                  <Icon name="target" style={{ width: 16, height: 16 }} />
+                </span>
+              )}
               {node.name}
             </h3>
             <div className={styles.detailMeta}>
@@ -282,7 +293,10 @@ export default function NodePanel({
                 {phase === "loading" ? "正在生成微课…" : "开始学习"} {phase !== "loading" && <Icon name="arrow" />}
               </button>
             ) : (
-              <div className={styles.lockNote}>🔒 未解锁 · 先学完下面的前置</div>
+              <div className={styles.lockNote}>
+                <Icon name="lock" style={{ width: 14, height: 14, verticalAlign: -2, marginRight: 5 }} />
+                未解锁 · 先学完下面的前置
+              </div>
             )}
             {!lessonReady && (
               <div className={styles.metaDim} style={{ marginTop: 8 }}>
@@ -301,7 +315,13 @@ export default function NodePanel({
                 <div className={styles.detailH}>前置</div>
                 {prereqs.map((p) => (
                   <button key={p.id} className={styles.preRow} onClick={() => onOpenNode(p.id)}>
-                    <span>{p.done ? "✓" : "○"}</span>
+                    <span>
+                      {p.done ? (
+                        <Icon name="check" style={{ width: 13, height: 13, verticalAlign: -1 }} />
+                      ) : (
+                        "○"
+                      )}
+                    </span>
                     <b>{p.name}</b>
                     <span className={styles.metaDim}>{p.done ? "已掌握" : `${p.pct}%`}</span>
                   </button>

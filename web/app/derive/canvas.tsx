@@ -7,7 +7,6 @@ import {
   Background,
   Controls,
   Handle,
-  MiniMap,
   Panel,
   Position,
   ReactFlow,
@@ -16,6 +15,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { Icon } from "@/components/icon";
 import styles from "./derive.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
@@ -62,7 +62,11 @@ function TelosNode({ data }: NodeProps) {
         {d.domainLabel}
       </span>
       <div className={styles.rfName}>
-        {d.isGoal && <span className={styles.star}>★</span>}
+        {d.isGoal && (
+          <span className={styles.star}>
+            <Icon name="target" style={{ width: 12, height: 12 }} />
+          </span>
+        )}
         {d.name}
       </div>
       <s>{d.sub}</s>
@@ -159,12 +163,6 @@ export default function DeriveCanvas({
       >
         <Background gap={24} size={1} color="#e2dfd7" />
         <Controls showInteractive={false} />
-        <MiniMap
-          pannable
-          zoomable
-          nodeColor={(n) => ((n.data as TelosData).status === "done" ? "#141310" : "#b9b4a8")}
-          maskColor="rgba(240,238,233,0.6)"
-        />
         <Panel position="top-right">
           <button className={styles.dirToggle} onClick={toggle} title="切换横向 / 纵向">
             {dir === "TB" ? "横向 ⇄" : "纵向 ⇄"}
