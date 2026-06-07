@@ -1,5 +1,5 @@
 1:"$Sreact.fragment"
-2:I[39756,["/telos/app/_next/static/chunks/04jvel9kl3-8p.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js"],"default"]
-3:I[37457,["/telos/app/_next/static/chunks/04jvel9kl3-8p.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js"],"default"]
+2:I[39756,["/telos/app/_next/static/chunks/1_ccus1t1y400.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js"],"default"]
+3:I[37457,["/telos/app/_next/static/chunks/1_ccus1t1y400.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js"],"default"]
 4:[]
-0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"OnHgZLQC3tWXJfLrz8Fy1"}
+0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"_QTQkif-sJ_N5ylC8O0FY"}
