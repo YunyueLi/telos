@@ -11,6 +11,16 @@ import { generateLesson, generateProbes, getLessonUrl, type Lesson, type Probe }
 
 type Phase = "detail" | "loading" | "lesson" | "challenge";
 
+// 外部学习资源链接（由知识点名称生成）——微课的补充与离线兜底。
+function resourceLinks(name: string) {
+  const q = encodeURIComponent(name);
+  return [
+    { label: "搜索", href: `https://www.bing.com/search?q=${q}` },
+    { label: "维基百科", href: `https://zh.wikipedia.org/wiki/Special:Search?search=${q}` },
+    { label: "视频", href: `https://search.bilibili.com/all?keyword=${q}` },
+  ];
+}
+
 export default function NodePanel({
   graph,
   view,
@@ -325,6 +335,23 @@ export default function NodePanel({
                 <div className={styles.unlockList}>{benchmark}</div>
               </div>
             )}
+
+            <div className={styles.detailSec}>
+              <div className={styles.detailH}>学习资源</div>
+              <div className={styles.resRow}>
+                {resourceLinks(node.name).map((r) => (
+                  <a
+                    key={r.label}
+                    className={styles.resLink}
+                    href={r.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {r.label} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
 
             {prereqs.length > 0 && (
               <div className={styles.detailSec}>
