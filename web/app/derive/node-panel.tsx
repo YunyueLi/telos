@@ -4,6 +4,7 @@
 // 详情(渐进披露) → 开始学习 → LLM 微课(讲解+范例+检查题) → 判分回填 record(FIRe+FSRS)。
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
 import styles from "./derive.module.css";
 import { AGAIN, GOOD, KnowledgeGraph, type LearnerState, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
@@ -19,6 +20,17 @@ function resourceLinks(name: string) {
     { label: "维基百科", href: `https://zh.wikipedia.org/wiki/Special:Search?search=${q}` },
     { label: "视频", href: `https://search.bilibili.com/all?keyword=${q}` },
   ];
+}
+
+// 把"课程名 + 平台"指向该平台的检索结果(LLM 只给名+平台，不编造 URL，搜名字最稳)。
+function resourceUrl(name: string, platform: string): string {
+  const q = encodeURIComponent(name);
+  const p = (platform || "").toLowerCase();
+  if (p.includes("youtube")) return `https://www.youtube.com/results?search_query=${q}`;
+  if (p.includes("bili") || p.includes("b站") || p.includes("哔哩")) return `https://search.bilibili.com/all?keyword=${q}`;
+  if (p.includes("coursera")) return `https://www.coursera.org/search?query=${q}`;
+  if (p.includes("youku") || p.includes("优酷")) return `https://so.youku.com/search_video/q_${q}`;
+  return `https://www.bing.com/search?q=${q}`;
 }
 
 export default function NodePanel({
@@ -132,6 +144,186 @@ export default function NodePanel({
   }
 
   const correct = submitted && lesson ? choice === lesson.check.answer : false;
+
+  // 全屏「学习中」整页(landing 05 LESSON 设计语言 + 看板娘)
+  if (phase === "lesson" && lesson) {
+    const correctNow = submitted && choice === lesson.check.answer;
+    return (
+      <div className={styles.lessonFull}>
+        <div className={styles.lessonPlate}>
+          <div className={`dark ${styles.lhead}`}>
+            <svg className="contour skL" viewBox="0 0 900 200" preserveAspectRatio="none">
+              <g stroke="currentColor" fill="none" strokeWidth="1.5" opacity="0.12">
+                <path d="M-20 60C220 30 460 90 920 50" />
+                <path d="M-20 110C220 80 460 140 920 100" />
+                <path d="M-20 160C220 130 460 190 920 150" />
+              </g>
+            </svg>
+            <span className={`pcirc ${styles.lheadPortrait}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={asset("/portraits/teach.png")} alt="Telos 老师" />
+            </span>
+            <div className={styles.lheadText}>
+              <div className={styles.lm}>学习前沿 · 为你定制 · {domainLabel(node.domain)}</div>
+              <h2>{node.name}</h2>
+              <div className={styles.pills}>
+                <span className={styles.pill}>讲解</span>
+                <span className={styles.pill}>跟着做</span>
+                <span className={`${styles.pill} ${styles.pillOn}`}>检验</span>
+              </div>
+            </div>
+            <button className={styles.lessonClose} onClick={onClose} aria-label="关闭">
+              ✕
+            </button>
+          </div>
+          <div className={styles.lbody}>
+            <div className={styles.lmain}>
+              <p>{lesson.explain}</p>
+              {lesson.analogy && (
+                <div className={styles.analogy}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <span className={`pmini ${styles.analogyPic}`}>
+                    <img src={asset("/portraits/think.png")} alt="" />
+                  </span>
+                  <div>
+                    <div className={styles.analogyL}>用你已会的来理解</div>
+                    <p>{lesson.analogy}</p>
+                  </div>
+                </div>
+              )}
+              {lesson.worked.problem && (
+                <>
+                  <div className={styles.lessonLabel}>跟着做一遍</div>
+                  <p className={styles.workedProblem}>{lesson.worked.problem}</p>
+                  <ol className={styles.workedSteps}>
+                    {lesson.worked.steps.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ol>
+                </>
+              )}
+              <div className={styles.lessonLabel} style={{ marginTop: 18 }}>
+                检验一下 —— 答对就算掌握
+              </div>
+              <p className={styles.checkQ}>{lesson.check.q}</p>
+              <div className={styles.opts}>
+                {lesson.check.options.map((o, i) => {
+                  const isAns = i === lesson.check.answer;
+                  const cls = [
+                    styles.opt,
+                    submitted && isAns ? styles.optRight : "",
+                    submitted && choice === i && !isAns ? styles.optWrong : "",
+                    !submitted && choice === i ? styles.optSel : "",
+                  ].join(" ");
+                  return (
+                    <button key={i} className={cls} disabled={submitted} onClick={() => setChoice(i)}>
+                      <span className={styles.optMark}>{String.fromCharCode(65 + i)}</span>
+                      {o}
+                    </button>
+                  );
+                })}
+              </div>
+              {!submitted ? (
+                <button className={`btn btn-ink ${styles.lessonBtn}`} disabled={choice === null} onClick={submit}>
+                  提交答案
+                </button>
+              ) : (
+                <>
+                  <div className={correctNow ? styles.outcomeOk : styles.outcomeNo}>
+                    {correctNow ? (
+                      <>
+                        <Icon name="check" style={{ width: 14, height: 14, verticalAlign: -2, marginRight: 4 }} />
+                        掌握了！
+                      </>
+                    ) : (
+                      "还差一点。"
+                    )}
+                    {lesson.check.rationale && <span> {lesson.check.rationale}</span>}
+                  </div>
+                  <div className={styles.lessonActions}>
+                    <button className={`btn btn-ink ${styles.lessonBtn}`} onClick={onClose}>
+                      完成
+                    </button>
+                    {!correctNow && (
+                      <button className={`btn btn-line ${styles.lessonBtn}`} onClick={start}>
+                        换一道再试
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className={styles.lside}>
+              <div className={styles.lsideSec}>
+                <h4>为什么学这个</h4>
+                <div className={styles.lwhy}>
+                  {unlocks.length ? (
+                    <>
+                      学完它会解锁 <b>{unlocks.slice(0, 3).join("、")}</b>
+                      {unlocks.length > 3 ? " 等" : ""}。
+                    </>
+                  ) : (
+                    "这是你这条路径的终点目标。"
+                  )}
+                </div>
+              </div>
+              <div className={styles.lsideSec}>
+                <h4>当前掌握度</h4>
+                <div className={styles.gauge}>
+                  <div className={styles.gaugeG}>
+                    <svg viewBox="0 0 64 64">
+                      <circle className={styles.gaugeTk} cx="32" cy="32" r="26" />
+                      <circle
+                        className={styles.gaugeFg}
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        strokeDasharray="163"
+                        strokeDashoffset={163 * (1 - pct / 100)}
+                      />
+                    </svg>
+                    <span className={styles.gaugeV}>{pct}%</span>
+                  </div>
+                  <div className={styles.lwhy}>{pct >= 80 ? "已掌握" : "答对检验题即标记掌握"}</div>
+                </div>
+              </div>
+              {drill && (
+                <div className={styles.lsideSec}>
+                  <h4>怎么练</h4>
+                  <div className={styles.lwhy}>{drill}</div>
+                </div>
+              )}
+              {benchmark && (
+                <div className={styles.lsideSec}>
+                  <h4>达标线</h4>
+                  <div className={styles.lwhy}>{benchmark}</div>
+                </div>
+              )}
+              {lesson.resources && lesson.resources.length > 0 && (
+                <div className={styles.lsideSec}>
+                  <h4>优质公开课</h4>
+                  <div className={styles.resRow}>
+                    {lesson.resources.map((r, i) => (
+                      <a
+                        key={i}
+                        className={styles.resLink}
+                        href={resourceUrl(r.name, r.platform)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {r.name}
+                        {r.platform ? ` · ${r.platform}` : ""} ↗
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

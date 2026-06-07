@@ -100,8 +100,10 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
 
 export interface Lesson {
   explain: string;
+  analogy?: string;
   worked: { problem: string; steps: string[] };
   check: { q: string; options: string[]; answer: number; rationale: string };
+  resources?: { name: string; platform: string }[];
 }
 
 export function getLessonUrl(): string {

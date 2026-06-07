@@ -26,8 +26,8 @@ export interface Layout {
   edges: LayoutEdge[];
 }
 
-const NODE_W = 152;
-const NODE_H = 56;
+const NODE_W = 190;
+const NODE_H = 72;
 const MARGIN = 36;
 // 层间距(rank：LR=列间距 / TB=行间距) 与 层内铺开间距(cross)
 const LR_RANK_GAP = 92;
