@@ -110,7 +110,7 @@ async function deriveContext(goal, env) {
 async function chatJSON(system, user, env, temperature = 0.2) {
   const key = env.TELOS_LLM_API_KEY;
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
-  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const model = env.TELOS_LLM_MODEL || "deepseek-v4-pro";
   const resp = await fetch(base + "/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -123,6 +123,8 @@ async function chatJSON(system, user, env, temperature = 0.2) {
       temperature,
       stream: false,
       response_format: { type: "json_object" },
+      // DeepSeek V4 双模、思考为默认；倒推/微课/诊断要快速结构化 JSON → 一律非思考（仅 v4 加此字段）。
+      ...(/v4/i.test(model) ? { thinking: { type: "disabled" } } : {}),
     }),
   });
   if (!resp.ok) throw new Error(`LLM 请求失败 HTTP ${resp.status}（检查 key / base_url / model）`);
@@ -426,7 +428,7 @@ async function summarizeTitle(goal, env, lang) {
   const key = env.TELOS_LLM_API_KEY;
   if (!key) return "";
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
-  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const model = env.TELOS_LLM_MODEL || "deepseek-v4-pro";
   const user =
     `把下面的学习目标概括成一个简洁标题：中文≤12字、英文≤4词；提炼核心主题，去掉『我想/学会/达到…水平』这类口语。只输出标题。\n目标：${goal}` +
     langDirective(lang);
@@ -434,7 +436,7 @@ async function summarizeTitle(goal, env, lang) {
     const resp = await fetch(base + "/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, messages: [{ role: "system", content: TITLE_SYSTEM }, { role: "user", content: user }], temperature: 0.3, stream: false, max_tokens: 40 }),
+      body: JSON.stringify({ model, messages: [{ role: "system", content: TITLE_SYSTEM }, { role: "user", content: user }], temperature: 0.3, stream: false, max_tokens: 40, ...(/v4/i.test(model) ? { thinking: { type: "disabled" } } : {}) }),
     });
     if (!resp.ok) return "";
     const data = await resp.json();
@@ -646,7 +648,7 @@ async function lesson(body, env) {
   const name = String(body.name || "").trim();
   if (!name) throw new Error("name 不能为空");
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
-  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const model = env.TELOS_LLM_MODEL || "deepseek-v4-pro";
   const prereqs = (body.prereqs || []).map(String);
   const goal = String(body.goal || "");
   const resp = await fetch(base + "/chat/completions", {
@@ -661,6 +663,7 @@ async function lesson(body, env) {
       temperature: 0.3,
       stream: false,
       response_format: { type: "json_object" },
+      ...(/v4/i.test(model) ? { thinking: { type: "disabled" } } : {}),
     }),
   });
   if (!resp.ok) throw new Error(`LLM 请求失败 HTTP ${resp.status}（检查 key / base_url / model）`);
@@ -697,7 +700,7 @@ async function probes(body, env) {
   const points = Array.isArray(body.points) ? body.points : [];
   if (!points.length) throw new Error("points 不能为空");
   const base = (env.TELOS_LLM_BASE_URL || "https://api.deepseek.com").replace(/\/$/, "");
-  const model = env.TELOS_LLM_MODEL || "deepseek-chat";
+  const model = env.TELOS_LLM_MODEL || "deepseek-v4-pro";
   const items = points.map((p) => `- ${p.id} ｜ ${p.name || p.id} ｜ ${p.domain || "B"}`).join("\n");
   const ctx = await deriveContext(String(body.goal || ""), env);
   const resp = await fetch(base + "/chat/completions", {
@@ -712,6 +715,7 @@ async function probes(body, env) {
       temperature: 0.3,
       stream: false,
       response_format: { type: "json_object" },
+      ...(/v4/i.test(model) ? { thinking: { type: "disabled" } } : {}),
     }),
   });
   if (!resp.ok) throw new Error(`LLM 请求失败 HTTP ${resp.status}（检查 key / base_url / model）`);
@@ -746,7 +750,7 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
     if (request.method === "GET" && (path === "" || path === "/health")) {
-      return json({ ok: true, available: !!env.TELOS_LLM_API_KEY, model: env.TELOS_LLM_MODEL || "deepseek-chat" }, 200, env);
+      return json({ ok: true, available: !!env.TELOS_LLM_API_KEY, model: env.TELOS_LLM_MODEL || "deepseek-v4-pro" }, 200, env);
     }
     if (request.method === "POST" && path === "/derive") {
       let goal = "";

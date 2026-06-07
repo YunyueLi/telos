@@ -46,12 +46,18 @@ def _config() -> tuple[str, str, str]:
     if key.startswith("sk-your") or key in ("", "changeme", "your-key-here"):
         key = ""  # treat placeholders as "not configured"
     base = os.environ.get("TELOS_LLM_BASE_URL", "https://api.deepseek.com").rstrip("/")
-    model = os.environ.get("TELOS_LLM_MODEL", "deepseek-chat")
+    model = os.environ.get("TELOS_LLM_MODEL", "deepseek-v4-pro")
     return key, base, model
 
 
 def available() -> bool:
     return bool(_config()[0])
+
+
+def _thinking_off(model: str) -> dict:
+    """DeepSeek V4 是「思考/非思考」双模、且思考为默认。倒推/微课/诊断要的是快速结构化 JSON，
+    一律走非思考模式（更快、更省、不混入链式思考）。非 v4 模型不加此字段（旧模型 / 其它兼容厂商可能不识别）。"""
+    return {"thinking": {"type": "disabled"}} if "v4" in str(model).lower() else {}
 
 
 def _lang_directive(lang: str) -> str:
@@ -209,6 +215,7 @@ def _chat_json(system: str, user: str, lang: str = "", timeout: float = 90.0, te
         "temperature": temperature,
         "stream": False,
         "response_format": {"type": "json_object"},
+        **_thinking_off(model),
     }
     req = urllib.request.Request(
         base + "/chat/completions",
@@ -642,6 +649,7 @@ def summarize_title(goal: str, lang: str = "", timeout: float = 30.0) -> str:
         "temperature": 0.3,
         "stream": False,
         "max_tokens": 40,
+        **_thinking_off(model),
     }
     req = urllib.request.Request(
         base + "/chat/completions",
@@ -832,6 +840,7 @@ def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: fl
         "temperature": 0.3,
         "stream": False,
         "response_format": {"type": "json_object"},
+        **_thinking_off(model),
     }
     req = urllib.request.Request(
         base + "/chat/completions",
@@ -892,6 +901,7 @@ def probes(points, goal: str = "", timeout: float = 90.0, lang: str = "") -> dic
         "temperature": 0.3,
         "stream": False,
         "response_format": {"type": "json_object"},
+        **_thinking_off(model),
     }
     req = urllib.request.Request(
         base + "/chat/completions",

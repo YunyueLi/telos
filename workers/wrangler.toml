@@ -5,7 +5,8 @@ compatibility_date = "2024-11-01"
 # 非敏感默认值（可改）。API key 不放这里——用 `wrangler secret put TELOS_LLM_API_KEY` 设置。
 [vars]
 TELOS_LLM_BASE_URL = "https://api.deepseek.com"
-TELOS_LLM_MODEL = "deepseek-chat"
+# deepseek-v4-pro（最强）/ deepseek-v4-flash（更快更省）。代码对 v4 自动走非思考模式。
+TELOS_LLM_MODEL = "deepseek-v4-pro"
 # 联网检索（#4/#5）：provider 非敏感放这里；key 用 `wrangler secret put TELOS_SEARCH_API_KEY`。
 TELOS_SEARCH_PROVIDER = "tavily"
 # 可选：把跨域来源收紧到你的站点，降低被盗刷。默认 "*"。
