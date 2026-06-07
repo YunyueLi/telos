@@ -75,7 +75,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "not found"})
 
     def do_POST(self):  # noqa: N802
-        if self.path.rstrip("/") != "/derive":
+        path = self.path.rstrip("/")
+        if path not in ("/derive", "/lesson"):
             self._json(404, {"error": "not found"})
             return
         if not llm.available():
@@ -84,19 +85,32 @@ class Handler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", 0))
             data = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
-            goal = str(data.get("goal", "")).strip()
         except Exception:  # noqa: BLE001
-            self._json(400, {"error": '请求体需为 JSON：{"goal": "..."}'})
+            self._json(400, {"error": "请求体需为 JSON"})
             return
-        if not goal:
-            self._json(400, {"error": "goal 不能为空"})
-            return
-        try:
-            g = llm.derive_graph(goal)
-        except Exception as e:  # noqa: BLE001
-            self._json(502, {"error": str(e)})
-            return
-        self._json(200, _graph_to_json(goal, g))
+        if path == "/derive":
+            goal = str(data.get("goal", "")).strip()
+            if not goal:
+                self._json(400, {"error": "goal 不能为空"})
+                return
+            try:
+                g = llm.derive_graph(goal)
+            except Exception as e:  # noqa: BLE001
+                self._json(502, {"error": str(e)})
+                return
+            self._json(200, _graph_to_json(goal, g))
+        else:  # /lesson —— 按需微课
+            name = str(data.get("name", "")).strip()
+            if not name:
+                self._json(400, {"error": "name 不能为空"})
+                return
+            prereqs = [str(p) for p in (data.get("prereqs") or [])]
+            try:
+                out = llm.lesson(name, str(data.get("domain", "B")), prereqs, str(data.get("goal", "")))
+            except Exception as e:  # noqa: BLE001
+                self._json(502, {"error": str(e)})
+                return
+            self._json(200, out)
 
 
 def main() -> int:

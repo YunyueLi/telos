@@ -14,20 +14,26 @@ export interface LayoutEdge {
   to: string;
   d: string; // SVG path
 }
+export type Direction = "LR" | "TB"; // 左→右（横屏）/ 上→下（竖屏）
+
 export interface Layout {
   width: number;
   height: number;
   nodeW: number;
   nodeH: number;
+  direction: Direction;
   nodes: Record<string, LayoutNode>;
   edges: LayoutEdge[];
 }
 
 const NODE_W = 152;
 const NODE_H = 56;
-const COL_GAP = 92; // 列间距（节点框之外）
-const ROW_GAP = 28; // 行间距
 const MARGIN = 36;
+// 层间距(rank：LR=列间距 / TB=行间距) 与 层内铺开间距(cross)
+const LR_RANK_GAP = 92;
+const LR_CROSS_GAP = 28;
+const TB_RANK_GAP = 60;
+const TB_CROSS_GAP = 38;
 
 function topoOrder(g: KnowledgeGraph): string[] {
   const indeg: Record<string, number> = {};
@@ -44,7 +50,7 @@ function topoOrder(g: KnowledgeGraph): string[] {
   return out;
 }
 
-export function layeredLayout(g: KnowledgeGraph): Layout {
+export function layeredLayout(g: KnowledgeGraph, direction: Direction = "LR"): Layout {
   const order = topoOrder(g);
 
   // 1) 最长路径分层：layer(n) = 0 若无前置，否则 max(layer(前置)) + 1
@@ -74,42 +80,57 @@ export function layeredLayout(g: KnowledgeGraph): Layout {
     return rows.reduce((s, r) => s + r, 0) / rows.length;
   }
 
-  // 4) 坐标
-  const colPitch = NODE_W + COL_GAP;
-  const rowPitch = NODE_H + ROW_GAP;
+  // 4) 坐标：rank 轴 = 层推进方向（LR→X，TB→Y）；cross 轴 = 层内铺开方向
+  const vertical = direction === "TB";
+  const rankSize = vertical ? NODE_H : NODE_W;
+  const crossSize = vertical ? NODE_W : NODE_H;
+  const rankGap = vertical ? TB_RANK_GAP : LR_RANK_GAP;
+  const crossGap = vertical ? TB_CROSS_GAP : LR_CROSS_GAP;
+  const rankPitch = rankSize + rankGap;
+  const crossPitch = crossSize + crossGap;
   const maxRows = Math.max(1, ...byLayer.map((c) => c.length));
-  const height = MARGIN * 2 + maxRows * rowPitch - ROW_GAP;
-  const width = MARGIN * 2 + (maxLayer + 1) * colPitch - COL_GAP;
+  const rankSpan = (maxLayer + 1) * rankPitch - rankGap;
+  const crossSpan = maxRows * crossPitch - crossGap;
 
   const nodes: Record<string, LayoutNode> = {};
   byLayer.forEach((col, li) => {
-    const colH = col.length * rowPitch - ROW_GAP;
-    const startY = (height - colH) / 2 + NODE_H / 2;
+    const rankPos = MARGIN + li * rankPitch + rankSize / 2;
+    const colCross = col.length * crossPitch - crossGap;
+    const crossStart = MARGIN + (crossSpan - colCross) / 2 + crossSize / 2;
     col.forEach((id, i) => {
+      const crossPos = crossStart + i * crossPitch;
       nodes[id] = {
         id,
         layer: li,
-        x: MARGIN + li * colPitch + NODE_W / 2,
-        y: startY + i * rowPitch,
+        x: vertical ? crossPos : rankPos,
+        y: vertical ? rankPos : crossPos,
       };
     });
   });
 
-  // 5) 连线：从前置右沿 → 后继左沿，水平控制点的三次贝塞尔
+  const width = MARGIN * 2 + (vertical ? crossSpan : rankSpan);
+  const height = MARGIN * 2 + (vertical ? rankSpan : crossSpan);
+
+  // 5) 连线：沿 rank 轴 前置 → 后继（TB 竖直控制点 / LR 水平控制点）
   const edges: LayoutEdge[] = [];
   for (const id of g.ids()) {
     const to = nodes[id];
     for (const pre of g.prerequisites(id)) {
       const from = nodes[pre];
       if (!from || !to) continue;
-      const x1 = from.x + NODE_W / 2;
-      const y1 = from.y;
-      const x2 = to.x - NODE_W / 2;
-      const y2 = to.y;
-      const dx = Math.max(28, (x2 - x1) * 0.5);
-      edges.push({ from: pre, to: id, d: `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}` });
+      let d: string;
+      if (vertical) {
+        const x1 = from.x, y1 = from.y + NODE_H / 2, x2 = to.x, y2 = to.y - NODE_H / 2;
+        const dy = Math.max(20, (y2 - y1) * 0.5);
+        d = `M${x1},${y1} C${x1},${y1 + dy} ${x2},${y2 - dy} ${x2},${y2}`;
+      } else {
+        const x1 = from.x + NODE_W / 2, y1 = from.y, x2 = to.x - NODE_W / 2, y2 = to.y;
+        const dx = Math.max(28, (x2 - x1) * 0.5);
+        d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+      }
+      edges.push({ from: pre, to: id, d });
     }
   }
 
-  return { width, height, nodeW: NODE_W, nodeH: NODE_H, nodes, edges };
+  return { width, height, nodeW: NODE_W, nodeH: NODE_H, direction, nodes, edges };
 }

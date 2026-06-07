@@ -118,3 +118,79 @@ def _to_graph(spec: dict) -> KnowledgeGraph:
         for p in points
     ]
     return KnowledgeGraph.from_spec(rows)  # validates the DAG + prerequisite existence
+
+
+# ---- 按需微课：讲解 + worked example + 一道检查题（喂回引擎做 teach-verify）----
+
+_LESSON_SYSTEM = (
+    "你是一位精通认知科学的微课老师。针对单个知识点，产出极简微课："
+    "建立直觉的讲解、一个走通的范例(worked example)、一道检验掌握的单选题。只输出 JSON。"
+)
+
+_LESSON_USER = (
+    "知识点：{name}\n所属目标：{goal}\n学习类型(domain)：{domain}\n已掌握的前置：{prereqs}\n\n"
+    "产出严格 JSON：\n"
+    '{{"explain":"不超过180字、建立直觉的讲解","worked":{{"problem":"一个具体例子或任务","steps":["步骤1","步骤2","步骤3"]}},'
+    '"check":{{"q":"一道检验是否掌握的单选题","options":["A","B","C","D"],"answer":0,"rationale":"为什么对、其它为何错"}}}}\n'
+    "要求：explain 通俗有直觉；worked 是一个走通的范例；check 恰好 4 个选项、answer 为正确项下标(0-3)、"
+    "有唯一正确答案、干扰项要像样能暴露常见误解。按学习类型调整：A 记忆=例子/助记；B 程序=可分步范例；"
+    "C 创造=范例+要点；D 动作=分解练习步骤；E 对抗=情境拆解；F 习惯=微行动建议。只输出 JSON，不要解释。"
+)
+
+
+def _validate_lesson(spec: dict) -> dict:
+    if not isinstance(spec, dict):
+        raise RuntimeError("微课返回格式错误")
+    explain = str(spec.get("explain", "")).strip()
+    worked = spec.get("worked") or {}
+    steps = [str(s) for s in (worked.get("steps") or []) if str(s).strip()]
+    check = spec.get("check") or {}
+    options = [str(o) for o in (check.get("options") or []) if str(o).strip()]
+    try:
+        answer = int(check.get("answer", 0))
+    except (TypeError, ValueError):
+        answer = 0
+    if not explain or len(options) < 2 or not str(check.get("q", "")).strip():
+        raise RuntimeError("微课内容不完整")
+    answer = max(0, min(answer, len(options) - 1))
+    return {
+        "explain": explain,
+        "worked": {"problem": str(worked.get("problem", "")).strip(), "steps": steps},
+        "check": {
+            "q": str(check["q"]).strip(),
+            "options": options,
+            "answer": answer,
+            "rationale": str(check.get("rationale", "")).strip(),
+        },
+    }
+
+
+def lesson(name: str, domain: str = "B", prereqs=(), goal: str = "", timeout: float = 60.0) -> dict:
+    """生成一个知识点的按需微课（OpenAI 兼容；返回校验过的 dict）。"""
+    key, base, model = _config()
+    if not key:
+        raise RuntimeError("未配置 LLM API key（见 core/.env.example）。")
+    pre = "、".join(prereqs) if prereqs else "（无）"
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": _LESSON_SYSTEM},
+            {"role": "user", "content": _LESSON_USER.format(name=name, domain=domain, prereqs=pre, goal=goal)},
+        ],
+        "temperature": 0.3,
+        "stream": False,
+        "response_format": {"type": "json_object"},
+    }
+    req = urllib.request.Request(
+        base + "/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"LLM 请求失败 HTTP {e.code}（检查 key / base_url / model）") from e
+    content = data["choices"][0]["message"]["content"]
+    return _validate_lesson(json.loads(content))
