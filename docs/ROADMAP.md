@@ -61,28 +61,18 @@ cd web  && npm run dev               # :3000
 
 ---
 
-## 1. 进行中：#4 + #5 —— agentic 检索 + 真实引用链接（方案 A：先搭架构 + 无 key 优雅降级）
+## 1. ✅ 已完成：#4 + #5 —— agentic 检索 + 真实引用链接（方案 A）
 
-**目标**：课程/资料链接给**真实可直接点开的 URL**（不再是平台搜索页），并像 ChatGPT/Perplexity 那样带**出处卡片**。生成更准（联网 grounding）。
+**已交付**：微课「延伸学习 · 真实来源」改为 ChatGPT/Perplexity 风格的**出处卡片**（favicon + 标题 + 域名）。配了检索 key → 先联网搜真实来源、模型只能 `ref` 引用、校验层回填真实 URL，**直达具体视频/文档**；没配 key → **优雅降级**回平台搜索链接（标注「· 搜索」），不报错照常用。已实测降级路径渲染正确、grounded 的 ref 解析逻辑单测通过、`npm run build` + 21 引擎测试通过。
 
-**为什么需要搜索 key**：LLM 自己写 URL 会幻觉。必须先真的联网搜、拿真 URL，再让模型**只从真实结果里挑、用 `[n]` 引用**（Perplexity 铁律：绝不让模型生成 URL）。
+**两端实现**（llm.py 与 workers/derive.js 已同步）：
+- `web_search(query,k)` → `[{title,url,snippet,domain}]`，provider=tavily|youtube|none，none/出错→`[]`。
+- `lesson()` 先 `web_search(f"{goal} {name} 教程 公开课")`，有结果就把【真实来源】块塞进 prompt、令模型用 `ref` 下标引用（禁编 URL）；校验层 `_resolve_resources`/`resolveResources` 把 `ref`→`{name,url,domain,platform,snippet}`，去重、取前 3。
+- 前端 `LessonResource` 加 `url?/domain?/snippet?`；`lesson-runner` 的 `ResourceCard`：有真实 `url`→favicon+域名直达；降级→`platformDomain()` 映射平台 favicon + `resourceUrl()` 搜索链 +「搜索」标注；favicon 裂图兜底首字母。
 
-**默认 provider**：Tavily（专为 LLM，约 1000 次/月免费，POST `https://api.tavily.com/search` {api_key,query,max_results} → results[].{title,url,content}）。可选 YouTube Data API v3（拿真实视频：GET `.../youtube/v3/search?part=snippet&q=&type=video&maxResults=3&key=` → items[].{id.videoId,snippet.title} → `https://www.youtube.com/watch?v=ID`）。
+**怎么开启真实链接**（给用户）：在 `core/.env` 加 `TELOS_SEARCH_PROVIDER=tavily` + `TELOS_SEARCH_API_KEY=tvly-...`（[tavily.com](https://tavily.com) 注册，~1000 次/月免费），**重启 serve.py** 即生效。线上 Worker：`wrangler secret put TELOS_SEARCH_API_KEY` + `wrangler.toml [vars] TELOS_SEARCH_PROVIDER`。详见 `DERIVE.md`「联网检索」。
 
-### 实施步骤（按顺序）
-1. **后端搜索层**（`core/telos_core/llm.py` + 同步 `workers/derive.js`）：
-   - 新 env：`TELOS_SEARCH_PROVIDER`(tavily|youtube|none，缺省 none)、`TELOS_SEARCH_API_KEY`。写进 `core/.env.example`。
-   - 新函数 `web_search(query, k=4) -> [{title,url,snippet,domain}]`（按 provider 分支；none/出错→返回 []）。
-   - 改 `lesson()`：拿到 node 后先 `web_search(f"{name} 公开课 教程")`（可结合 goal）。把结果作为 `SOURCES` 块塞进 user prompt，指令模型："只能从下列真实来源选 2-3 个最相关的优质资源，用 `[n]` 引用其下标，**绝不编造 URL**"。模型在 resources 里返回 `[{ref:n, name:title}]`。
-   - 校验层把 `ref` → 真实 url/domain 回填：resource 形状变成 `{name, url, platform, snippet?}`（platform 用 domain 或人读名）。可选对 url 做 HEAD 200 校验，挂的丢弃。
-   - **降级**：`TELOS_SEARCH_API_KEY` 为空 → 跳过搜索，`resources` 仍是现在的 `{name, platform}`（前端回退到平台搜索链接）。**保证不报错、照常用**。这就是方案 A。
-2. **前端**（`web/lib/telos/derive.ts` + `web/components/lesson-runner.tsx`）：
-   - `Lesson.resources` 类型加可选 `url?: string; domain?: string; snippet?: string`。
-   - lside「优质公开课」改成**引用卡片**：favicon(`https://www.google.com/s2/favicons?domain=DOMAIN&sz=64`) + 标题 + 域名（mono）。有 `url` → 直接 `href=url`；无 → 回退现有 `resourceUrl(name,platform)`（平台搜索）。样式走本产品设计语言（纸感卡片 + 手绘感），不要花哨。
-   - （可选增强）若模型在讲解里用了 `[n]`，可在文末渲染编号来源列表。v1 先只做资源卡片真链。
-3. **配置**：搜索 key 是**服务端 env**（core/.env / Worker secret），不是前端字段。写进 `DERIVE.md`：如何拿 Tavily key、填 `TELOS_SEARCH_PROVIDER=tavily` + `TELOS_SEARCH_API_KEY=...`。
-4. **验证**：无 key → 跑一节微课确认资源仍正常（降级）。用户给 Tavily key 后 → 资源卡片显示真实可点 URL + favicon/域名；HEAD 校验生效。
-5. **同步 + 收尾**：llm.py 与 workers/derive.js 两处搜索逻辑一致；`npm run build` + `run_tests.py` 通过；提交推送。
+> 待用户给 key 后再实测一次 grounded 端到端（真实 URL + favicon + 域名）。无法替用户注册，故 grounded 实链未在本地跑通，仅单测验证。
 
 ---
 
@@ -99,5 +89,5 @@ cd web  && npm run dev               # :3000
 ## 3. 注意事项
 - 用户用**自己的 DeepSeek key**（在 core/.env，已明确授权使用，别再提醒轮换）。搜索 key 同理放服务端。
 - 后台进程：serve.py(:8787)、`npm run dev`(:3000) 可能需在新会话重启。
-- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）。
+- 已完成里程碑：单一产品重做、多项目库、新学习入口、隐藏 dev 指示、地图居中+可读比例尺+双指手势、**#9 交互式微课**（已实测红楼梦全程跑通）、**#4+#5 检索 grounding + 出处卡片**（方案 A，降级已实测、grounded 待 key）。
 - 全局工作偏好已写入 `~/.claude/CLAUDE.md`（在 ~/clauderoam，需 `clauderoam push` 同步）与项目 `CLAUDE.md`。

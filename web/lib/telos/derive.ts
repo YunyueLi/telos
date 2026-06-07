@@ -116,10 +116,20 @@ export type LessonStep =
     }
   | { kind: "retrieve"; prompt: string; options: string[]; answer: number; hints?: string[]; rationale?: string };
 
+// 资源/引用：联网检索命中时带真实 url + domain（像 ChatGPT/Perplexity 的出处卡片）；
+// 未配检索 key 时降级，只有 name + platform（前端回退到平台搜索链接）。
+export interface LessonResource {
+  name: string;
+  platform?: string;
+  url?: string;
+  domain?: string;
+  snippet?: string;
+}
+
 export interface Lesson {
   concept: string;
   steps: LessonStep[];
-  resources?: { name: string; platform: string }[];
+  resources?: LessonResource[];
 }
 
 export function getLessonUrl(): string {
@@ -153,11 +163,22 @@ export async function generateLesson(
     const opts = (s as { options?: unknown }).options;
     if (Array.isArray(opts)) (s as { options: string[] }).options = opts.map((o) => stripOptionLabel(String(o)));
   }
-  return {
-    concept: String(data.concept ?? ""),
-    steps,
-    resources: data.resources as Lesson["resources"],
-  };
+  const resources = (Array.isArray(data.resources) ? data.resources : [])
+    .map((raw): LessonResource | null => {
+      const r = raw as Record<string, unknown>;
+      const name = String(r.name ?? "").trim();
+      if (!name) return null;
+      const url = String(r.url ?? "").trim();
+      return {
+        name,
+        platform: String(r.platform ?? "").trim() || undefined,
+        url: url || undefined,
+        domain: String(r.domain ?? "").trim() || undefined,
+        snippet: String(r.snippet ?? "").trim() || undefined,
+      };
+    })
+    .filter((r): r is LessonResource => r !== null);
+  return { concept: String(data.concept ?? ""), steps, resources };
 }
 
 // ---- 起点诊断题（批量客观探针）----

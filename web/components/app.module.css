@@ -509,12 +509,33 @@
   border-bottom: 1px solid var(--line-soft);
 }
 .olmLink:hover { color: var(--ink); border-color: var(--ink); }
-.resRow { display: flex; gap: 8px; flex-wrap: wrap; }
-.resLink {
-  font: 500 12.5px var(--sans); padding: 6px 11px; border-radius: 8px;
-  border: 1px solid var(--line-soft); color: var(--ink-2); background: var(--paper);
+/* 引用卡片（联网检索出处，仿 ChatGPT/Perplexity citation） */
+.resCards { display: flex; flex-direction: column; gap: 7px; }
+.resCard {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border: 1px solid var(--line-soft); border-radius: 10px; background: var(--card);
+  text-decoration: none; transition: border-color 0.15s, transform 0.1s;
 }
-.resLink:hover { border-color: var(--ink); color: var(--ink); }
+.resCard:hover { border-color: var(--ink); transform: translateY(-1px); }
+.resFav {
+  width: 18px; height: 18px; border-radius: 5px; flex: none; object-fit: cover;
+  background: var(--paper); border: 1px solid var(--line-soft);
+}
+.resFavDot {
+  display: flex; align-items: center; justify-content: center;
+  font: 700 10px var(--mono); color: var(--ink-2); background: var(--paper);
+}
+.resCardBody { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.resCardName {
+  font: 600 12.5px/1.35 var(--sans); color: var(--ink);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.resCardMeta {
+  font: 11px/1 var(--mono); color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.resGo { font-size: 13px; color: var(--ink-3); flex: none; align-self: flex-start; }
+.resCard:hover .resGo { color: var(--ink); }
 
 /* ===== 全屏「学习中」整页(移植 landing 05 LESSON 设计语言) ===== */
 .lessonFull {
