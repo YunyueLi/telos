@@ -161,6 +161,10 @@ export const DICT: Record<string, Record<Lang, string>> = {
   "dx.located": { "zh-CN": "已定位", "zh-TW": "已定位", en: "Located", fr: "Localisées", ja: "特定済み", ko: "파악됨", es: "Ubicadas", ru: "Определено", de: "Verortet" },
   "dx.judgedKnown": { "zh-CN": "判定已会", "zh-TW": "判定已會", en: "Judged known", fr: "Jugées connues", ja: "習得と判定", ko: "안다고 판정", es: "Ya sabidas", ru: "Уже известно", de: "Als gekonnt" },
   "dx.toLearn": { "zh-CN": "待学习", "zh-TW": "待學習", en: "To learn", fr: "À apprendre", ja: "未習得", ko: "학습할 것", es: "Por aprender", ru: "К изучению", de: "Zu lernen" },
+  "dx.correctRate": { "zh-CN": "正确率", "zh-TW": "正確率", en: "accuracy", fr: "précision", ja: "正答率", ko: "정답률", es: "acierto", ru: "точность", de: "Trefferquote" },
+  "dx.answeredOf": { "zh-CN": "答对 {m}/{n}", "zh-TW": "答對 {m}/{n}", en: "{m}/{n} correct", fr: "{m}/{n} corrects", ja: "{m}/{n} 正解", ko: "{m}/{n} 정답", es: "{m}/{n} correctas", ru: "{m}/{n} верно", de: "{m}/{n} richtig" },
+  "dx.wrongReview": { "zh-CN": "错题解析", "zh-TW": "錯題解析", en: "Review your misses", fr: "Vos erreurs expliquées", ja: "間違えた問題の解説", ko: "틀린 문제 해설", es: "Repaso de errores", ru: "Разбор ошибок", de: "Fehler im Detail" },
+  "dx.correctAnswer": { "zh-CN": "正确答案", "zh-TW": "正確答案", en: "Correct answer", fr: "Bonne réponse", ja: "正解", ko: "정답", es: "Respuesta correcta", ru: "Правильный ответ", de: "Richtige Antwort" },
   "dx.goMap": { "zh-CN": "去地图开始", "zh-TW": "去地圖開始", en: "Go to the map", fr: "Aller à la carte", ja: "マップで始める", ko: "지도로 가기", es: "Ir al mapa", ru: "К карте", de: "Zur Karte" },
   "dx.retest": { "zh-CN": "重测", "zh-TW": "重測", en: "Retest", fr: "Refaire", ja: "再診断", ko: "다시 진단", es: "Repetir", ru: "Заново", de: "Neu testen" },
 
