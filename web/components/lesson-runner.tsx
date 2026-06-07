@@ -9,6 +9,7 @@ import { asset } from "@/lib/base";
 import styles from "./app.module.css";
 import type { Lesson, LessonResource, LessonStep } from "@/lib/telos/derive";
 import { useT } from "@/lib/telos/i18n";
+import { TierText } from "@/components/tier-text";
 
 // 降级（无真实 url）时按平台拼一个搜索链接，仍是真实可点的页面、不编造具体视频地址。
 function resourceUrl(name: string, platform: string): string {
@@ -235,13 +236,13 @@ export default function LessonRunner({
             {drill && (
               <div className={styles.lsideSec}>
                 <h4>{t("np.howToPractice")}</h4>
-                <div className={styles.lwhy}>{drill}</div>
+                <TierText text={drill} className={styles.lwhy} />
               </div>
             )}
             {benchmark && (
               <div className={styles.lsideSec}>
                 <h4>{t("np.benchmark")}</h4>
-                <div className={styles.lwhy}>{benchmark}</div>
+                <TierText text={benchmark} className={styles.lwhy} />
               </div>
             )}
             {lesson.resources && lesson.resources.length > 0 && (
