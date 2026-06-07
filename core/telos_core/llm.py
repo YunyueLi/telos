@@ -142,13 +142,16 @@ _LESSON_SYSTEM = (
 _LESSON_USER = (
     "知识点：{name}\n所属目标：{goal}\n学习类型(domain)：{domain}\n已掌握的前置：{prereqs}\n\n"
     "产出严格 JSON：\n"
-    '{{"explain":"不超过180字、建立直觉的讲解","worked":{{"problem":"一个具体例子或任务","steps":["步骤1","步骤2","步骤3"]}},'
-    '"check":{{"q":"一道检验是否掌握的单选题","options":["A","B","C","D"],"answer":0,"rationale":"为什么对、其它为何错"}}}}\n'
+    '{{"explain":"不超过180字、建立直觉的讲解","analogy":"用学习者已掌握的前置打一个贴切类比(无前置则用生活常识类比)",'
+    '"worked":{{"problem":"一个具体例子或任务","steps":["步骤1","步骤2","步骤3"]}},'
+    '"check":{{"q":"一道检验是否掌握的单选题","options":["A","B","C","D"],"answer":0,"rationale":"为什么对、其它为何错"}},'
+    '"resources":[{{"name":"真实存在、口碑最好的公开课程或视频名","platform":"YouTube/B站/Coursera/官方文档"}}]}}\n'
     "要求：explain 建立直觉并点出『高手与新手的关键差别』，不要只给定义；"
     "worked 是一个带具体情境/数字、能照着做一遍的真实范例，steps 给【3-6 个有实质内容的步骤】(每步:做什么 + 关键点/为什么)——"
     "对抗(E)/动作(D)类则给一次可练的 drill(怎么做、反馈从哪来、达标线)；"
     "check 考应用/情境判断而非背定义，恰 4 选项、answer 为正确项下标(0-3)、唯一正确答案、"
     "每个错项对应一种真实的高水平误解(进阶者会被带偏、专家会避开)，禁止送分题。"
+    "analogy 用学习者【已掌握的前置】做贴切类比；resources 给 2-3 个该领域【真实存在、口碑最好】的公开课/视频(只写课程名 + 平台，绝不编造 URL)；"
     "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric 要点；D 动作=分解练习+达标；E 对抗=情境拆解+决策。只输出 JSON。"
 )
 
@@ -168,8 +171,15 @@ def _validate_lesson(spec: dict) -> dict:
     if not explain or len(options) < 2 or not str(check.get("q", "")).strip():
         raise RuntimeError("微课内容不完整")
     answer = max(0, min(answer, len(options) - 1))
+    resources = []
+    for r in (spec.get("resources") or [])[:4]:
+        if isinstance(r, dict) and str(r.get("name", "")).strip():
+            resources.append(
+                {"name": str(r["name"]).strip(), "platform": str(r.get("platform", "")).strip()}
+            )
     return {
         "explain": explain,
+        "analogy": str(spec.get("analogy", "")).strip(),
         "worked": {"problem": str(worked.get("problem", "")).strip(), "steps": steps},
         "check": {
             "q": str(check["q"]).strip(),
@@ -177,6 +187,7 @@ def _validate_lesson(spec: dict) -> dict:
             "answer": answer,
             "rationale": str(check.get("rationale", "")).strip(),
         },
+        "resources": resources,
     }
 
 
