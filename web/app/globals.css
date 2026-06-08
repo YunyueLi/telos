@@ -408,6 +408,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .cfgm-status{display:flex;align-items:center;gap:7px;font:500 12px var(--mono);margin:6px 0 12px}
 .cfgm-status .dot{width:8px;height:8px;border-radius:50%;flex:none}
 .cfgm-status.bad{color:#a23b2d}
+.cfgm-err{display:block;font:500 11px var(--mono);color:#a23b2d;margin-top:6px;line-height:1.5}
+.cfgm-field input[aria-invalid="true"]{border-color:#a23b2d}
 .cfgm-actions{display:flex;gap:10px;margin-top:8px}
 .cfgm-actions .btn{flex:1;justify-content:center}
 .cfgm-note{display:flex;gap:7px;font:500 10.5px var(--mono);color:var(--ink-3);line-height:1.55;margin-top:16px;padding-top:13px;border-top:1px dashed var(--line-soft)}

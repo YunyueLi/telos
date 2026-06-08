@@ -31,7 +31,7 @@ import {
   setActiveId,
   upsertProject,
 } from "./project";
-import { deriveGraph, generateTitle, getLlmConfig, hasLlmKey, setLlmConfig, type LlmConfig } from "./derive";
+import { deriveGraph, generateTitle, getLlmConfig, setLlmConfig, type LlmConfig } from "./derive";
 import {
   addDailyXp,
   computeXp,
@@ -41,7 +41,7 @@ import {
   type DailyInfo,
 } from "./xp";
 import { useAuth } from "./auth";
-import { cloudConfigured } from "./supabase";
+import { cloudConfigured, supabase } from "./supabase";
 import { deleteRemoteProject, pullProjects, pushProject } from "./cloud";
 
 interface ProjectContextValue {
@@ -210,10 +210,22 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
     if (syncedRef.current === user.id) return;
     syncedRef.current = user.id;
-    // BYOK：登录时把账号里的 LLM 配置拉回本机（仅当本机还没配 key，不覆盖刚在本设备设的）。
+    // BYOK：登录时在本机 ↔ 账号之间双向对账（后写入者胜，按 updatedAt）。
+    // 修复「先在本机填 key、后登录」既不上传、又因本机已有 key 跳过拉取 → 配置永不随账号走。
     const remoteLlm = (user.user_metadata as { telos_llm?: LlmConfig } | undefined)?.telos_llm;
-    if (remoteLlm && typeof remoteLlm === "object" && (remoteLlm.key || "").trim() && !hasLlmKey()) {
-      setLlmConfig({ ...getLlmConfig(), ...remoteLlm });
+    const localLlm = getLlmConfig();
+    const rKey = (remoteLlm?.key || "").trim();
+    const lKey = (localLlm.key || "").trim();
+    const rT = remoteLlm?.updatedAt || 0;
+    const lT = localLlm.updatedAt || 0;
+    if (rKey && (!lKey || rT > lT)) {
+      // 账号端更新（或本机没配）→ 拉回本机（setLlmConfig 会广播事件，接入状态卡即时重测）。
+      setLlmConfig({ ...localLlm, ...remoteLlm });
+    } else if (lKey && (!rKey || lT > rT)) {
+      // 本机更新（或账号端还没有）→ 推到账号，让其它设备登录后拿得到。
+      supabase()
+        ?.auth.updateUser({ data: { telos_llm: { ...localLlm, updatedAt: lT || Date.now() } } })
+        .catch(() => {});
     }
     void syncNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -13,7 +13,9 @@ import {
   testEndpoint,
   getLlmConfig,
   setLlmConfig,
+  cleanBaseUrl,
   LOCAL_ENDPOINT,
+  LLM_EVENT,
   type EndpointStatus,
   type LlmConfig,
 } from "@/lib/telos/derive";
@@ -45,6 +47,7 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
   const [key, setKey] = useState("");
   const [model, setModel] = useState("");
   const [base, setBase] = useState("");
+  const [baseErr, setBaseErr] = useState<string | null>(null);
   const [searchKey, setSearchKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [showSk, setShowSk] = useState(false);
@@ -63,11 +66,20 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
     void runTest();
   }, []);
 
+  // 配置变更（含登录后从账号拉回 BYOK 配置）→ 即时重测，状态卡随账号同步刷新。
+  useEffect(() => {
+    const h = () => void runTest();
+    window.addEventListener(LLM_EVENT, h);
+    return () => window.removeEventListener(LLM_EVENT, h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function loadDrafts() {
     const c = getLlmConfig();
     setKey(c.key || "");
     setModel(c.model || "");
-    setBase(c.base || "");
+    setBase(cleanBaseUrl(c.base) || ""); // 规整显示：残留的非法地址（如 "DeepSeek"）显示为空 → 用默认
+    setBaseErr(null);
     setSearchKey(c.searchKey || "");
     setEp(getDeriveUrl());
     setEpAdv(false);
@@ -91,11 +103,19 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
   }
 
   function saveAi() {
+    const rawBase = base.trim();
+    const cb = cleanBaseUrl(rawBase);
+    if (rawBase && !cb) {
+      setBaseErr(t("conn.baseInvalid")); // 填了但不是合法网址（如 "DeepSeek"）→ 提示并拦下，不保存
+      return;
+    }
+    setBaseErr(null);
     const next: LlmConfig = {
       ...getLlmConfig(),
       key: key.trim() || undefined,
       model: model.trim() || undefined,
-      base: base.trim() || undefined,
+      base: cb,
+      updatedAt: Date.now(),
     };
     persist(next, ep);
     setModal(null);
@@ -106,6 +126,7 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
       ...getLlmConfig(),
       searchKey: searchKey.trim() || undefined,
       searchProvider: searchKey.trim() ? "tavily" : undefined,
+      updatedAt: Date.now(),
     };
     persist(next);
     setModal(null);
@@ -270,8 +291,14 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
                       value={base}
                       spellCheck={false}
                       autoCapitalize="off"
-                      onChange={(e) => setBase(e.target.value)}
+                      inputMode="url"
+                      aria-invalid={!!baseErr}
+                      onChange={(e) => {
+                        setBase(e.target.value);
+                        if (baseErr) setBaseErr(null);
+                      }}
                     />
+                    {baseErr && <span className="cfgm-err">{baseErr}</span>}
                   </label>
 
                   <button className="cfgm-adv" onClick={() => setEpAdv((v) => !v)} aria-expanded={epAdv}>
