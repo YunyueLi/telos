@@ -687,6 +687,25 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ach-t b{font:600 13px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ach-t span{font:500 10.5px var(--mono);color:var(--ink-3)}
 .ach-chk{position:absolute;top:10px;right:11px;width:14px;height:14px;color:var(--ink)}
+/* 法律页（隐私 / 条款）—— 贴合 App 设计 */
+.legal{max-width:740px;margin:0 auto;width:100%;padding:0 24px 80px}
+.legal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:32px}
+.legal-brand{display:inline-flex;align-items:center;gap:9px;font:600 20px var(--serif);color:var(--ink);text-decoration:none}
+.legal-brand .sk{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.legal-navlink{display:inline-flex;align-items:center;gap:5px;font:600 12.5px var(--sans);color:var(--ink-2);text-decoration:none}
+.legal-navlink:hover{color:var(--ink)}
+.legal-navlink .ic{width:13px;height:13px}
+.legal-doc h1{font:500 30px var(--serif);letter-spacing:-.02em;line-height:1.08;margin:8px 0 6px;color:var(--ink)}
+.legal-doc h2{font:500 19px var(--serif);margin:26px 0 8px;color:var(--ink)}
+.legal-doc p,.legal-doc li{font-size:14.5px;line-height:1.7;color:var(--ink-2)}
+.legal-doc ul{margin:6px 0;padding-left:18px}
+.legal-doc li{margin:3px 0}
+.legal-doc b{color:var(--ink);font-weight:600}
+.legal-doc a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+.legal-date{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.legal-hr{border:0;border-top:1px solid var(--line-soft);margin:44px 0}
+.legal-back{display:inline-flex;align-items:center;gap:7px;margin-top:34px;font:600 13px var(--sans);color:var(--ink);text-decoration:none}
+.legal-back .ic{width:14px;height:14px}
 
 /* —— 诊断 v2（全屏接管）—— */
 .dx{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto}
