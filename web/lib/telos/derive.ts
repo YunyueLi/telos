@@ -34,8 +34,11 @@ export function envDeriveUrl(): string {
 
 export function getDeriveUrl(): string {
   if (typeof window !== "undefined") {
-    const override = window.localStorage.getItem(LS_KEY);
-    if (override && override.trim()) return override.trim();
+    const override = (window.localStorage.getItem(LS_KEY) || "").trim();
+    // 忽略「在非本机页面上指向 localhost 的过时覆盖」——否则线上会去打本地 serve.py，必然失败
+    //（常见于先本地开发、后用同一浏览器开线上版，残留了 telos:derive-url=127.0.0.1）。
+    const isLocalUrl = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|\/|$)/i.test(override);
+    if (override && !(isLocalUrl && !isLocalHost())) return override;
   }
   const env = envDeriveUrl();
   if (env) return env;
