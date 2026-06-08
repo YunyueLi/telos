@@ -32,7 +32,16 @@ import {
   upsertProject,
 } from "./project";
 import { deriveGraph, generateTitle } from "./derive";
-import { computeXp, getStreak, touchStreak } from "./xp";
+import {
+  addDailyXp,
+  computeXp,
+  getDailyInfo,
+  noteDerive,
+  recentDays,
+  setDailyGoal,
+  type DailyInfo,
+  type DayCell,
+} from "./xp";
 import { useAuth } from "./auth";
 import { cloudConfigured } from "./supabase";
 import { deleteRemoteProject, pullProjects, pushProject } from "./cloud";
@@ -45,6 +54,14 @@ interface ProjectContextValue {
   view: LearnerView | null;
   xp: number;
   streak: number;
+  dailyXp: number; // 今日已得 XP
+  dailyGoal: number; // 今日目标 XP
+  dailyPct: number; // 今日进度 0..1
+  dailyGoalMet: boolean;
+  freezes: number; // 可用断签保护
+  calendar: DayCell[]; // 最近若干天打卡格子
+  goalNonce: number; // 每次"刚达成今日目标"自增 → 触发庆祝
+  setDailyGoal: (g: number) => void;
   composing: boolean; // 正在"新学习"（即使有旧项目也显示引导页）
   deriving: boolean;
   deriveError: string | null;
@@ -72,8 +89,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActive] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
-  const [streak, setStreak] = useState(0);
+  const [dailyVersion, setDailyVersion] = useState(0); // 每次学习/改目标自增 → 重算每日信息
+  const [goalNonce, setGoalNonce] = useState(0); // 刚达成今日目标 → 触发庆祝
   const [deriving, setDeriving] = useState(false);
+  const projectsRef = useRef<Project[]>([]); // 与 projects 同步，供 mutateActive 同步读取算 XP delta
   const [deriveError, setDeriveError] = useState<string | null>(null);
   const { user } = useAuth();
   const userIdRef = useRef<string | null>(null);
@@ -85,9 +104,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setProjects(listProjects());
     setActive(getActiveId());
-    setStreak(getStreak());
     setReady(true);
   }, []);
+
+  // projectsRef 跟随 projects（任何 setProjects 后同步），供 mutateActive 同步算 XP delta。
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
 
   // 给旧项目补「概括标题」：加载后对没有 title 的项目逐个联网概括并存回（一次性、节流、失败回退原目标）。
   const backfilledRef = useRef(false);
@@ -122,6 +145,29 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     () => (graph && project ? computeXp(graph, project.state) : 0),
     [graph, project],
   );
+
+  // 每日目标 / 连胜 / 断签保护：从 localStorage(telos:daily) 读，随每次学习/改目标重算。
+  const daily = useMemo<DailyInfo | null>(
+    () => (ready ? getDailyInfo() : null),
+    [ready, dailyVersion],
+  );
+  const calendar = useMemo<DayCell[]>(
+    () => (ready ? recentDays(35) : []),
+    [ready, dailyVersion],
+  );
+  const streak = daily?.streak ?? 0;
+
+  // 记一次真实学习获得的 XP（delta）：刷新每日信息；刚达标则触发庆祝。
+  const noteLearning = useCallback((delta: number) => {
+    const r = addDailyXp(delta);
+    setDailyVersion((v) => v + 1);
+    if (r.justMetGoal) setGoalNonce((n) => n + 1);
+  }, []);
+
+  const updateDailyGoal = useCallback((g: number) => {
+    setDailyGoal(g);
+    setDailyVersion((v) => v + 1);
+  }, []);
 
   // 把更新后的项目并入列表（去重 + 按最近排序）
   const merge = useCallback((p: Project) => {
@@ -198,7 +244,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         pushCloud(p);
         setActive(p.id);
         setComposing(false);
-        setStreak(touchStreak());
+        const r = noteDerive();
+        setDailyVersion((v) => v + 1);
+        if (r.justMetGoal) setGoalNonce((n) => n + 1);
         setDeriving(false);
         return true;
       } catch (e) {
@@ -213,20 +261,22 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const mutateActive = useCallback(
     (fn: (g: KnowledgeGraph, state: LearnerState) => void) => {
-      setProjects((prev) => {
-        const cur = prev.find((p) => p.id === activeId);
-        if (!cur) return prev;
-        const g = new KnowledgeGraph(cur.points);
-        const state: LearnerState = JSON.parse(JSON.stringify(cur.state));
-        fn(g, state);
-        const p: Project = { ...cur, state, updatedAt: Date.now() };
-        upsertProject(p);
-        pushCloud(p);
-        return [p, ...prev.filter((x) => x.id !== cur.id)].sort(byRecent);
-      });
-      setStreak(touchStreak());
+      const cur = projectsRef.current.find((p) => p.id === activeId);
+      if (!cur) return;
+      const g = new KnowledgeGraph(cur.points);
+      const before = computeXp(g, cur.state);
+      const state: LearnerState = JSON.parse(JSON.stringify(cur.state));
+      fn(g, state);
+      const after = computeXp(g, state);
+      const p: Project = { ...cur, state, updatedAt: Date.now() };
+      upsertProject(p);
+      pushCloud(p);
+      const next = [p, ...projectsRef.current.filter((x) => x.id !== cur.id)].sort(byRecent);
+      projectsRef.current = next;
+      setProjects(next);
+      noteLearning(Math.max(0, after - before)); // 今日 XP 按真实掌握/复习增量计
     },
-    [activeId],
+    [activeId, pushCloud, noteLearning],
   );
 
   const record = useCallback(
@@ -287,6 +337,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     view,
     xp,
     streak,
+    dailyXp: daily?.xp ?? 0,
+    dailyGoal: daily?.goal ?? 20,
+    dailyPct: daily?.pct ?? 0,
+    dailyGoalMet: daily?.goalMet ?? false,
+    freezes: daily?.freezes ?? 0,
+    calendar,
+    goalNonce,
+    setDailyGoal: updateDailyGoal,
     composing,
     deriving,
     deriveError,

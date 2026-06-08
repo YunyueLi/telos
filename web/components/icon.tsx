@@ -2,7 +2,8 @@ export type IconName =
   | "check" | "lock" | "flag" | "target" | "arrow" | "up" | "clock"
   | "gauge" | "play" | "refresh" | "plus" | "spark" | "home" | "map"
   | "user" | "compass" | "settings" | "trash" | "globe"
-  | "chevron" | "search" | "x" | "sort" | "mail" | "logout";
+  | "chevron" | "search" | "x" | "sort" | "mail" | "logout"
+  | "flame" | "shield" | "calendar";
 
 export function Icon({
   name,

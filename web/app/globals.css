@@ -549,6 +549,70 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .me-dark .l{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,238,233,.6)}
 .me-dark p{font-size:13px;line-height:1.6;margin:8px 0 13px;color:rgba(240,238,233,.86)}
 
+/* —— 每日目标 · 连胜 · 打卡日历（多邻国式激励，纯黑白纸感）—— */
+.daily-streak{margin-left:auto;display:inline-flex;align-items:baseline;gap:7px;color:var(--ink)}
+.daily-streak .fl{width:18px;height:18px;align-self:center;color:var(--ink-3)}
+.daily-streak .fl.on{color:var(--ink)}
+.daily-streak b{font:500 20px var(--serif);line-height:1}
+.daily-streak s{text-decoration:none;font:500 10px var(--mono);color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+.daily-goalrow{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ring{width:76px;height:76px;flex:none}
+.ring circle{fill:none}
+.ring-trk{stroke:var(--line-soft);stroke-width:3.4}
+.ring-bar{stroke:var(--ink);stroke-width:3.4;stroke-linecap:round;transition:stroke-dashoffset .65s cubic-bezier(.22,1,.36,1)}
+.ring-pct{fill:var(--ink-2);font:600 11px var(--mono)}
+.ring-chk{fill:none;stroke:var(--ink);stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}
+.daily-meta{flex:1;min-width:120px}
+.daily-meta .lab{font:500 10px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.daily-meta .val{display:flex;align-items:baseline;gap:2px;margin:3px 0 4px}
+.daily-meta .val b{font:500 26px var(--serif);line-height:1;color:var(--ink)}
+.daily-meta .val .den{font:500 12px var(--mono);color:var(--ink-3)}
+.daily-meta .state{display:inline-flex;align-items:center;gap:5px;font:500 11.5px var(--mono);color:var(--ink-3)}
+.daily-meta .state.ok{color:var(--ink)}
+.daily-meta .state .ic{width:13px;height:13px}
+.daily-goalsel{flex:none;margin-left:auto}
+.daily-goalsel-btn{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);color:var(--ink-2);background:var(--card);border:1.5px solid var(--line-soft);border-radius:999px;padding:7px 12px;cursor:pointer}
+.daily-goalsel-btn:hover{border-color:var(--ink-3)}
+.daily-goalsel-btn .ic{width:14px;height:14px;color:var(--ink-3)}
+.daily-goalsel-btn .cv{transition:transform .2s}
+.daily-goalsel-btn .cv.up{transform:rotate(180deg)}
+.daily-freeze{display:flex;align-items:center;gap:12px;border:1px solid var(--line-soft);border-radius:14px;padding:11px 15px;background:var(--card);margin-top:15px}
+.daily-freeze .fz-ic{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1.4px solid var(--line-soft);border-radius:10px}
+.daily-freeze .fz-ic .ic{width:18px;height:18px;color:var(--ink-3)}
+.daily-freeze .fz-ic .ic.on{color:var(--ink)}
+.daily-freeze .fz-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.daily-freeze .fz-txt b{font:600 13px var(--sans);color:var(--ink)}
+.daily-freeze .fz-txt span{font:500 11px var(--mono);color:var(--ink-3);line-height:1.45}
+.daily-cal{margin-top:18px;max-width:344px}
+.cal-head,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-wd{text-align:center;font:500 9.5px var(--mono);text-transform:uppercase;color:var(--ink-3);padding-bottom:2px}
+.cal-grid{margin-top:2px}
+.cal-cell{aspect-ratio:1;border-radius:6px;border:1.4px solid var(--line-soft);background:var(--card);display:grid;place-items:center;position:relative}
+.cal-cell.partial{background:repeating-linear-gradient(45deg,transparent 0 4px,var(--hatch) 4px 5px),var(--card);border-color:var(--ink-3)}
+.cal-cell.met{background:var(--ink);border-color:var(--ink)}
+.cal-cell.frozen{background:var(--card);border-color:var(--ink-3)}
+.cal-cell.frozen .ic{width:13px;height:13px;color:var(--ink-2)}
+.cal-cell.today{box-shadow:0 0 0 2px var(--paper),0 0 0 3.6px var(--ink)}
+.cal-cell.blank{border:0;background:none}
+.cal-legend{display:flex;flex-wrap:wrap;gap:6px 15px;margin-top:13px;font:500 10px var(--mono);color:var(--ink-3)}
+.cal-legend span{display:inline-flex;align-items:center;gap:5px}
+.cal-legend .sw{width:12px;height:12px;border-radius:4px;border:1.4px solid var(--line-soft);display:inline-grid;place-items:center;flex:none}
+.cal-legend .sw.met{background:var(--ink);border-color:var(--ink)}
+.cal-legend .sw.partial{background:repeating-linear-gradient(45deg,transparent 0 3px,var(--hatch) 3px 4px),var(--card);border-color:var(--ink-3)}
+.cal-legend .sw.frozen{border-color:var(--ink-3)}
+.cal-legend .sw.frozen .ic{width:9px;height:9px;color:var(--ink-2)}
+/* 达标庆祝 */
+.celebrate{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px;background:rgba(20,19,16,.2);backdrop-filter:blur(2px);animation:celebFade .25s ease;cursor:pointer}
+.celebrate-card{position:relative;background:var(--card);border:1.5px solid var(--ink);border-radius:22px;padding:26px 30px 24px;text-align:center;max-width:320px;box-shadow:0 20px 54px rgba(20,19,16,.24);animation:celebPop .42s cubic-bezier(.22,1.2,.36,1)}
+.celebrate-portrait{width:92px;height:92px;margin:0 auto 12px}
+.celebrate-spark{margin-bottom:4px}
+.celebrate-spark .ic{width:26px;height:26px;color:var(--ink)}
+.celebrate-card h3{font:500 22px var(--serif);color:var(--ink);margin:2px 0 6px;letter-spacing:-.01em}
+.celebrate-card p{font:500 13px var(--sans);color:var(--ink-2);line-height:1.5}
+@keyframes celebFade{from{opacity:0}to{opacity:1}}
+@keyframes celebPop{from{transform:translateY(10px) scale(.95);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.ring-bar,.celebrate,.celebrate-card{transition:none;animation:none}}
+
 /* —— 诊断 v2（全屏接管）—— */
 .dx{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto}
 .dx-top{position:sticky;top:0;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:14px;padding:13px 22px;z-index:2}
