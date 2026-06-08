@@ -1,0 +1,14 @@
+{
+  "name": "telos-derive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telos 倒推代理 · Cloudflare Worker（镜像 core/serve.py 的 /derive /lesson /probe /title /health）",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
