@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
+import { useAuth } from "@/lib/telos/auth";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
 import { domainLabel } from "@/lib/telos/engine";
@@ -18,8 +19,9 @@ const GROUPS = [
 ] as const;
 
 export default function MePage() {
-  const { t } = useT();
-  const { ready, project, graph, view, xp, streak } = useProject();
+  const { t, lang } = useT();
+  const { ready, project, graph, view, xp, streak, syncing, lastSync, syncNow } = useProject();
+  const { configured, user, signOut } = useAuth();
 
   if (!ready) {
     return (
@@ -84,6 +86,57 @@ export default function MePage() {
             </div>
           </div>
         )}
+
+        {/* 账户 · 跨设备同步（与「设置 → 接入状态」呼应；登录/退出/同步都在这里） */}
+        <div className="me-sect">
+          <div className="me-sh">
+            <h3>{t("auth.eyebrow")}</h3>
+          </div>
+          {!configured ? (
+            <Link href="/settings" className="me-note" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+              {t("auth.notConfigured")} <Icon name="arrow" style={{ width: 12, height: 12 }} />
+            </Link>
+          ) : user ? (
+            <>
+              <div className="me-acct">
+                <span className="dot dot-ok" />
+                <div className="me-acct-id">
+                  <b>{user.email}</b>
+                  <span>{t("auth.signedIn")}</span>
+                </div>
+              </div>
+              <div className="auth-synccard" style={{ marginTop: 12 }}>
+                <div className="auth-syncrow">
+                  <Icon name="refresh" className="ic" />
+                  <div className="l">
+                    <b>{t("auth.syncOn")}</b>
+                    <span>
+                      {syncing
+                        ? t("auth.syncing")
+                        : lastSync
+                          ? t("auth.lastSync", { t: new Date(lastSync).toLocaleTimeString(lang) })
+                          : t("auth.never")}
+                    </span>
+                  </div>
+                  <button className="btn btn-line" onClick={() => void syncNow()} disabled={syncing}>
+                    {syncing ? t("auth.syncing") : t("auth.syncNow")}
+                  </button>
+                </div>
+              </div>
+              <button className="auth-signout" onClick={() => void signOut()}>
+                <Icon name="logout" /> {t("auth.signOut")}
+              </button>
+            </>
+          ) : (
+            <div className="me-dark dark">
+              <div className="l">{t("conn.syncTitle")}</div>
+              <p>{t("conn.syncSub")}</p>
+              <Link href="/account" className="btn btn-light" style={{ justifyContent: "center", width: "100%" }}>
+                {t("auth.signIn")} <Icon name="arrow" />
+              </Link>
+            </div>
+          )}
+        </div>
 
         {/* 掌握进度 */}
         <div className="me-sect">
