@@ -75,6 +75,20 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 
 ## 7. 后续工作（按优先级 · 续作主看这里）
 
+### 待办速览
+
+| # | 待办 | 优先级 | 谁做 | 状态 | 能否独立由助手完成 |
+|---|---|---|---|---|---|
+| 1 | 线上倒推（部署 Cloudflare Worker） | **P0** | 用户 wrangler → 我接线 | 未开始，**线上核心卡这** | 否（需用户 deploy） |
+| 2 | 多人周联赛 ⑤（全局周榜） | P1 | 用户建表 → 我接客户端 | 方案就绪，待建表 | 否（需用户建表） |
+| 3 | 额外登录（魔法链接/Google/GitHub） | P1 | 用户 Supabase 控制台 | UI 就绪，可选 | 否（需用户配置） |
+| 4 | 老项目「重新倒推」入口 | P2 | **我** | 未开始 | **是** |
+| 5 | 跨设备连胜同步（`user_meta` 表） | P2 | 用户建表 → 我接 | 可选 | 否 |
+| 6 | Supabase 邮件模板本地化 | P2 | 用户 Supabase | 可选 | 否 |
+| 7 | README 截图/GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 | 部分 |
+
+> 我能**完全独立**推进的只有 #4（老项目重新倒推入口）；其余都卡在需要用户做的外部动作（wrangler / Supabase 控制台）。**最该先做的是 #1**（不解决则线上访客登录后无法倒推，核心不可用）。
+
 ### P0 · 让线上能倒推（当前唯一卡核心的事）
 线上没有 LLM 端点 → 访客登录后无法倒推/学习。要部署 Cloudflare Worker 并接线：
 1. **用户做**：`cd workers && wrangler login && wrangler deploy` → 得 `https://telos-derive.<子域>.workers.dev`。设密钥：`wrangler secret put TELOS_LLM_API_KEY`（DeepSeek），可选 `wrangler secret put TELOS_SEARCH_API_KEY`（Tavily）。`wrangler.toml` 已含 `TELOS_LLM_MODEL=deepseek-v4-pro`。
@@ -122,8 +136,9 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **老项目「重新倒推」入口**：本程之前的旧图稀疏、无 module；在 `/settings` 项目卡加「用新框架重推」。
 - 删测试账号（§4）；账号删除/数据导出入口（可选）。
 
-## 8. 本程提交（git，已 push main）
-`fix(map)` CTA flex 截断 · `feat(settings)` 独立 /settings · `fix(settings)` 单列+备份归位 · `fix(nav)` 设置入口 · `fix(nav)` 顶栏三段重排 · `feat(switcher)` 项目切换器 · `fix(switcher)` 分面单行 · `feat(auth)` Supabase 账号+同步 · `feat(derive)` 分阶段进度 · `feat(ui)` 自定义下拉+达标线+折叠 · `feat(settings)` 接入状态重构 · `feat(settings)` 同步并入接入状态 · `feat(ui)` 账户 IA 重构 · `fix(mobile)` 去齿轮 · `fix(mobile)` 三段真居中（`b118659`）。
+## 8. 本程提交（git，已 push main · 多邻国式激励系统）
+`feat(gamify)` 每日目标+打卡日历+断签保护 ①②③（`765c7c9`）· `feat(streak)` 玩法独立成「坚持」Tab+全屏响应式（`d050b30`）· `feat(streak)` 打卡日历改月历翻页+真实日期（`456890f`）· `feat(streak)` 等级+段位+成就徽章+个人纪录 ④（`d2b1392`）· `feat(streak)` 段位天梯 ⑤本地+多人周联赛后端方案（`d456bc0`）。
+> 上一程（账号+IA 重构）止于 `b118659`，详见 git log。
 
 ## 9. 约定 / 安全（每次遵守）
 - 回复**中文**、不写「总结」段；commit 用 conventional，结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`；代码改动默认**直接 commit+push+部署**，不用问。
