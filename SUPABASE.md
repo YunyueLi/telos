@@ -31,6 +31,27 @@ create policy "own rows" on public.projects
 
 > 合并策略：客户端按 `data.updatedAt` 做 per-project 最后写入者胜（两台设备改不同项目都不丢）。
 
+### 2b. 周排行榜表（可选 · 「坚持」Tab 多人周联赛用，暂未接客户端）
+
+启用全局周榜后才需要建；不建也不影响其它功能（坚持 Tab 的段位天梯/成就/连胜全是本地的）。
+
+```sql
+create table public.leaderboard (
+  user_id    uuid        references auth.users primary key,
+  name       text,
+  week       text        not null,   -- ISO 周，如 2026-W24（周一 GMT 滚动）
+  xp         int         not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.leaderboard enable row level security;
+create policy "read all"   on public.leaderboard for select using (true);
+create policy "write own"  on public.leaderboard for insert with check (auth.uid() = user_id);
+create policy "update own" on public.leaderboard for update using (auth.uid() = user_id);
+```
+
+> 全局周榜（按本周 XP 排名）而非 30 人分组联赛（后者需 cron 分 cohort）。客户端接入计划见 `docs/HANDOFF.md` §7。
+
 ## 3. 配置登录方式（Authentication → Providers / URL Configuration）
 
 - **Email**：默认开启，即同时支持「邮箱+密码」和「魔法链接（OTP）」。如需关闭注册邮件确认可在 Email 设置里调整（保持开启更安全）。

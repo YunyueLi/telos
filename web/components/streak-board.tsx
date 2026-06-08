@@ -10,7 +10,16 @@ import { Icon, type IconName } from "@/components/icon";
 import { SelectMenu, type MenuOption } from "@/components/select-menu";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
-import { GOAL_OPTIONS, bestDayXp, levelInfo, maxStreak, monthGrid, totalXp, type DayCell } from "@/lib/telos/xp";
+import {
+  GOAL_OPTIONS,
+  TIER_MIN_LEVEL,
+  bestDayXp,
+  levelInfo,
+  maxStreak,
+  monthGrid,
+  totalXp,
+  type DayCell,
+} from "@/lib/telos/xp";
 
 // 进度环：纯 SVG，描边随 pct 收放；达标显对勾，否则显百分比。
 function Ring({ pct, met }: { pct: number; met: boolean }) {
@@ -211,6 +220,20 @@ export function StreakBoard() {
               <i style={{ width: `${Math.round(lvl.pct * 100)}%` }} />
             </div>
             <div className="lvl-next">{t("streak.toNext", { n: lvl.toNext })}</div>
+            <div className="tier-ladder" role="img" aria-label={t(`tier.${lvl.tier}`)}>
+              {TIER_MIN_LEVEL.map((_, i) => (
+                <span
+                  key={i}
+                  className={`tl-seg ${i <= lvl.tier ? "on" : ""} ${i === lvl.tier ? "cur" : ""}`.trim()}
+                  title={t(`tier.${i}`)}
+                />
+              ))}
+            </div>
+            <div className="tier-hint">
+              {lvl.tier < TIER_MIN_LEVEL.length - 1
+                ? t("streak.nextTier", { tier: t(`tier.${lvl.tier + 1}`), lv: TIER_MIN_LEVEL[lvl.tier + 1] })
+                : t("streak.maxTier")}
+            </div>
             <div className="lvl-records">
               <div>
                 <b>{longest}</b>

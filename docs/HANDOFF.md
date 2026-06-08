@@ -44,7 +44,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **倒推等待**：分阶段进度条（理解→规划蓝图→展开模块→汇编）+ 缓动进度 + 实时秒数。
 - **达标线**：`tier-text` 修复，按 `。/；/英文". "` 切分（不切小数）→ 新手/进阶/精英 分行。
 - **设置「我的学习」网格**：默认 6 个，超出「展开全部 N / 收起」。
-- **多邻国式激励 v1（①②③）= 独立「坚持」Tab**（地图 · 复习 · **坚持** · 我，位于复习之后）。`app/streak/page.tsx` + `components/streak-board.tsx`：连胜横幅（深色 ink）+ 今日目标进度环 + 断签保护卡 + 35 天打卡日历（纯黑白纸感、Intl 本地化星期/日期）。**全屏响应式**：手机单列堆叠 / ≥760px 左右分栏（今日+保护在左 360px，日历占满右列 1fr）。达标弹 `goal-celebrate.tsx` 庆祝（看板娘喝彩，~2.6s 自动消）。底座 `xp.ts`→`telos:daily`，集成进 `use-project`（每次学习算真实 XP delta、达标触发 `goalNonce`）。新图标 flame/shield/calendar。连胜数字三处呼应：顶栏火焰药丸（常驻）· /me 快览 · 坚持 Tab 横幅（玩法仅在此）。**已三档宽度 Preview 实测**（375/768/1180）。
+- **多邻国式激励 = 独立「坚持」Tab**（地图 · 复习 · **坚持** · 我，复习之后；`app/streak/page.tsx` + `components/streak-board.tsx`，全屏响应式手机单列 / ≥760 左右分栏）。含：连胜横幅 + ①今日目标环（自定档位 + 达标庆祝 `goal-celebrate.tsx`）+ ③断签保护 + **④等级卡**（Lv + 段位 + 进度 + ⑤段位天梯 + 个人纪录）+ ②**月历打卡**（翻页看历史月、真实日期号、星期对应）+ **④成就网格**（8 枚）。底座 `xp.ts`→`telos:daily`（每日 XP 流水/goal/freezes/frozen/rewarded + 等级曲线 + maxStreak/bestDay/totalXp），集成进 `use-project`（学习算真实 XP delta、达标触发 `goalNonce`、暴露 `dailyVersion`）。新图标 flame/shield/calendar/medal。连胜数字三处呼应：顶栏火焰药丸 · /me 快览 · 坚持 Tab。详见 §7。**多档宽度 Preview 实测**。**唯一未做：⑤ 多人周联赛（需 Supabase 表，见 §7）。**
 
 ## 4. Supabase 配置现状（精确）
 
@@ -87,11 +87,34 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **Google / GitHub OAuth**：Google Cloud / GitHub 建 OAuth 应用，回调 `https://gbvetfyudlbdiydapipr.supabase.co/auth/v1/callback`，client id/secret 填进 Supabase provider。登录页按钮已就绪，开了即生效。
 - 密码重置：`resetPasswordForEmail` 已接（「忘记密码」），同样需 Redirect URLs + 邮件模板。
 
-### P1 · 多邻国式激励系统（①②③ 已交付 v2 · 见 §3；剩 ④⑤）
-- **已做（本程）= 独立「坚持」Tab**（地图·复习·**坚持**·我，复习之后；`app/streak/page.tsx` + `streak-board.tsx`，全屏响应式 手机单列 / ≥760 左右分栏）：① 每日目标（用户自定 10/20/40/60 XP + 进度环 + 达标庆祝弹层 `goal-celebrate.tsx`）② 35 天打卡日历（达成实心 / 有学习 hatch / 冻结盾牌 / 今日墨环，Intl 本地化星期）③ 断签保护 freeze（缺勤自动桥接、连胜每 5 天奖 1 个、最多持 2，与 Duolingo 同）。底座：`xp.ts` 升级为 `telos:daily`（每日 XP 流水 + goal + freezes + frozen + rewarded），从旧 `telos:streak` 自动迁移；连胜改为「按是否达成今日目标」计。「我」页只留档案+掌握+账户（玩法已迁出）。**已三档宽度 Preview 实测**（375/768/1180，连胜/环/日历/freeze/庆祝全对）。
-- **剩（按子项）**：④ 等级/成就徽章（可由累计 XP 派生 level + 里程碑徽章）⑤（后置）排行榜（需 Supabase 表 + 隐私开关）。
-- **原则（续作守住）**：XP 永远绑真实掌握/复习信号、绝不绑在线时长；Telos 结构上无法刷连胜（掌握靠 BKT 阈值、复习靠 FSRS 到期）；目标可调可「轻松档」、低压力、无愧疚式暗黑模式（防 over-justification）。
-- **待打磨（可选）**：每日进度目前**仅本地**（`localStorage`），换设备不同步连胜——要跨设备需新建 `user_meta`/`profiles` 表（用户须在 Supabase 跑 SQL，外部动作）；domain **D 动作 / F 习惯**节点本是「打卡而非遗忘曲线」，可进一步把日历与之打通。
+### P1 · 多邻国式激励系统（①②③④ + ⑤本地 已交付 = 独立「坚持」Tab；剩 ⑤多人榜）
+全在 `app/streak/page.tsx` + `components/streak-board.tsx`（全屏响应式：手机单列 / ≥760 左右分栏），底座 `xp.ts`→`telos:daily`。
+- **① 每日目标**：用户自定 10/20/40/60 XP + 进度环 + 达标庆祝弹层 `goal-celebrate.tsx`。
+- **② 打卡日历**：**月历翻页**（‹ › 看历史月、不可越当前月），格子标真实日期号、星期列对应真实星期、未来日虚线淡显、今日墨环、达成实心/学习 hatch/冻结盾角标。
+- **③ 断签保护 freeze**：缺勤自动桥接、连胜每 5 天奖 1 个、最多持 2（与 Duolingo 同）。
+- **④ 等级 + 成就**：累计 XP→等级曲线（三角数）+ 段位（见习→钻石 6 档）+ 8 枚成就徽章（解锁/未解锁+进度），全由真实掌握·复习·连胜派生。
+- **⑤ 本地部分**：段位天梯（6 段进阶可视化 + 下一段位提示）+ 个人纪录（最长连胜/单日最高/已掌握）。
+- 连胜改「按是否达成今日目标」计，从旧 `telos:streak` 自动迁移；「我」页只留档案+掌握+账户（玩法全迁出）。**已多档宽度 Preview 实测**（375/430/768/1040/1180）。
+
+**⑤ 多人周联赛（待做 · 需 Supabase 后端表，属外部动作）**：真·竞技榜需要他人数据 + 用户基数，不上空壳假数据。备好方案：
+1. **用户做**（Supabase SQL Editor）：建表
+   ```sql
+   create table public.leaderboard (
+     user_id uuid references auth.users primary key,
+     name text, week text not null, xp int not null default 0,
+     updated_at timestamptz default now()
+   );
+   alter table public.leaderboard enable row level security;
+   create policy "read all" on public.leaderboard for select using (true);
+   create policy "write own" on public.leaderboard for insert with check (auth.uid()=user_id);
+   create policy "update own" on public.leaderboard for update using (auth.uid()=user_id);
+   ```
+   （`week` = ISO 周字符串，如 `2026-W24`，周一 GMT 滚动。SQL 也写进 `SUPABASE.md`。）
+2. **我做**：`cloud.ts` 加 `reportWeekXp(week, xp)`（同步时 upsert 本周 XP）+ `pullLeaderboard(week)`（读 top 30 + 自己排名）；坚持 Tab 加「本周联赛」区（top N + 自己名次 + 升降级线），隐私：显示名让用户设昵称、可关闭参榜；`xp.ts` 加 `weekXp()`（本周一起累计，已留接口位）。
+3. 决策：先做**全局周榜**（按本周 XP 排名，简单），不做 30 人分组联赛（需 cron 分 cohort，重）。无人时空态「本周还没有其他学习者，先把自己冲上去」。
+
+**原则（续作守住）**：XP 永远绑真实掌握/复习信号、绝不绑在线时长；Telos 结构上无法刷连胜（掌握靠 BKT 阈值、复习靠 FSRS 到期）；目标可调可「轻松档」、低压力、无愧疚式暗黑（防 over-justification）。
+**另一可选**：每日进度目前**仅本地**（`localStorage`），换设备不同步连胜——跨设备需 `user_meta` 表（同属外部动作）。
 
 ### P2 · 打磨
 - Supabase **邮件模板本地化**（默认英文；魔法链接/确认/重置邮件）。
