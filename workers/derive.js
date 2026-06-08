@@ -750,7 +750,17 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
     if (request.method === "GET" && (path === "" || path === "/health")) {
-      return json({ ok: true, available: !!env.TELOS_LLM_API_KEY, model: env.TELOS_LLM_MODEL || "deepseek-v4-pro" }, 200, env);
+      const sc = searchConfig(env);
+      return json(
+        {
+          ok: true,
+          available: !!env.TELOS_LLM_API_KEY,
+          model: env.TELOS_LLM_MODEL || "deepseek-v4-pro",
+          search: { provider: sc.provider, available: sc.provider !== "none" && !!sc.key },
+        },
+        200,
+        env,
+      );
     }
     if (request.method === "POST" && path === "/derive") {
       let goal = "";

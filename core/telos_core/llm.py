@@ -54,6 +54,12 @@ def available() -> bool:
     return bool(_config()[0])
 
 
+def search_status() -> dict:
+    """联网搜索（Tavily/YouTube）接入状态，供 /health 透出给「接入」UI。"""
+    provider, key = _search_config()
+    return {"provider": provider, "available": provider not in ("", "none") and bool(key)}
+
+
 def _thinking_off(model: str) -> dict:
     """DeepSeek V4 是「思考/非思考」双模、且思考为默认。倒推/微课/诊断要的是快速结构化 JSON，
     一律走非思考模式（更快、更省、不混入链式思考）。非 v4 模型不加此字段（旧模型 / 其它兼容厂商可能不识别）。"""
