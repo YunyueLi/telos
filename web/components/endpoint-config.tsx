@@ -1,10 +1,11 @@
 "use client";
 
-// 接入状态（重构）：用户只看「需要接入什么 + 现在通不通」——AI 引擎 / 联网搜索两张能力卡 + 实时状态点。
-// 技术细节（端点 URL、模式、测试/保存）收进「高级」折叠，给需要的人。key 永远在服务端，前端只选端点。
-// 本机 localhost 零配置默认指向 serve.py，绝大多数用户无需展开高级。
+// 接入状态：三张能力卡（AI 引擎 / 联网搜索 / 跨设备同步），点卡片弹出对应配置。
+// BYOK——用户自带 LLM 配置（API Key / 模型 / 接口地址），存本机 + 随账号同步，随请求发往服务、不落盘。
+// 服务端点（处理倒推的服务器，默认线上 Worker）收进「自部署」高级，普通用户无需触碰。
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/icon";
 import {
   getDeriveUrl,
@@ -14,16 +15,17 @@ import {
   setLlmConfig,
   LOCAL_ENDPOINT,
   type EndpointStatus,
+  type LlmConfig,
 } from "@/lib/telos/derive";
 import { useAuth } from "@/lib/telos/auth";
 import { supabase } from "@/lib/telos/supabase";
 import { useT } from "@/lib/telos/i18n";
 
 const DEEPSEEK_KEYS_URL = "https://platform.deepseek.com/api_keys";
-
-const PRESETS = [
+const MODEL_PRESETS = ["deepseek-v4-pro", "deepseek-v4-flash"];
+const ENDPOINT_PRESETS = [
+  { key: "worker", labelKey: "epc.worker", fill: "" }, // 线上默认（env 注入），留空＝用构建期默认
   { key: "local", labelKey: "epc.local", fill: LOCAL_ENDPOINT },
-  { key: "worker", labelKey: "epc.worker", fill: "https://你的子域.workers.dev/derive" },
 ];
 
 function provLabel(p?: string): string {
@@ -35,67 +37,80 @@ function provLabel(p?: string): string {
 export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void }) {
   const { t } = useT();
   const { configured: cloudCfg, user } = useAuth();
-  const [draft, setDraft] = useState("");
-  const [saved, setSaved] = useState("");
   const [status, setStatus] = useState<EndpointStatus | null>(null);
   const [testing, setTesting] = useState(false);
-  const [advanced, setAdvanced] = useState(false);
-  // BYOK：用户自带的 LLM key / base / model（存 localStorage，登录后随账号同步）。
-  const [llmKey, setLlmKey] = useState("");
-  const [llmBase, setLlmBase] = useState("");
-  const [llmModel, setLlmModel] = useState("");
-  const [showKey, setShowKey] = useState(false);
-  const [keySaved, setKeySaved] = useState("");
+  const [modal, setModal] = useState<null | "ai" | "search">(null);
 
-  async function runTest(u: string) {
+  // BYOK 配置草稿（打开弹层时从存储载入）
+  const [key, setKey] = useState("");
+  const [model, setModel] = useState("");
+  const [base, setBase] = useState("");
+  const [searchKey, setSearchKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [showSk, setShowSk] = useState(false);
+  const [ep, setEp] = useState(""); // 服务端点草稿
+  const [epAdv, setEpAdv] = useState(false);
+
+  async function runTest(u?: string) {
     setTesting(true);
     setStatus(null);
-    const s = await testEndpoint(u);
+    const s = await testEndpoint(u ?? getDeriveUrl());
     setStatus(s);
     setTesting(false);
-    if (!(s.ok && s.available !== false)) setAdvanced(true); // 没接上 → 自动展开配置
   }
 
   useEffect(() => {
-    const u = getDeriveUrl();
-    setDraft(u);
-    setSaved(u);
-    const c = getLlmConfig();
-    setLlmKey(c.key || "");
-    setLlmBase(c.base || "");
-    setLlmModel(c.model || "");
-    setKeySaved(c.key || "");
-    if (u) void runTest(u);
-    if (!u || !(c.key || "").trim()) setAdvanced(true); // 没端点或没 key → 自动展开
+    void runTest();
   }, []);
 
-  function save() {
-    const v = draft.trim();
-    setDeriveUrl(v);
-    setSaved(v);
-    onSaved?.(v);
-    if (v) void runTest(v);
+  function loadDrafts() {
+    const c = getLlmConfig();
+    setKey(c.key || "");
+    setModel(c.model || "");
+    setBase(c.base || "");
+    setSearchKey(c.searchKey || "");
+    setEp(getDeriveUrl());
+    setEpAdv(false);
+  }
+  function openAi() {
+    loadDrafts();
+    setModal("ai");
+  }
+  function openSearch() {
+    loadDrafts();
+    setModal("search");
   }
 
-  // 保存用户自带 key/base/model，并用新配置重测端点（key 经请求头发往端点，不进构建）。
-  function saveKey() {
-    const cfg = {
+  function persist(next: LlmConfig, endpoint?: string) {
+    setLlmConfig(next);
+    if (endpoint !== undefined) {
+      setDeriveUrl(endpoint.trim());
+      onSaved?.(endpoint.trim());
+    }
+    if (user) supabase()?.auth.updateUser({ data: { telos_llm: next } }).catch(() => {});
+  }
+
+  function saveAi() {
+    const next: LlmConfig = {
       ...getLlmConfig(),
-      key: llmKey.trim() || undefined,
-      base: llmBase.trim() || undefined,
-      model: llmModel.trim() || undefined,
+      key: key.trim() || undefined,
+      model: model.trim() || undefined,
+      base: base.trim() || undefined,
     };
-    setLlmConfig(cfg);
-    setKeySaved(llmKey.trim());
-    // 登录后把 BYOK 配置同步到账号（Supabase user_metadata），跨设备带着走。
-    if (user) supabase()?.auth.updateUser({ data: { telos_llm: cfg } }).catch(() => {});
-    const u = saved.trim() || getDeriveUrl();
-    if (u) void runTest(u);
+    persist(next, ep);
+    setModal(null);
+    void runTest(ep.trim() || undefined);
   }
-
-  const trimmed = draft.trim();
-  const isPreset = PRESETS.some((p) => p.fill === trimmed);
-  const active = PRESETS.find((p) => p.fill === trimmed)?.key ?? (trimmed ? "custom" : "");
+  function saveSearch() {
+    const next: LlmConfig = {
+      ...getLlmConfig(),
+      searchKey: searchKey.trim() || undefined,
+      searchProvider: searchKey.trim() ? "tavily" : undefined,
+    };
+    persist(next);
+    setModal(null);
+    void runTest();
+  }
 
   const llmOk = !!status?.ok && status.available !== false;
   const llmReachable = !!status?.ok;
@@ -105,8 +120,8 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
   return (
     <div className="epc">
       <div className="conn">
-        {/* AI 引擎 —— 必需 */}
-        <div className="conn-card">
+        {/* AI 引擎 —— 点按配置 LLM */}
+        <button className="conn-card" onClick={openAi}>
           <span className="conn-ic">
             <Icon name="spark" />
           </span>
@@ -116,7 +131,9 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
           </div>
           <div className="conn-stat">
             {testing ? (
-              <>{spin} {t("epc.testing")}</>
+              <>
+                {spin} {t("epc.testing")}
+              </>
             ) : llmOk ? (
               <>
                 <span className="dot dot-ok" /> {t("conn.connected")}
@@ -131,11 +148,12 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
                 <span className="dot dot-off" /> {t("conn.offline")}
               </>
             )}
+            <Icon name="arrow" className="conn-go" />
           </div>
-        </div>
+        </button>
 
-        {/* 联网搜索 —— 可选增强 */}
-        <div className="conn-card">
+        {/* 联网搜索 —— 点按配置 */}
+        <button className="conn-card" onClick={openSearch}>
           <span className="conn-ic">
             <Icon name="globe" />
           </span>
@@ -145,7 +163,9 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
           </div>
           <div className="conn-stat">
             {testing ? (
-              <>{spin} {t("epc.testing")}</>
+              <>
+                {spin} {t("epc.testing")}
+              </>
             ) : searchOk ? (
               <>
                 <span className="dot dot-ok" /> {t("conn.enabled")}
@@ -156,10 +176,11 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
                 <span className="dot dot-off" /> {t("conn.optional")}
               </>
             )}
+            <Icon name="arrow" className="conn-go" />
           </div>
-        </div>
+        </button>
 
-        {/* 跨设备同步（账号）—— 登录后多设备同步，点进 /account 登录/管理 */}
+        {/* 跨设备同步 —— 进 /account */}
         <Link href="/account" className="conn-card conn-card-link">
           <span className="conn-ic">
             <Icon name="refresh" />
@@ -187,109 +208,150 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
         </Link>
       </div>
 
-      <button className="conn-adv-toggle" onClick={() => setAdvanced((v) => !v)} aria-expanded={advanced}>
-        <Icon name="chevron" className={advanced ? "up" : ""} /> {t("conn.advanced")}
-      </button>
-
-      {advanced && (
-        <div className="conn-adv">
-          {/* BYOK：你自带的 LLM key —— 只存本机 + 你的账号，随请求发往端点，不落盘、不进构建 */}
-          <div className="epc-key">
-            <div className="epc-key-h">{t("conn.keyTitle")}</div>
-            <p className="epc-key-sub">
-              {t("conn.keySub")}{" "}
-              <a href={DEEPSEEK_KEYS_URL} target="_blank" rel="noreferrer">
-                {t("conn.keyGet")} <Icon name="arrow" />
-              </a>
-            </p>
-            <div className="epc-row">
-              <div className="auth-pwd" style={{ flex: 1 }}>
-                <input
-                  type={showKey ? "text" : "password"}
-                  placeholder="sk-..."
-                  value={llmKey}
-                  spellCheck={false}
-                  autoCapitalize="off"
-                  autoComplete="off"
-                  onChange={(e) => setLlmKey(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveKey();
-                  }}
-                />
-                <button type="button" className="auth-eye" onClick={() => setShowKey((v) => !v)}>
-                  {showKey ? t("auth.hide") : t("auth.show")}
+      {modal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="cfgm-back" onClick={() => setModal(null)} role="dialog" aria-modal="true">
+            <div className="cfgm" onClick={(e) => e.stopPropagation()}>
+              <div className="cfgm-head">
+                <h3>{modal === "ai" ? t("conn.aiTitle") : t("conn.searchTitle")}</h3>
+                <button className="cfgm-x" onClick={() => setModal(null)} aria-label={t("common.close")}>
+                  <Icon name="x" />
                 </button>
               </div>
-              <button className="btn btn-ink epc-btn" onClick={saveKey} disabled={!llmKey.trim()}>
-                {t("epc.save")}
-              </button>
+
+              {modal === "ai" ? (
+                <>
+                  <p className="cfgm-lead">{t("conn.aiCfgLead")}</p>
+
+                  <label className="cfgm-field">
+                    <span>{t("conn.fieldKey")}</span>
+                    <div className="cfgm-pwd">
+                      <input
+                        type={showKey ? "text" : "password"}
+                        placeholder="sk-..."
+                        value={key}
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        autoComplete="off"
+                        onChange={(e) => setKey(e.target.value)}
+                      />
+                      <button type="button" className="cfgm-eye" onClick={() => setShowKey((v) => !v)}>
+                        {showKey ? t("auth.hide") : t("auth.show")}
+                      </button>
+                    </div>
+                    <a className="cfgm-hint-link" href={DEEPSEEK_KEYS_URL} target="_blank" rel="noreferrer">
+                      {t("conn.getKey")} <Icon name="arrow" />
+                    </a>
+                  </label>
+
+                  <label className="cfgm-field">
+                    <span>{t("conn.fieldModel")}</span>
+                    <input
+                      placeholder="deepseek-v4-pro"
+                      value={model}
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      onChange={(e) => setModel(e.target.value)}
+                    />
+                    <div className="cfgm-chips">
+                      {MODEL_PRESETS.map((m) => (
+                        <button key={m} type="button" className={`cfgm-chip ${model === m ? "on" : ""}`} onClick={() => setModel(m)}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </label>
+
+                  <label className="cfgm-field">
+                    <span>{t("conn.fieldBase")}</span>
+                    <input
+                      placeholder="https://api.deepseek.com"
+                      value={base}
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      onChange={(e) => setBase(e.target.value)}
+                    />
+                  </label>
+
+                  <button className="cfgm-adv" onClick={() => setEpAdv((v) => !v)} aria-expanded={epAdv}>
+                    <Icon name="chevron" className={epAdv ? "up" : ""} /> {t("conn.selfhost")}
+                  </button>
+                  {epAdv && (
+                    <div className="cfgm-ep">
+                      <div className="cfgm-chips">
+                        {ENDPOINT_PRESETS.map((p) => (
+                          <button
+                            key={p.key}
+                            type="button"
+                            className={`cfgm-chip ${ep.trim() === p.fill ? "on" : ""}`}
+                            onClick={() => setEp(p.fill)}
+                          >
+                            {t(p.labelKey)}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        placeholder={LOCAL_ENDPOINT}
+                        value={ep}
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        onChange={(e) => setEp(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  {status && !status.ok && modal === "ai" && (
+                    <div className="cfgm-status bad">
+                      <span className="dot dot-off" /> {status.error}
+                    </div>
+                  )}
+
+                  <div className="cfgm-actions">
+                    <button className="btn btn-line" onClick={() => runTest(ep.trim() || undefined)} disabled={testing}>
+                      {testing ? t("epc.testing") : t("epc.test")}
+                    </button>
+                    <button className="btn btn-ink" onClick={saveAi}>
+                      {t("epc.save")}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="cfgm-lead">{t("conn.searchCfgLead")}</p>
+                  <label className="cfgm-field">
+                    <span>{t("conn.fieldSearchKey")}</span>
+                    <div className="cfgm-pwd">
+                      <input
+                        type={showSk ? "text" : "password"}
+                        placeholder="tvly-..."
+                        value={searchKey}
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        autoComplete="off"
+                        onChange={(e) => setSearchKey(e.target.value)}
+                      />
+                      <button type="button" className="cfgm-eye" onClick={() => setShowSk((v) => !v)}>
+                        {showSk ? t("auth.hide") : t("auth.show")}
+                      </button>
+                    </div>
+                    <span className="cfgm-hint">{t("conn.searchHint")}</span>
+                  </label>
+                  <div className="cfgm-actions">
+                    <button className="btn btn-ink" onClick={saveSearch}>
+                      {t("epc.save")}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              <p className="cfgm-note">
+                <Icon name="lock" /> {t("epc.note")}
+              </p>
             </div>
-            <div className="epc-row2">
-              <input
-                placeholder={t("conn.basePh")}
-                value={llmBase}
-                spellCheck={false}
-                autoCapitalize="off"
-                onChange={(e) => setLlmBase(e.target.value)}
-              />
-              <input
-                placeholder={t("conn.modelPh")}
-                value={llmModel}
-                spellCheck={false}
-                autoCapitalize="off"
-                onChange={(e) => setLlmModel(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="epc-eplabel">{t("conn.epTitle")}</div>
-          <div className="epc-chips">
-            {PRESETS.map((p) => (
-              <button key={p.key} className={`epc-chip ${active === p.key ? "on" : ""}`} onClick={() => setDraft(p.fill)}>
-                {t(p.labelKey)}
-              </button>
-            ))}
-            <button
-              className={`epc-chip ${active === "custom" ? "on" : ""}`}
-              onClick={() => {
-                if (isPreset) setDraft("");
-              }}
-            >
-              {t("epc.custom")}
-            </button>
-          </div>
-
-          <div className="epc-row">
-            <input
-              placeholder={LOCAL_ENDPOINT}
-              value={draft}
-              spellCheck={false}
-              autoCapitalize="off"
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") save();
-              }}
-            />
-            <button className="btn btn-line epc-btn" onClick={() => runTest(draft)} disabled={testing || !trimmed}>
-              {testing ? t("epc.testing") : t("epc.test")}
-            </button>
-            <button className="btn btn-ink epc-btn" onClick={save} disabled={trimmed === saved.trim()}>
-              {t("epc.save")}
-            </button>
-          </div>
-
-          {status && !status.ok && (
-            <div className="epc-status bad">
-              <span className="dot dot-off" /> {status.error}
-            </div>
-          )}
-
-          <div className="epc-note">
-            <Icon name="lock" style={{ width: 12, height: 12, verticalAlign: -2, marginRight: 5 }} />
-            {t("epc.note")}
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
