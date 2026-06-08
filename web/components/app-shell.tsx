@@ -6,11 +6,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon";
-import { asset } from "@/lib/base";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
 import { LangSwitch } from "@/components/lang-switch";
 import { ProjectSwitcher } from "@/components/project-switcher";
+import { AccountMenu } from "@/components/account-menu";
 
 type Tab = "map" | "review" | "me" | "settings";
 
@@ -101,10 +101,7 @@ export function AppShell({
             >
               <Icon name="settings" /> <span className="appgear-t">{t("nav.settings")}</span>
             </Link>
-            <Link href="/me" className={`appavatar ${tab === "me" ? "on" : ""}`} aria-label={t("nav.me")}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset("/portraits/avatar.png")} alt="" />
-            </Link>
+            <AccountMenu />
           </div>
         </div>
       </header>

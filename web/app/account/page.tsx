@@ -3,14 +3,13 @@
 // 账号页：登录 / 注册 / 退出 + 跨设备同步状态。OAuth/魔法链接回跳目标即此页（/account/）。
 // 设计依据：单页、最少字段；显示/隐藏密码、无「确认密码」（提升转化）；社交按钮白底单色 logo；
 // 友好错误 + 忘记密码（见 authgear / learnui / nngroup 调研）。未配置 Supabase 时优雅降级为本地优先说明。
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import { useAuth, type OAuthProvider } from "@/lib/telos/auth";
-import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
 
 const SUPABASE_DOC = "https://github.com/YunyueLi/telos/blob/main/SUPABASE.md";
@@ -32,10 +31,14 @@ function GithubMark() {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { t, lang } = useT();
-  const { configured, ready, user, signInPassword, signUpPassword, signInMagicLink, signInOAuth, resetPassword, signOut } =
+  const { t } = useT();
+  const { configured, ready, user, signInPassword, signUpPassword, signInMagicLink, signInOAuth, resetPassword } =
     useAuth();
-  const { cloudOn, syncing, lastSync, syncNow } = useProject();
+
+  // 账户/同步都在统一的「我的」(/me)；此页只负责登录，登录成功（会话建立）即跳过去。
+  useEffect(() => {
+    if (ready && user) router.replace("/me");
+  }, [ready, user, router]);
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -64,11 +67,11 @@ export default function AccountPage() {
       const r = await signUpPassword(email, password);
       if (!r.ok) setMsg({ kind: "err", text: mapErr(r.error) });
       else if (r.needsConfirm) setMsg({ kind: "ok", text: t("auth.signUpDone") });
-      else router.push("/");
+      // 否则会话已建立 → effect 跳转 /me
     } else {
       const r = await signInPassword(email, password);
       if (!r.ok) setMsg({ kind: "err", text: mapErr(r.error) });
-      else router.push("/");
+      // 成功 → effect 跳转 /me
     }
     setBusy(false);
   };
@@ -137,44 +140,12 @@ export default function AccountPage() {
     );
   }
 
-  // 已登录 → 账号 + 同步
+  // 已登录 → 由上面的 effect 跳到统一的「我的」(/me)；这里给个过渡态
   if (user) {
-    const provider = (user.app_metadata?.provider as string) || "email";
     return (
       <AppShell>
-        <div className="auth auth-narrow">
-          <div className="auth-head">
-            <span className="pcirc auth-portrait">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset("/portraits/avatar.png")} alt="" />
-            </span>
-            <div className="eyebrow">{t("auth.eyebrow")}</div>
-            <h2>{t("auth.signedIn")}</h2>
-            <p className="auth-email">{user.email}</p>
-            <span className="auth-provider">{t("auth.via")} · {provider}</span>
-          </div>
-
-          <div className="auth-synccard">
-            <div className="auth-syncrow">
-              <Icon name="refresh" className="ic" />
-              <div className="l">
-                <b>{t("auth.syncOn")}</b>
-                <span>
-                  {syncing ? t("auth.syncing") : lastSync ? t("auth.lastSync", { t: new Date(lastSync).toLocaleTimeString(lang) }) : t("auth.never")}
-                </span>
-              </div>
-              <button className="btn btn-line" onClick={() => void syncNow()} disabled={syncing || !cloudOn}>
-                {syncing ? t("auth.syncing") : t("auth.syncNow")}
-              </button>
-            </div>
-          </div>
-
-          <button className="auth-signout" onClick={() => void signOut()}>
-            <Icon name="logout" /> {t("auth.signOut")}
-          </button>
-          <Link className="auth-back" href="/">
-            <Icon name="arrow" style={{ transform: "rotate(180deg)" }} /> {t("auth.backHome")}
-          </Link>
+        <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
+          <span className="spinner" /> {t("auth.signedIn")}
         </div>
       </AppShell>
     );
