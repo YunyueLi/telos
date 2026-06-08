@@ -323,6 +323,8 @@ export const DICT: Record<string, Record<Lang, string>> = {
   "streak.recMastered": { "zh-CN": "已掌握", "zh-TW": "已掌握", en: "Mastered", fr: "Maîtrisées", ja: "習得", ko: "마스터", es: "Dominadas", ru: "Освоено", de: "Beherrscht" },
   "streak.achievements": { "zh-CN": "成就", "zh-TW": "成就", en: "Achievements", fr: "Succès", ja: "実績", ko: "업적", es: "Logros", ru: "Достижения", de: "Erfolge" },
   "streak.unlocked": { "zh-CN": "已解锁", "zh-TW": "已解鎖", en: "Unlocked", fr: "Débloqué", ja: "達成", ko: "달성", es: "Desbloqueado", ru: "Открыто", de: "Freigeschaltet" },
+  "streak.nextTier": { "zh-CN": "下一段位：{tier} · Lv {lv}", "zh-TW": "下一段位：{tier} · Lv {lv}", en: "Next: {tier} · Lv {lv}", fr: "Suivant : {tier} · Niv. {lv}", ja: "次の段位：{tier} · Lv {lv}", ko: "다음 등급: {tier} · Lv {lv}", es: "Siguiente: {tier} · Nv {lv}", ru: "Далее: {tier} · ур. {lv}", de: "Nächste: {tier} · Lv {lv}" },
+  "streak.maxTier": { "zh-CN": "已达最高段位", "zh-TW": "已達最高段位", en: "Top tier reached", fr: "Palier max atteint", ja: "最高段位に到達", ko: "최고 등급 달성", es: "Nivel máximo alcanzado", ru: "Высший ранг достигнут", de: "Höchste Stufe erreicht" },
   "tier.0": { "zh-CN": "见习", "zh-TW": "見習", en: "Novice", fr: "Débutant", ja: "見習い", ko: "수습", es: "Aprendiz", ru: "Новичок", de: "Neuling" },
   "tier.1": { "zh-CN": "青铜", "zh-TW": "青銅", en: "Bronze", fr: "Bronze", ja: "ブロンズ", ko: "브론즈", es: "Bronce", ru: "Бронза", de: "Bronze" },
   "tier.2": { "zh-CN": "白银", "zh-TW": "白銀", en: "Silver", fr: "Argent", ja: "シルバー", ko: "실버", es: "Plata", ru: "Серебро", de: "Silber" },
