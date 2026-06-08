@@ -9,5 +9,5 @@ TELOS_LLM_BASE_URL = "https://api.deepseek.com"
 TELOS_LLM_MODEL = "deepseek-v4-pro"
 # 联网检索（#4/#5）：provider 非敏感放这里；key 用 `wrangler secret put TELOS_SEARCH_API_KEY`。
 TELOS_SEARCH_PROVIDER = "tavily"
-# 可选：把跨域来源收紧到你的站点，降低被盗刷。默认 "*"。
-# ALLOW_ORIGIN = "https://yunyueli.github.io"
+# 跨域来源收紧到线上站点，降低被盗刷（本地开发走 serve.py，不经此 Worker）。
+ALLOW_ORIGIN = "https://yunyueli.github.io"
