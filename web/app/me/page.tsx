@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
-import { DailyGoal } from "@/components/daily-goal";
 import { useAuth } from "@/lib/telos/auth";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
@@ -87,9 +86,6 @@ export default function MePage() {
             </div>
           </div>
         )}
-
-        {/* 今日目标 · 连胜 · 打卡日历（多邻国式激励） */}
-        <DailyGoal />
 
         {/* 账户 · 跨设备同步（与「设置 → 接入状态」呼应；登录/退出/同步都在这里） */}
         <div className="me-sect">

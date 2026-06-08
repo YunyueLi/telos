@@ -13,11 +13,12 @@ import { ProjectSwitcher } from "@/components/project-switcher";
 import { AccountMenu } from "@/components/account-menu";
 import { GoalCelebrate } from "@/components/goal-celebrate";
 
-type Tab = "map" | "review" | "me" | "settings";
+type Tab = "map" | "review" | "streak" | "me" | "settings";
 
 const TABS: { key: Tab; href: string; icon: IconName; labelKey: string }[] = [
   { key: "map", href: "/", icon: "map", labelKey: "nav.map" },
   { key: "review", href: "/review", icon: "refresh", labelKey: "nav.review" },
+  { key: "streak", href: "/streak", icon: "flame", labelKey: "nav.streak" },
   { key: "me", href: "/me", icon: "user", labelKey: "nav.me" },
 ];
 
@@ -44,9 +45,11 @@ export function AppShell({
       ? "settings"
       : pathname.startsWith("/review")
         ? "review"
-        : pathname.startsWith("/me")
-          ? "me"
-          : "map");
+        : pathname.startsWith("/streak")
+          ? "streak"
+          : pathname.startsWith("/me")
+            ? "me"
+            : "map");
   const due = view?.due.length ?? 0;
 
   return (
