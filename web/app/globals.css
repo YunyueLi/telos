@@ -409,6 +409,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .cfgm-status .dot{width:8px;height:8px;border-radius:50%;flex:none}
 .cfgm-status.bad{color:#a23b2d}
 .cfgm-err{display:block;font:500 11px var(--mono);color:#a23b2d;margin-top:6px;line-height:1.5}
+.cfgm-bind{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:6px 0 4px}
+.cfgm-bind .cfgm-lead{margin:0}
+.cfgm-bind-cta{align-self:stretch;justify-content:center}
 .cfgm-field input[aria-invalid="true"]{border-color:#a23b2d}
 .cfgm-actions{display:flex;gap:10px;margin-top:8px}
 .cfgm-actions .btn{flex:1;justify-content:center}

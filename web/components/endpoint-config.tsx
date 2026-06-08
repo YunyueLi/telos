@@ -241,7 +241,14 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
                 </button>
               </div>
 
-              {modal === "ai" ? (
+              {cloudCfg && !user ? (
+                <div className="cfgm-bind">
+                  <p className="cfgm-lead">{t("conn.bindNote")}</p>
+                  <Link href="/account" className="btn btn-ink cfgm-bind-cta" onClick={() => setModal(null)}>
+                    {t("conn.bindSignIn")}
+                  </Link>
+                </div>
+              ) : modal === "ai" ? (
                 <>
                   <p className="cfgm-lead">{t("conn.aiCfgLead")}</p>
 

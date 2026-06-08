@@ -92,7 +92,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [deriving, setDeriving] = useState(false);
   const projectsRef = useRef<Project[]>([]); // 与 projects 同步，供 mutateActive 同步读取算 XP delta
   const [deriveError, setDeriveError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, ready: authReady } = useAuth();
   const userIdRef = useRef<string | null>(null);
   const syncedRef = useRef<string | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -204,7 +204,15 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   // 登录后自动同步一次（按 user.id 去重，token 刷新不重复触发）。
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
-    if (!cloudConfigured() || !user) {
+    if (!cloudConfigured()) return; // 无账号体系（自托管 / 未配 Supabase）：本机 key 自管，不动它
+    if (!authReady) return; // 等会话解析完再判断，避免加载瞬间把已登录用户的 key 误清
+    if (!user) {
+      // 未登录（退出后 / 直接刷新都算）→ key 跟账号走：清掉本机 key/检索配置，状态即「未连接」。
+      // 账号端 user_metadata 仍在，下次登录自动拉回（setLlmConfig 广播事件 → 接入状态卡即时刷新）。
+      const c = getLlmConfig();
+      if ((c.key || "").trim() || (c.searchKey || "").trim()) {
+        setLlmConfig({ ...c, key: undefined, searchKey: undefined, searchProvider: undefined });
+      }
       syncedRef.current = null;
       return;
     }
@@ -229,7 +237,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
     void syncNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, authReady]);
 
   const derive = useCallback(
     async (goal: string): Promise<boolean> => {
