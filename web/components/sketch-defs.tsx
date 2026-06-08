@@ -40,6 +40,7 @@ export function SketchDefs() {
         <symbol id="i-flame" viewBox="0 0 24 24"><path d="M13 2.5c.6 3.4-1.4 4.9-3 6.4C8.6 7.6 8.1 6.6 8 5.2 5.6 7.2 4.6 10.6 5 13.6a7 7 0 0 0 14 0c0-3.4-2.4-5.4-3.4-7.9-.8 1.2-1.3 2-1.6 3.3C13.7 6.2 13.4 4.3 13 2.5z" /></symbol>
         <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 2.5v5.6c0 4.6-3 7.6-7 9.4-4-1.8-7-4.8-7-9.4V5.5z" /><path d="M8.8 12.2l2.2 2.2 4.4-4.6" /></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 9.5h16M8.5 3v4M15.5 3v4" /></symbol>
+        <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8.5 8.5L6 3M15.5 8.5L18 3" /><circle cx="12" cy="14" r="6" /><path d="M12 11l.85 1.7 1.9.28-1.37 1.34.32 1.88L12 15.4l-1.7.9.32-1.88-1.37-1.34 1.9-.28z" /></symbol>
       </defs>
     </svg>
   );

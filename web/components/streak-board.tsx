@@ -6,11 +6,11 @@
 // 设计依据：Duolingo（目标自定、连胜按达成今日目标计、freeze 自动桥接、最多持 2）；
 // 习惯类 App 月历打卡（月份切换、日期数字、今日高亮、未来日淡显）；动机红线见 xp.ts。
 import { useMemo, useState } from "react";
-import { Icon } from "@/components/icon";
+import { Icon, type IconName } from "@/components/icon";
 import { SelectMenu, type MenuOption } from "@/components/select-menu";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
-import { GOAL_OPTIONS, monthGrid, type DayCell } from "@/lib/telos/xp";
+import { GOAL_OPTIONS, bestDayXp, levelInfo, maxStreak, monthGrid, totalXp, type DayCell } from "@/lib/telos/xp";
 
 // 进度环：纯 SVG，描边随 pct 收放；达标显对勾，否则显百分比。
 function Ring({ pct, met }: { pct: number; met: boolean }) {
@@ -41,7 +41,26 @@ function Ring({ pct, met }: { pct: number; met: boolean }) {
 
 export function StreakBoard() {
   const { t, lang } = useT();
-  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, dailyVersion, setDailyGoal } = useProject();
+  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, dailyVersion, setDailyGoal, view } =
+    useProject();
+
+  // 等级 / 段位 / 个人纪录（全本地真实算，随学习重算）。
+  const total = useMemo(() => totalXp(), [dailyVersion]);
+  const lvl = useMemo(() => levelInfo(total), [total]);
+  const longest = useMemo(() => maxStreak(), [dailyVersion]);
+  const best = useMemo(() => bestDayXp(), [dailyVersion]);
+  const mastered = view?.mastered ?? 0;
+  const mapPct = view?.pct ?? 0;
+  const achievements: { id: string; icon: IconName; value: number; target: number }[] = [
+    { id: "firstStep", icon: "check", value: Math.min(longest, 1), target: 1 },
+    { id: "streak7", icon: "flame", value: longest, target: 7 },
+    { id: "streak30", icon: "flame", value: longest, target: 30 },
+    { id: "xp1000", icon: "spark", value: total, target: 1000 },
+    { id: "xp5000", icon: "spark", value: total, target: 5000 },
+    { id: "master25", icon: "target", value: mastered, target: 25 },
+    { id: "mapDone", icon: "flag", value: mapPct, target: 100 },
+    { id: "shieldFull", icon: "shield", value: freezes, target: 2 },
+  ];
 
   // 当前查看的月份（默认本月）。不能翻到未来月。
   const now = new Date();
@@ -175,6 +194,38 @@ export function StreakBoard() {
               </div>
             </div>
           </section>
+
+          {/* 等级 / 段位 / 个人纪录 */}
+          <section className="streak-card lvl-card">
+            <div className="lvl-top">
+              <span className="lvl-medal">
+                <Icon name="medal" />
+              </span>
+              <div className="lvl-id">
+                <b>Lv {lvl.level}</b>
+                <span>{t(`tier.${lvl.tier}`)}</span>
+              </div>
+              <span className="lvl-xp">{total} XP</span>
+            </div>
+            <div className="lvl-bar">
+              <i style={{ width: `${Math.round(lvl.pct * 100)}%` }} />
+            </div>
+            <div className="lvl-next">{t("streak.toNext", { n: lvl.toNext })}</div>
+            <div className="lvl-records">
+              <div>
+                <b>{longest}</b>
+                <span>{t("streak.recMaxStreak")}</span>
+              </div>
+              <div>
+                <b>{best}</b>
+                <span>{t("streak.recBestDay")}</span>
+              </div>
+              <div>
+                <b>{mastered}</b>
+                <span>{t("streak.recMastered")}</span>
+              </div>
+            </div>
+          </section>
         </div>
 
         {/* 打卡日历（月历翻页） */}
@@ -234,6 +285,30 @@ export function StreakBoard() {
           </div>
         </section>
       </div>
+
+      {/* 成就 */}
+      <section className="streak-ach">
+        <div className="sc-h">
+          <h3>{t("streak.achievements")}</h3>
+        </div>
+        <div className="ach-grid">
+          {achievements.map((a) => {
+            const unlocked = a.value >= a.target;
+            return (
+              <div key={a.id} className={`ach ${unlocked ? "on" : ""}`}>
+                <span className="ach-ic">
+                  <Icon name={a.icon} />
+                </span>
+                <div className="ach-t">
+                  <b>{t(`ach.${a.id}`)}</b>
+                  <span>{unlocked ? t("streak.unlocked") : `${Math.min(a.value, a.target)} / ${a.target}`}</span>
+                </div>
+                {unlocked && <Icon name="check" className="ach-chk" />}
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

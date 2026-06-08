@@ -239,6 +239,71 @@ export function setDailyGoal(goal: number): void {
   persist(d);
 }
 
+// ---- 等级 / 段位 / 统计（④⑤ 本地真实算）----
+export const LEVEL_BASE = 60; // 第 L→L+1 级所需 XP = LEVEL_BASE*L（累计为三角数，前期快后期缓）
+export const TIER_MIN_LEVEL = [1, 3, 6, 10, 15, 21]; // 见习 / 青铜 / 白银 / 黄金 / 铂金 / 钻石
+
+function cumXpFor(level: number): number {
+  return (LEVEL_BASE * (level - 1) * level) / 2; // 达到 level 所需累计 XP
+}
+
+export interface LevelInfo {
+  level: number;
+  into: number; // 当前级已积累
+  span: number; // 当前级总跨度
+  toNext: number; // 距下一级
+  pct: number; // 0..1
+  total: number;
+  tier: number; // 段位索引 0..TIER_MIN_LEVEL.length-1
+}
+
+export function levelInfo(total: number): LevelInfo {
+  let level = 1;
+  while (cumXpFor(level + 1) <= total) level++;
+  const base = cumXpFor(level);
+  const span = cumXpFor(level + 1) - base;
+  const into = total - base;
+  let tier = 0;
+  for (let k = 0; k < TIER_MIN_LEVEL.length; k++) if (level >= TIER_MIN_LEVEL[k]) tier = k;
+  return { level, into, span, toNext: span - into, pct: span > 0 ? into / span : 0, total, tier };
+}
+
+// 累计赚取的 XP（每日流水求和，绑真实学习）。
+export function totalXp(): number {
+  const d = load();
+  let s = 0;
+  for (const k in d.days) s += d.days[k];
+  return s;
+}
+
+// 单日最高 XP。
+export function bestDayXp(): number {
+  const d = load();
+  let m = 0;
+  for (const k in d.days) if (d.days[k] > m) m = d.days[k];
+  return m;
+}
+
+// 历史最长连胜（扫所有 covered 日，求最长连续 run）。
+export function maxStreak(): number {
+  const d = load();
+  const set = new Set<string>();
+  for (const k in d.days) if (d.days[k] >= d.goal) set.add(k);
+  for (const f of d.frozen) set.add(f);
+  let best = 0;
+  for (const day of set) {
+    if (set.has(shift(day, -1))) continue; // 只从 run 起点数
+    let len = 0;
+    let cur = day;
+    while (set.has(cur)) {
+      len++;
+      cur = shift(cur, 1);
+    }
+    if (len > best) best = len;
+  }
+  return best;
+}
+
 // 某个自然月的格子（1..月末），供月历翻页渲染。monthIndex: 0=一月 .. 11=十二月。
 export function monthGrid(year: number, monthIndex: number): DayCell[] {
   const d = load();

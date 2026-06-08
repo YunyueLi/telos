@@ -654,6 +654,34 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .cal-card .daily-cal{margin-top:0}
 @media(min-width:760px){.streak-grid{grid-template-columns:minmax(300px,360px) 1fr;align-items:start}}
 @media(max-width:520px){.streak{padding:22px 16px 56px}.streak-banner{padding:17px 18px;gap:12px}.sb-num b{font-size:34px}.sb-state{font-size:11px}}
+/* 等级 / 段位 / 个人纪录 */
+.lvl-top{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.lvl-medal{flex:none;width:38px;height:38px;display:grid;place-items:center;border:1.4px solid var(--ink);border-radius:11px;background:var(--paper)}
+.lvl-medal .ic{width:20px;height:20px;color:var(--ink)}
+.lvl-id{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lvl-id b{font:500 17px var(--serif);color:var(--ink);line-height:1}
+.lvl-id span{font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.lvl-xp{margin-left:auto;font:600 11px var(--mono);color:var(--ink-3);flex:none}
+.lvl-bar{height:7px;border-radius:999px;background:var(--line-soft);overflow:hidden}
+.lvl-bar i{display:block;height:100%;background:var(--ink);border-radius:999px;transition:width .5s ease}
+.lvl-next{font:500 10.5px var(--mono);color:var(--ink-3);margin-top:7px}
+.lvl-records{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;border-top:1px solid var(--line-soft);padding-top:13px}
+.lvl-records > div{display:flex;flex-direction:column;gap:3px;text-align:center}
+.lvl-records b{font:500 18px var(--serif);color:var(--ink);line-height:1}
+.lvl-records span{font:500 9px var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3)}
+/* 成就 */
+.streak-ach{margin-top:20px}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:11px}
+.ach{display:flex;align-items:center;gap:11px;border:1px solid var(--line-soft);border-radius:13px;padding:12px 13px;background:var(--card);position:relative;opacity:.5}
+.ach.on{opacity:1;border-color:var(--ink)}
+.ach-ic{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1.4px solid var(--line-soft);border-radius:9px;background:var(--paper)}
+.ach-ic .ic{width:18px;height:18px;color:var(--ink-3)}
+.ach.on .ach-ic{border-color:var(--ink)}
+.ach.on .ach-ic .ic{color:var(--ink)}
+.ach-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ach-t b{font:600 13px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ach-t span{font:500 10.5px var(--mono);color:var(--ink-3)}
+.ach-chk{position:absolute;top:10px;right:11px;width:14px;height:14px;color:var(--ink)}
 
 /* —— 诊断 v2（全屏接管）—— */
 .dx{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto}
