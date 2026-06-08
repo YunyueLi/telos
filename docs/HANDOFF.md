@@ -7,7 +7,8 @@
 
 ## 0. 一句话现状
 
-倒推已是**多段层级化**（30–80 节点）、模型 **deepseek-v4-pro 非思考**；**账号 + 跨设备同步已真上线并实测通过**（Supabase）；顶栏/设置/账户的信息架构做了多轮重构。**线上倒推端点已部署并打通**——Cloudflare Worker `telos-derive.xuanlyy.workers.dev`（deepseek-v4-pro + tavily，CORS 收紧到 github.io），`NEXT_PUBLIC_TELOS_DERIVE_URL` 已注入构建，端到端实测输目标倒推 48 节点。**线上核心（注册/登录/倒推/学习/同步）现已全部可用。**
+倒推多段层级化（30–80 节点）、模型 deepseek-v4-pro。账号+跨设备同步上线（Supabase：邮箱/密码、魔法链接、Google ✅；GitHub 待开）。**线上为 BYOK**：Worker `telos-derive.xuanlyy.workers.dev` 编排倒推，**用每个用户自带的 key**（前端「接入状态」填、存本机 + 随 Supabase `user_metadata` 同步、随请求经 `X-Telos-Key` 头发出、Worker 不留存）；站长已**删除 Worker env key** → 纯 BYOK 零成本。多人激励「坚持」Tab、营销落地页、隐私/条款页、设计参考 `docs/DESIGN.md`、首个 Release **v0.1.0** 均已上线。
+> **⚠️ 待验证（本程结尾刚修，部署中）**：用户反馈"线上填 key 保存后没用"。已查明：**Worker + 用户 key 经 curl 实测 OK（42 节点）**，根因是浏览器残留本地开发的 `telos:derive-url=127.0.0.1` 覆盖，线上会去打本机 serve.py 必然失败。已修 `getDeriveUrl`：非本机页面忽略 localhost 覆盖（commit `61885dc`）。**续作第一件事**：部署完后线上 hard-refresh（或 `localStorage.removeItem('telos:derive-url')`）→ 接入状态点 AI 引擎填 key → 验证能倒推。若仍不行，见 §7 P0-BYOK 排查清单。
 
 ## 1. 怎么跑（本地）
 
@@ -80,17 +81,27 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 
 ### 待办速览
 
-| # | 待办 | 优先级 | 谁做 | 状态 | 能否独立由助手完成 |
-|---|---|---|---|---|---|
-| 1 | ~~线上倒推（部署 Cloudflare Worker）~~ | ~~P0~~ | 用户 wrangler + 我接线 | **✅ 已完成**（实测倒推 48 节点） | — |
-| 2 | 多人周联赛 ⑤（全局周榜） | P1 | 用户建表 → 我接客户端 | 方案就绪，待建表 | 否（需用户建表） |
-| 3 | GitHub 登录（魔法链接 + Google 已开） | P1 | 用户 Supabase + GitHub | Google/魔法链接 ✅；剩 GitHub | 否（需用户配置） |
-| 4 | 老项目「重新倒推」入口 | P2 | **我** | 未开始 | **是** |
-| 5 | 跨设备连胜同步（`user_meta` 表） | P2 | 用户建表 → 我接 | 可选 | 否 |
-| 6 | Supabase 邮件模板本地化 | P2 | 用户 Supabase | 可选 | 否 |
-| 7 | README 截图/GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 | 部分 |
+| # | 待办 | 优先级 | 谁做 | 状态 |
+|---|---|---|---|---|
+| 0 | **验证线上 BYOK 倒推**（填 key→倒推） | **P0** | 用户 hard-refresh 验 + 我修剩余 | 刚修 localhost 覆盖 bug（`61885dc`），**待线上确认** |
+| 1 | ~~线上倒推端点（Worker 部署）~~ | ~~P0~~ | — | ✅ 已完成 |
+| 2 | GitHub 登录（魔法链接 + Google 已开） | P1 | 用户 GitHub+Supabase | 剩 GitHub（建 OAuth App，回调 `…supabase.co/auth/v1/callback`，填进 Supabase provider，开了即生效；GitHub 同意页天然显示「Telos」） |
+| 3 | 多人周联赛 ⑤（全局周榜） | P1 | 用户建表 → 我接客户端 | 方案+SQL 就绪（SUPABASE.md §2b），待建表 |
+| 4 | 老项目「重新倒推」入口 | P2 | **我（可独立）** | 未开始 |
+| 5 | 跨设备连胜/激励同步（`user_meta` 或 user_metadata） | P2 | 我（可仿 BYOK 同步做） | 可选；连胜目前仅本地 |
+| 6 | 文档继续扫（STRATEGY/ROADMAP 过时项） | P2 | **我（可独立）** | README/DERIVE 本程已扫 |
+| 7 | Supabase 邮件模板本地化 · README 截图GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 |
 
-> 我能**完全独立**推进的只有 #4（老项目重新倒推入口）；其余都卡在需要用户做的外部动作（建表 / OAuth 控制台）。
+> 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#0 验证、#2 GitHub、#3 建表。
+
+### P0-BYOK 排查清单（若线上填 key 仍不能倒推）
+1. **已确认 OK**：Worker + 用户 key 经 curl 实测返回 42 节点（`curl -X POST .../derive -H "X-Telos-Key: <key>" -d '{"goal":"…"}'`）。所以 Worker/CORS/key 都没问题。
+2. 浏览器 devtools → Application → Local Storage：看 `telos:derive-url`（应为空或 `…workers.dev/derive`，**不能是 127.0.0.1**——本程已让线上忽略 localhost 覆盖，但 hard-refresh 后才生效）、`telos:llm`（应含 `key`）。
+3. Network 看 `/derive` 请求：有没有带 `X-Telos-Key` 头？响应码？401=key 错；NO_KEY=没带 key（config 没存上）；CORS 错=预检头。
+4. 确认线上是最新构建（`/_next/.../*.js` 含 `X-Telos-Key`）；GitHub Pages CDN 有缓存，hard-refresh。
+
+### 本程交付（this session，均已 push + 部署）
+多邻国式激励「坚持」Tab（每日目标/月历打卡/断签保护/等级段位/成就/段位天梯，①②③④⑤本地）· 登录区按钮等宽 · `docs/DESIGN.md` 设计参考 · 营销版落地页重写（对齐 App）· 隐私/服务条款页 · 魔法链接+Google 登录开通 · **P0 Worker 部署接线** · **BYOK**（用户自带 key+随账号同步+接入状态弹层重做+去"免费"措辞）· README/DERIVE 准确性审计 · 首个 Release **v0.1.0** + CHANGELOG。
 
 ### P0 · 让线上能倒推 —— ✅ 已完成
 - **Worker**：`telos-derive.xuanlyy.workers.dev`（用户 Cloudflare 账号 `xuanlyy`，`npx wrangler deploy` 部署；`wrangler.toml` name=telos-derive、model=deepseek-v4-pro、provider=tavily、`ALLOW_ORIGIN=https://yunyueli.github.io`）。
