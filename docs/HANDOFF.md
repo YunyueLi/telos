@@ -7,12 +7,13 @@
 
 ## 0. 一句话现状
 
-倒推多段层级化（30–80 节点）、模型 deepseek-v4-pro。账号+跨设备同步上线（Supabase：邮箱/密码、魔法链接、Google ✅；GitHub 待开）。**线上为 BYOK**：Worker `telos-derive.xuanlyy.workers.dev` 编排倒推，**用每个用户自带的 key**（前端「接入状态」填、存本机 + 随 Supabase `user_metadata` 同步、随请求经 `X-Telos-Key` 头发出、Worker 不留存）；站长已**删除 Worker env key** → 纯 BYOK 零成本。多人激励「坚持」Tab、营销落地页、隐私/条款页、设计参考 `docs/DESIGN.md`、首个 Release **v0.1.0** 均已上线。
+倒推多段层级化（30–80 节点）、模型 deepseek-v4-pro。账号+跨设备同步上线（Supabase：邮箱/密码、魔法链接、Google ✅；GitHub 待开）。**线上为 BYOK，且 key 跟账号绑定**：Worker `telos-derive.xuanlyy.workers.dev` 编排倒推，**用每个用户自带的 key**（登录后在「接入状态」绑定 → 存 Supabase `user_metadata` + 本机镜像；随请求经 `X-Telos-Key` 头发出、Worker 不留存）；**登录自动连接、退出登录即清本机 key**（未登录刷新也是未连接，云端已配置时 AI/搜索弹层只显示「登录后绑定」面板）；站长已**删除 Worker env key** → 纯 BYOK 零成本。多人激励「坚持」Tab、营销落地页、隐私/条款页、设计参考 `docs/DESIGN.md`、首个 Release **v0.1.0** 均已上线。
 > **BYOK 三处根因已全部修复并上线**（用户反馈"线上填 key 没用 / 配置不随账号走"）：
 > 1. `telos:derive-url=127.0.0.1` 残留覆盖 → 线上去打本机 serve.py。修：非本机页面忽略 localhost 覆盖（`61885dc`）。
 > 2. **接口地址被填成 `"DeepSeek"` 等非 URL** → Worker 拼 `DeepSeek/chat/completions` 抛 `Invalid URL`。修：新增 `cleanBaseUrl()`（缺协议补 https://、剥误粘的 `/chat/completions`、主机不像域名判无效）；`llmHeaders` 只发合法 base（自愈脏值，无需用户操作即可倒推）；保存时校验+提示、加载时显示规整值（`73c5708`）。
 > 3. **配置不随账号走**：原推送仅「保存且已登录」、拉取仅「本机无 key」→「先填 key 后登录」既不上传又跳过拉取。修：登录时按 `updatedAt` 双向对账（后写入者胜），`LlmConfig` 加 `updatedAt`、`setLlmConfig` 广播 `telos:llm` 事件、接入状态卡监听即时重测（`73c5708`/`fc0592b`）。
-> 验证链已逐环确认（cleanBaseUrl 单测 + 线上 chunk grep 命中新代码 + 无 base 的 curl 出 42 节点）。**用户侧确认**：hard-refresh 线上 → 直接输目标倒推（旧脏 base 会被自动忽略）；接入状态点 AI 引擎，接口地址会显示为空（已规整），保存即净化本机存储。
+> 4. **key 改为「跟账号绑定」**（用户要求：登录＝连上我的 key，退出＝没 key）：登录从 `user_metadata` 拉回；未登录（退出后 / 直接刷新）清本机 key/检索配置 → 未连接（`authReady` 门避免加载瞬间误清已登录用户）；云端已配置但未登录时，AI/搜索弹层显示「登录后绑定」面板而非填 key 表单（`47ae529`）。**自托管未配 Supabase 时不受影响**（本机 key 自管）。
+> 验证链已逐环确认（cleanBaseUrl 单测 + 线上 chunk grep 命中新代码 + 无 base 的 curl 出 42 节点；Preview 实测未登录刷新即清 key、显示未连接、弹出绑定面板、无报错）。**用户侧确认**：登录 → 接入状态点 AI 引擎绑定 key → 自动连接；退出登录 → 变未连接；重新登录 → 自动恢复。
 
 ## 1. 怎么跑（本地）
 
