@@ -28,6 +28,8 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [backup, setBackup] = useState("");
   const [msg, setMsg] = useState("");
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const PROJECT_CAP = 6; // 默认最多 2 行（桌面 3 列）；多的折叠
 
   useEffect(() => {
     setMounted(true);
@@ -120,39 +122,47 @@ export default function SettingsPage() {
           {projects.length === 0 ? (
             <p className="me-note">{t("me.noProjects")}</p>
           ) : (
-            <div className="me-projects" style={{ marginTop: 12 }}>
-              {projects.map((p) => {
-                const pr = progressOf(p);
-                const active = project?.id === p.id;
-                return (
-                  <div key={p.id} className={`me-proj ${active ? "on" : ""}`}>
-                    <button
-                      className="me-proj-main"
-                      title={p.goal}
-                      onClick={() => {
-                        switchProject(p.id);
-                        router.push("/");
-                      }}
-                    >
-                      <span className="me-proj-goal">{projectTitle(p)}</span>
-                      <span className="me-proj-meta">
-                        {active && <i className="me-proj-dot" />}
-                        {t("me.projMastered", { m: pr.mastered, t: pr.total })}
-                        {active ? ` · ${t("me.current")}` : ""}
-                      </span>
-                    </button>
-                    <button
-                      className="me-proj-del"
-                      onClick={() => remove(p.id, p.goal)}
-                      title={t("me.delProject")}
-                      aria-label={t("me.delProject")}
-                    >
-                      <Icon name="trash" style={{ width: 15, height: 15 }} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+            <>
+              <div className="me-projects" style={{ marginTop: 12 }}>
+                {(showAllProjects ? projects : projects.slice(0, PROJECT_CAP)).map((p) => {
+                  const pr = progressOf(p);
+                  const active = project?.id === p.id;
+                  return (
+                    <div key={p.id} className={`me-proj ${active ? "on" : ""}`}>
+                      <button
+                        className="me-proj-main"
+                        title={p.goal}
+                        onClick={() => {
+                          switchProject(p.id);
+                          router.push("/");
+                        }}
+                      >
+                        <span className="me-proj-goal">{projectTitle(p)}</span>
+                        <span className="me-proj-meta">
+                          {active && <i className="me-proj-dot" />}
+                          {t("me.projMastered", { m: pr.mastered, t: pr.total })}
+                          {active ? ` · ${t("me.current")}` : ""}
+                        </span>
+                      </button>
+                      <button
+                        className="me-proj-del"
+                        onClick={() => remove(p.id, p.goal)}
+                        title={t("me.delProject")}
+                        aria-label={t("me.delProject")}
+                      >
+                        <Icon name="trash" style={{ width: 15, height: 15 }} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {projects.length > PROJECT_CAP && (
+                <button className="me-more" onClick={() => setShowAllProjects((v) => !v)}>
+                  {showAllProjects ? t("me.collapse") : t("me.showAll", { n: projects.length })}
+                  <Icon name="chevron" className={showAllProjects ? "me-more-up" : ""} />
+                </button>
+              )}
+            </>
           )}
 
           {/* 备份与同步 —— 紧随项目，属同一「数据」范畴 */}

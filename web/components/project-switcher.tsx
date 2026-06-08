@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
+import { SelectMenu } from "@/components/select-menu";
 import { useProject } from "@/lib/telos/use-project";
 import { projectTitle, type Project } from "@/lib/telos/project";
 import { KnowledgeGraph } from "@/lib/telos/engine";
@@ -323,23 +324,30 @@ export function ProjectSwitcher() {
                     </button>
                   ))}
                 </div>
-                <label className="psw-sort" title={t("psw.sortLabel")}>
-                  <Icon name="sort" className="psw-sorti" />
-                  <select
-                    aria-label={t("psw.sortLabel")}
-                    value={sort}
-                    onChange={(e) => {
-                      setSort(e.target.value as SortKey);
-                      setActive(0);
-                    }}
-                  >
-                    <option value="recent">{t("psw.sortRecent")}</option>
-                    <option value="progress">{t("psw.sortProgress")}</option>
-                    <option value="due">{t("psw.due")}</option>
-                    <option value="name">{t("psw.sortName")}</option>
-                  </select>
-                  <Icon name="chevron" className="psw-sortcv" />
-                </label>
+                <SelectMenu
+                  value={sort}
+                  options={[
+                    { value: "recent", label: t("psw.sortRecent") },
+                    { value: "progress", label: t("psw.sortProgress") },
+                    { value: "due", label: t("psw.due") },
+                    { value: "name", label: t("psw.sortName") },
+                  ]}
+                  onChange={(v) => {
+                    setSort(v as SortKey);
+                    setActive(0);
+                  }}
+                  ariaLabel={t("psw.sortLabel")}
+                  className="psw-sort"
+                  buttonClassName="psw-sortbtn"
+                  align="end"
+                  trigger={(cur) => (
+                    <>
+                      <Icon name="sort" className="psw-sorti" />
+                      <span>{cur.label}</span>
+                      <Icon name="chevron" className="psw-sortcv" />
+                    </>
+                  )}
+                />
               </div>
 
               <div className="psw-list" id={listId} role="listbox" ref={listRef} aria-label={t("psw.heading")}>
