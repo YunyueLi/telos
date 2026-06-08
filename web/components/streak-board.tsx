@@ -1,16 +1,16 @@
 "use client";
 
 // 「坚持」Tab 主体（地图 · 复习 · 坚持 · 我）：多邻国式激励中心。
-// 连胜横幅 + 今日目标进度环 + 断签保护 + 35 天打卡日历。全屏响应式：
-// 手机单列堆叠 / 平板桌面左右分栏（今日+保护在左，日历占满右列）。
+// 连胜横幅 + 今日目标进度环 + 断签保护 + 月历打卡（可翻看历史月，格子标真实日期）。
+// 全屏响应式：手机单列堆叠 / 平板桌面左右分栏（今日+保护在左，日历占满右列）。
 // 设计依据：Duolingo（目标自定、连胜按达成今日目标计、freeze 自动桥接、最多持 2）；
-// 习惯类 App 日历热力网格；动机红线：XP 绑真实学习、目标可调可"轻松档"、防 over-justification。
-import { useMemo } from "react";
+// 习惯类 App 月历打卡（月份切换、日期数字、今日高亮、未来日淡显）；动机红线见 xp.ts。
+import { useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
 import { SelectMenu, type MenuOption } from "@/components/select-menu";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
-import { GOAL_OPTIONS, type DayCell } from "@/lib/telos/xp";
+import { GOAL_OPTIONS, monthGrid, type DayCell } from "@/lib/telos/xp";
 
 // 进度环：纯 SVG，描边随 pct 收放；达标显对勾，否则显百分比。
 function Ring({ pct, met }: { pct: number; met: boolean }) {
@@ -41,9 +41,21 @@ function Ring({ pct, met }: { pct: number; met: boolean }) {
 
 export function StreakBoard() {
   const { t, lang } = useT();
-  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, calendar, setDailyGoal } = useProject();
+  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, dailyVersion, setDailyGoal } = useProject();
 
-  // 本地化星期表头（周一起头，narrow 单字）+ 日期标题，全用 Intl，免手填 9 语。
+  // 当前查看的月份（默认本月）。不能翻到未来月。
+  const now = new Date();
+  const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const atCurrent = ym.y === now.getFullYear() && ym.m === now.getMonth();
+  const cells = useMemo(() => monthGrid(ym.y, ym.m), [ym.y, ym.m, dailyVersion]);
+
+  const prevMonth = () => setYm(({ y, m }) => (m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }));
+  const nextMonth = () => {
+    if (atCurrent) return;
+    setYm(({ y, m }) => (m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }));
+  };
+
+  // 本地化星期表头（周一起头）+ 月份标题 + 日期标题，全用 Intl，免手填 9 语。
   const weekHead = useMemo(() => {
     try {
       const f = new Intl.DateTimeFormat(lang, { weekday: "narrow" });
@@ -52,7 +64,13 @@ export function StreakBoard() {
       return ["一", "二", "三", "四", "五", "六", "日"];
     }
   }, [lang]);
-
+  const monthLabel = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(lang, { year: "numeric", month: "long" }).format(new Date(ym.y, ym.m, 1));
+    } catch {
+      return `${ym.y}-${ym.m + 1}`;
+    }
+  }, [lang, ym]);
   const dateFmt = useMemo(() => {
     try {
       return new Intl.DateTimeFormat(lang, { month: "short", day: "numeric" });
@@ -69,7 +87,7 @@ export function StreakBoard() {
 
   // 周一起头：把 weekday(0=日..6=六) 映射到列(0=周一..6=周日)。首格补空。
   const col = (weekday: number) => (weekday + 6) % 7;
-  const lead = calendar.length ? col(calendar[0].weekday) : 0;
+  const lead = cells.length ? col(cells[0].weekday) : 0;
 
   const goalOpts: MenuOption[] = GOAL_OPTIONS.map((g) => ({ value: String(g), label: t(`daily.tier${g}`) }));
   const remain = Math.max(0, dailyGoal - dailyXp);
@@ -159,10 +177,22 @@ export function StreakBoard() {
           </section>
         </div>
 
-        {/* 打卡日历 */}
+        {/* 打卡日历（月历翻页） */}
         <section className="streak-card cal-card">
-          <div className="sc-h">
-            <h3>{t("streak.calTitle")}</h3>
+          <div className="cal-nav">
+            <button type="button" className="cal-navbtn" onClick={prevMonth} aria-label={t("streak.prevMonth")}>
+              <Icon name="arrow" className="flip" />
+            </button>
+            <span className="cal-month">{monthLabel}</span>
+            <button
+              type="button"
+              className="cal-navbtn"
+              onClick={nextMonth}
+              disabled={atCurrent}
+              aria-label={t("streak.nextMonth")}
+            >
+              <Icon name="arrow" />
+            </button>
           </div>
           <div className="daily-cal">
             <div className="cal-head">
@@ -176,13 +206,14 @@ export function StreakBoard() {
               {Array.from({ length: lead }, (_, i) => (
                 <span key={`b${i}`} className="cal-cell blank" aria-hidden="true" />
               ))}
-              {calendar.map((cell) => (
+              {cells.map((cell) => (
                 <span
                   key={cell.date}
-                  className={`cal-cell ${cell.met ? "met" : cell.partial ? "partial" : "miss"} ${cell.frozen ? "frozen" : ""} ${cell.today ? "today" : ""}`.trim()}
+                  className={`cal-cell ${cell.future ? "future" : cell.met ? "met" : cell.partial ? "partial" : "miss"} ${cell.frozen ? "frozen" : ""} ${cell.today ? "today" : ""}`.trim()}
                   title={titleOf(cell)}
                 >
-                  {cell.frozen && <Icon name="shield" />}
+                  <i className="cal-d">{cell.day}</i>
+                  {cell.frozen && <Icon name="shield" className="cal-fz" />}
                 </span>
               ))}
             </div>
