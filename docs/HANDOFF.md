@@ -132,6 +132,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 
 ### P2 · 打磨
 - **Google/OAuth 同意页品牌化**：免费版同意页醒目处显示 `gbvet….supabase.co`（OAuth 回调真实域名，**非**应用名称决定）。要显示 Telos/自有域名只有两条路、且都需**自有域名**：① Supabase 自定义域名（Pro 付费加购，回调变 `auth.telos.app`，最省事）② Google 品牌验证（免费但审核数日 + 授权域名须自有已验证，`yunyueli.github.io` 不行）。**无自有域名前无解**，纯 cosmetic、不影响登录。等买了域名走 ① 我来接。（已实测：改应用名称=Telos / 传徽标都不改变那行域名。）
+- **落地页重写**：`landing/index.html` **已过时**（用户明确）。设计基准已改为实际 App（`/telos/app/`）。需按当前 App 视觉重写落地页。新增的 `/privacy`、`/terms` 法律页已对齐 App 设计，可作风格参考。
 - Supabase **邮件模板本地化**（默认英文；魔法链接/确认/重置邮件）。
 - README 产品截图/GIF（`docs/assets/`）；结论：流程价值 → 10s GIF > 静图。
 - **老项目「重新倒推」入口**：本程之前的旧图稀疏、无 module；在 `/settings` 项目卡加「用新框架重推」。

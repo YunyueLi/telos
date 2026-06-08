@@ -13,11 +13,11 @@
 - `core/` — 学习引擎，Python 零依赖（KST · BKT+CBM 诊断 · FIRe · FSRS · LLM 倒推）。`serve.py` = 本地 CORS 代理（读 `core/.env` 的 key，跑 127.0.0.1:8787，路由 `/derive` `/lesson` `/probe`）。
 - `web/` — 产品，Next.js 16 + React 19 + Tailwind v4 + TS，**静态导出**（`output:export`，prod `basePath=/telos/app`）。GitHub Pages 部署：landing 在 `/telos/`，app 在 `/telos/app/`。
 - `workers/` — 生产用 Cloudflare Worker 代理（镜像 serve.py）。
-- `landing/index.html` — **设计基准**（所有产品视觉/人物/图标以它为准）。
+- **设计基准 = 实际 App（`/telos/app/`，即 `web/`）**，所有产品视觉/品牌/图标以它为准。`landing/index.html` **已过时**，勿再当基准；待重写以对齐 App（见 HANDOFF P2）。
 
 ## web 关键
 
-- 路由：`/`(引导或地图主页) · `/diagnose` · `/review` · `/me`。学习/诊断是全屏接管。
+- 路由：`/`(引导或地图主页) · `/diagnose` · `/review` · `/streak`(坚持/激励) · `/me` · `/settings` · `/account`(登录) · `/privacy` · `/terms`。学习/诊断是全屏接管。
 - `lib/telos/use-project.tsx` — 单一真相源 Context（localStorage `telos:project`），Provider 挂 `app/layout.tsx`。
 - 端点配置：env `NEXT_PUBLIC_TELOS_DERIVE_URL` 或 localStorage 覆盖；key 永远在服务端，绝不进前端 / 仓库。
 - React Flow 画布（`components/canvas.tsx`），手机竖屏走 `components/path-view.tsx`。
