@@ -27,7 +27,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 |---|---|
 | 账号登录/注册（邮箱+密码、魔法链接） | ✅ 可用（Supabase 变量已注入构建，实测通过）|
 | 跨设备同步 | ✅ 可用（`projects` 表 + RLS）|
-| **倒推 / 微课 / 诊断（核心）** | ✅ **可用** —— Cloudflare Worker `telos-derive.xuanlyy.workers.dev` 已部署（密钥已设 `available:true`、CORS=github.io），`NEXT_PUBLIC_TELOS_DERIVE_URL` 已注入构建。实测输目标倒推 48 节点。|
+| **倒推 / 微课 / 诊断（核心）** | ✅ **可用 · BYOK** —— Worker `telos-derive.xuanlyy.workers.dev` 用**调用方自带 key**（请求头 `X-Telos-Key` 等覆盖 env；前端「接入状态」填、存本机 + 随账号 `user_metadata` 同步）。env key 现仍在 → 无 key 访客暂仍用站长 key（软混合）；**站长收尾**：`npx wrangler secret delete TELOS_LLM_API_KEY`（+search）即变纯 BYOK 零成本。|
 | Google 登录 | ✅ 已开（provider 配好可登）。同意页显示 `*.supabase.co` 域名——免费版限制，需自有域名美化（见 P2）|
 | GitHub 登录 | ⬜ 待开（OAuth App 未建；流程同 Google，回调 `…supabase.co/auth/v1/callback`，见 P1）|
 | 魔法链接 | ✅ Redirect URLs 已配（`/account/`）|
