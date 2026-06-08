@@ -2,12 +2,14 @@
 
 // 独立设置页（从欢迎页 / 「我」抽离）：单列、区隔清晰。
 // 倒推端点 → 我的学习（项目管理 + 紧随其下的备份/同步）→ 界面语言。顶栏齿轮进入。
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import { EndpointConfig } from "@/components/endpoint-config";
+import { useAuth } from "@/lib/telos/auth";
 import { useProject } from "@/lib/telos/use-project";
 import { LANGS, useT, type Lang } from "@/lib/telos/i18n";
 import { genId, loadActive, projectTitle, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
@@ -22,6 +24,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { t, lang, setLang } = useT();
   const { ready, project, projects, switchProject, removeProject, startNew } = useProject();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [backup, setBackup] = useState("");
   const [msg, setMsg] = useState("");
@@ -185,17 +188,15 @@ export default function SettingsPage() {
               }}
             />
             <div className="me-dark dark" style={{ marginTop: 14 }}>
-              <div className="l">{t("me.cloudTitle")}</div>
-              <p>{t("me.cloudP")}</p>
-              <a
+              <div className="l">{user ? t("auth.signedIn") : t("me.cloudTitle")}</div>
+              <p>{user ? user.email : t("me.cloudP")}</p>
+              <Link
+                href="/account"
                 className="btn btn-light"
-                href="https://github.com/YunyueLi/telos/blob/main/SUPABASE.md"
-                target="_blank"
-                rel="noreferrer"
                 style={{ justifyContent: "center", width: "100%" }}
               >
-                {t("me.cloudCta")} <Icon name="arrow" />
-              </a>
+                {user ? t("psw.manage") : t("auth.signIn")} <Icon name="arrow" />
+              </Link>
             </div>
             {msg && <div className="me-msg">{msg}</div>}
           </div>
