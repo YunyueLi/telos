@@ -34,6 +34,8 @@ jobs:
           # anon key 公开可暴露（受 RLS 保护）；未设置则线上自动回退本地优先。见 SUPABASE.md。
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # 线上倒推端点（Cloudflare Worker /derive）。未设则线上无法倒推。见 HANDOFF P0。
+          NEXT_PUBLIC_TELOS_DERIVE_URL: ${{ vars.NEXT_PUBLIC_TELOS_DERIVE_URL }}
 
       - name: Assemble site (landing at /, demo at /app)
         run: |
