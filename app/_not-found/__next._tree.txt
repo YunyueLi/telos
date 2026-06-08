@@ -1,2 +1,2 @@
-:HL["/telos/app/_next/static/chunks/0kr1k_gbdim20.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"EdIhD3HO65vFuyurzNLXx"}
+:HL["/telos/app/_next/static/chunks/39ajorry1y0uk.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"b3t_q138wXfZF-HZYcxmS"}
