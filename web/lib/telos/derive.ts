@@ -56,12 +56,15 @@ export function getHealthUrl(url?: string): string {
 // ---- BYOK：用户自带的 LLM 配置（key/base/model + 联网检索）。存 localStorage，登录后随账号同步。----
 // key 只随请求发往倒推端点（你的 Worker 或本地 serve.py），端点不落盘、不记录；绝不进任何前端构建产物。
 const LLM_KEY = "telos:llm";
+// 配置变更事件：setLlmConfig 后广播，让接入状态卡等监听方即时重测（如登录后从账号拉回配置）。
+export const LLM_EVENT = "telos:llm";
 export interface LlmConfig {
   key?: string;
   base?: string;
   model?: string;
   searchProvider?: string;
   searchKey?: string;
+  updatedAt?: number; // 最后修改时间戳，用于本机 ↔ 账号的「后写入者胜」对账
 }
 export function getLlmConfig(): LlmConfig {
   if (typeof window === "undefined") return {};
@@ -75,6 +78,7 @@ export function setLlmConfig(c: LlmConfig): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(LLM_KEY, JSON.stringify(c));
+    window.dispatchEvent(new Event(LLM_EVENT));
   } catch {
     /* ignore */
   }
@@ -83,12 +87,35 @@ export function hasLlmKey(): boolean {
   return !!(getLlmConfig().key || "").trim();
 }
 
+// 规整用户填写的 API Base URL：容错常见写法；非法则返回 undefined（调用方回退默认 DeepSeek）。
+// - 去空白与尾部斜杠；剥掉误粘的 /chat/completions（含 /v1/chat/completions）后缀；缺协议补 https://
+// - 必须是合法 http(s) URL 且主机像域名（含点）或 localhost / IP，否则视为无效
+//   （如误把 "DeepSeek" 当地址填进来 → "https://deepseek" 主机无点 → 无效 → 用默认）
+export function cleanBaseUrl(raw?: string): string | undefined {
+  let s = String(raw ?? "").trim().replace(/\s+/g, "");
+  if (!s) return undefined;
+  s = s.replace(/\/+$/, "").replace(/\/(v1\/)?chat\/completions$/i, (_m, v1) => (v1 ? "/v1" : "")).replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+  let u: URL;
+  try {
+    u = new URL(s);
+  } catch {
+    return undefined;
+  }
+  const host = u.hostname.toLowerCase();
+  const looksHost = host === "localhost" || /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(".");
+  if (!looksHost) return undefined;
+  const path = u.pathname === "/" ? "" : u.pathname.replace(/\/+$/, "");
+  return u.origin + path;
+}
+
 // 把用户自带配置拼成请求头（随每次倒推/微课/诊断调用发出）。
 function llmHeaders(): Record<string, string> {
   const c = getLlmConfig();
   const h: Record<string, string> = { "Content-Type": "application/json" };
   if (c.key && c.key.trim()) h["X-Telos-Key"] = c.key.trim();
-  if (c.base && c.base.trim()) h["X-Telos-Base"] = c.base.trim();
+  const base = cleanBaseUrl(c.base); // 只发合法 base，过滤掉如 "DeepSeek" 这类残留的非法值
+  if (base) h["X-Telos-Base"] = base;
   if (c.model && c.model.trim()) h["X-Telos-Model"] = c.model.trim();
   if (c.searchProvider && c.searchProvider.trim()) h["X-Telos-Search-Provider"] = c.searchProvider.trim();
   if (c.searchKey && c.searchKey.trim()) h["X-Telos-Search-Key"] = c.searchKey.trim();
