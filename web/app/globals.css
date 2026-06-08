@@ -130,9 +130,17 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .psw-fchip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .psw-fchip i{font-style:normal;font-family:var(--mono);font-size:10px;opacity:.7}
 .psw-sort{position:relative;display:inline-flex;align-items:center;flex:none}
-.psw-sorti{position:absolute;left:9px;width:13px;height:13px;color:var(--ink-3);pointer-events:none}
-.psw-sort select{appearance:none;font:600 11.5px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 23px 5px 28px;cursor:pointer}
-.psw-sortcv{position:absolute;right:7px;width:12px;height:12px;color:var(--ink-3);pointer-events:none}
+.psw-sortbtn{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 11px;cursor:pointer;transition:.12s}
+.psw-sortbtn:hover,.psw-sortbtn[aria-expanded="true"]{border-color:var(--ink-3)}
+.psw-sortbtn .psw-sorti{width:13px;height:13px;color:var(--ink-3);flex:none}
+.psw-sortbtn .psw-sortcv{width:12px;height:12px;color:var(--ink-3);flex:none;transition:transform .18s}
+.psw-sortbtn[aria-expanded="true"] .psw-sortcv{transform:rotate(180deg)}
+/* 自定义下拉菜单（替代系统 <select>），portal 到 body */
+.selmenu{position:fixed;z-index:240;background:var(--card);border:1px solid var(--line-soft);border-radius:13px;box-shadow:0 14px 40px -10px rgba(20,19,16,.28),0 3px 10px -6px rgba(20,19,16,.2);padding:5px;display:flex;flex-direction:column;gap:1px;max-height:min(60vh,360px);overflow-y:auto;outline:none;animation:pswPop .14s ease}
+.selmenu-opt{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left;font:600 13px var(--sans);color:var(--ink-2);background:none;border:0;border-radius:9px;padding:8px 11px;cursor:pointer;white-space:nowrap}
+.selmenu-opt:hover,.selmenu-opt.active{background:rgba(20,19,16,.06);color:var(--ink)}
+.selmenu-opt.on{color:var(--ink)}
+.selmenu-opt .ic{width:14px;height:14px;color:var(--ink);flex:none}
 .psw-list{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 8px}
 .psw-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-radius:12px;padding:10px 12px;cursor:pointer}
 .psw-opt.active{background:rgba(20,19,16,.05)}
@@ -238,6 +246,11 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 /* 设置页：备份子区（紧随「我的学习」项目，虚线分隔同属「数据」范畴） */
 .set-backup{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line-soft)}
 .me-subh{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:8px}
+/* 项目列表「展开全部 / 收起」折叠开关 */
+.me-more{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font:600 12.5px var(--sans);color:var(--ink-2);background:none;border:0;cursor:pointer;padding:5px 2px}
+.me-more:hover{color:var(--ink)}
+.me-more .ic{width:14px;height:14px;transition:transform .2s}
+.me-more-up{transform:rotate(180deg)}
 .appnew{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);color:var(--paper);background:var(--ink);border:0;border-radius:999px;padding:7px 13px;cursor:pointer;flex:none}
 .appnew:hover{background:#000}
 .appnew .ic{width:13px;height:13px}
@@ -332,10 +345,10 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .epc-note{font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.6;margin-top:11px}
 
 /* 语言切换（#7） */
-.langsw{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;border-radius:999px;border:1px solid var(--line-soft);color:var(--ink-2);cursor:pointer;transition:.15s}
-.langsw:hover{border-color:var(--ink);color:var(--ink)}
-.langsw .ic{width:16px;height:16px}
-.langsw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0}
+.langsw{position:relative;display:inline-flex;flex:none}
+.langsw-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:1px solid var(--line-soft);color:var(--ink-2);background:none;cursor:pointer;transition:.15s}
+.langsw-btn:hover,.langsw-btn[aria-expanded="true"]{border-color:var(--ink);color:var(--ink)}
+.langsw-btn .ic{width:16px;height:16px}
 
 /* —— 地图主页（map = home）—— */
 .mh{flex:1;min-height:0;max-height:calc(100dvh - 59px);overflow:hidden;display:grid;grid-template-columns:1fr 350px;grid-template-rows:minmax(0,1fr)}

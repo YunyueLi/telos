@@ -1,7 +1,8 @@
 "use client";
 
-// 分级文本可视化：把「新手：…；进阶：…；精英：…」这类分号分隔的分级达标线拆成独立行（标签 + 内容）。
-// 语言无关：按 ；/; 切分，识别「标签：内容」（半/全角冒号）。识别不到分级 → 回退纯文本。
+// 分级文本可视化：把「新手：…；进阶：…；精英：…」这类分级达标线拆成独立行（标签 + 内容）。
+// 语言无关：按 ；/;/。 或英文「. 」切分（不切小数 90.5%），识别「标签：内容」（半/全角冒号）。
+// 至少 2 段带标签才认定为分级，否则回退纯文本。
 import styles from "./app.module.css";
 
 interface Tier {
@@ -13,8 +14,8 @@ function parseTiers(text: string): Tier[] | null {
   const t = (text || "").trim();
   if (!t) return null;
   const parts = t
-    .split(/[；;]+/)
-    .map((s) => s.trim().replace(/[。.]+$/, "").trim())
+    .split(/[；;。]+|\.\s+/)
+    .map((s) => s.trim().replace(/[。.，,、]+$/, "").trim())
     .filter(Boolean);
   if (parts.length < 2) return null;
   const rows: Tier[] = parts.map((p) => {
