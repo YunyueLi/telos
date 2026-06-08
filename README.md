@@ -28,6 +28,18 @@ goal ─▶ reverse-derive ─▶ a module-organized prerequisite map (30–80 t
      ─▶ teach only the gaps (interactive micro-lessons) ─▶ verify ─▶ spaced review ─▶ repeat
 ```
 
+## Which way is for you?
+
+| | **Use the hosted app** | **Run locally** | **Deploy your own** |
+| --- | --- | --- | --- |
+| **For** | Just want to learn | Try it / hack on it | Run your own public instance |
+| **Setup** | Nothing | `git clone` + 1 free key + `make` | Fork + 1-click Worker |
+| **Needs a key?** | No (server-side) | Yes (free DeepSeek) | Yes (in your Worker) |
+| **Your data** | Browser (+ optional account sync) | Your machine | Your users' browsers / your Supabase |
+| **Go** | **[Open the app ▶](https://yunyueli.github.io/telos/app/)** | [↓ Run it yourself](#run-it-yourself-one-command) | [↓ Deploy your own](#deploy-your-own) |
+
+> New here? **Just [open the hosted app](https://yunyueli.github.io/telos/app/)** — type a goal, watch it build your map. Zero setup, no key. The rest of this README is for running or hosting it yourself.
+
 ## Run it yourself (one command)
 
 ```bash
