@@ -279,10 +279,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .appgoal{display:none}
   .appnew-t{display:none}
   .appnew{padding:8px}
-  .appgear-t{display:none}
-  .appgear{padding:7px}
-  /* 移动端：分组竖线/语言收起，进度药丸让位给项目切换器；顶栏 = 项目 · 新建 · 设置 · 头像 */
-  /* .langsw 基础规则在文件后方，需用更高特异性覆盖才能在移动端隐藏 */
+  /* 移动端去掉设置齿轮（设置已在头像账户菜单里）；顶栏 = logo · 项目切换 · 新建 · 头像 */
+  .appgear{display:none}
+  /* 分组竖线/语言收起，进度药丸让位给项目切换器；.langsw 基础规则在后方，需高特异性覆盖 */
   .appdiv{display:none}
   .appstats .langsw{display:none}
   .appprog{display:none}
