@@ -583,7 +583,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .daily-freeze .fz-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
 .daily-freeze .fz-txt b{font:600 13px var(--sans);color:var(--ink)}
 .daily-freeze .fz-txt span{font:500 11px var(--mono);color:var(--ink-3);line-height:1.45}
-.daily-cal{margin-top:18px;max-width:344px}
+.daily-cal{margin-top:0}
 .cal-head,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cal-wd{text-align:center;font:500 9.5px var(--mono);text-transform:uppercase;color:var(--ink-3);padding-bottom:2px}
 .cal-grid{margin-top:2px}
@@ -612,6 +612,33 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 @keyframes celebFade{from{opacity:0}to{opacity:1}}
 @keyframes celebPop{from{transform:translateY(10px) scale(.95);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.ring-bar,.celebrate,.celebrate-card{transition:none;animation:none}}
+/* 「坚持」Tab 页：全屏响应式激励仪表盘 */
+.streak{flex:1;width:100%;max-width:860px;margin:0 auto;padding:28px 24px 60px}
+.streak-hd{margin-bottom:18px}
+.streak-hd h2{font:500 30px var(--serif);letter-spacing:-.02em;line-height:1.05;margin:7px 0 6px}
+.streak-lead{font-size:14px;color:var(--ink-2);line-height:1.6;max-width:54ch}
+.streak-banner{display:flex;align-items:center;gap:15px;background:var(--ink);color:var(--paper);border-radius:18px;padding:19px 24px;margin-bottom:18px}
+.streak-banner .sb-fl{width:30px;height:30px;color:var(--paper);opacity:.5;flex:none}
+.streak-banner .sb-fl.on{opacity:1}
+.sb-num{display:flex;align-items:baseline;gap:8px}
+.sb-num b{font:500 40px var(--serif);line-height:.9}
+.sb-num span{font:500 12px var(--mono);color:rgba(240,238,233,.6);text-transform:uppercase;letter-spacing:.05em}
+.sb-div{width:1px;align-self:stretch;background:rgba(240,238,233,.22);margin:3px 5px;flex:none}
+.sb-state{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font:500 12.5px var(--mono);color:rgba(240,238,233,.84);text-align:right}
+.sb-state .ic{width:15px;height:15px;color:var(--paper)}
+.streak-grid{display:grid;grid-template-columns:1fr;gap:16px}
+.streak-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.streak-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:18px}
+.sc-h{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.sc-h h3{font:400 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)}
+.sc-h .daily-goalsel{margin-left:auto}
+.today-body{display:flex;align-items:center;gap:18px}
+.today-body .ring{width:80px;height:80px}
+.today-body .daily-meta{flex:1;min-width:0}
+.streak-card .daily-freeze{border:0;background:none;padding:0;margin:0}
+.cal-card .daily-cal{margin-top:0}
+@media(min-width:760px){.streak-grid{grid-template-columns:minmax(300px,360px) 1fr;align-items:start}}
+@media(max-width:520px){.streak{padding:22px 16px 56px}.streak-banner{padding:17px 18px;gap:12px}.sb-num b{font-size:34px}.sb-state{font-size:11px}}
 
 /* —— 诊断 v2（全屏接管）—— */
 .dx{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto}

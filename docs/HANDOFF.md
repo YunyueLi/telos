@@ -44,7 +44,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **倒推等待**：分阶段进度条（理解→规划蓝图→展开模块→汇编）+ 缓动进度 + 实时秒数。
 - **达标线**：`tier-text` 修复，按 `。/；/英文". "` 切分（不切小数）→ 新手/进阶/精英 分行。
 - **设置「我的学习」网格**：默认 6 个，超出「展开全部 N / 收起」。
-- **多邻国式激励 v1（①②③）**：「我的」页 `daily-goal.tsx` = 今日目标进度环 + 连胜火焰（顶栏同步）+ 断签保护卡 + 35 天打卡日历（纯黑白纸感、Intl 本地化）；达标弹 `goal-celebrate.tsx` 庆祝（看板娘喝彩，~2.6s 自动消）。底座 `xp.ts`→`telos:daily`，集成进 `use-project`（每次学习算真实 XP delta、达标触发 `goalNonce`）。新图标 flame/shield/calendar。
+- **多邻国式激励 v1（①②③）= 独立「坚持」Tab**（地图 · 复习 · **坚持** · 我，位于复习之后）。`app/streak/page.tsx` + `components/streak-board.tsx`：连胜横幅（深色 ink）+ 今日目标进度环 + 断签保护卡 + 35 天打卡日历（纯黑白纸感、Intl 本地化星期/日期）。**全屏响应式**：手机单列堆叠 / ≥760px 左右分栏（今日+保护在左 360px，日历占满右列 1fr）。达标弹 `goal-celebrate.tsx` 庆祝（看板娘喝彩，~2.6s 自动消）。底座 `xp.ts`→`telos:daily`，集成进 `use-project`（每次学习算真实 XP delta、达标触发 `goalNonce`）。新图标 flame/shield/calendar。连胜数字三处呼应：顶栏火焰药丸（常驻）· /me 快览 · 坚持 Tab 横幅（玩法仅在此）。**已三档宽度 Preview 实测**（375/768/1180）。
 
 ## 4. Supabase 配置现状（精确）
 
@@ -88,7 +88,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - 密码重置：`resetPasswordForEmail` 已接（「忘记密码」），同样需 Redirect URLs + 邮件模板。
 
 ### P1 · 多邻国式激励系统（①②③ 已交付 v2 · 见 §3；剩 ④⑤）
-- **已做（本程）**：① 每日目标（用户自定 10/20/40/60 XP + 进度环 + 达标庆祝弹层 `goal-celebrate.tsx`）② 35 天打卡日历（达成实心 / 有学习 hatch / 冻结盾牌 / 今日墨环，Intl 本地化星期）③ 断签保护 freeze（缺勤自动桥接、连胜每 5 天奖 1 个、最多持 2，与 Duolingo 同）。底座：`xp.ts` 升级为 `telos:daily`（每日 XP 流水 + goal + freezes + frozen + rewarded），从旧 `telos:streak` 自动迁移；连胜改为「按是否达成今日目标」计。**已 Preview 实测**（连胜/环/日历/freeze/庆祝渲染全对）。
+- **已做（本程）= 独立「坚持」Tab**（地图·复习·**坚持**·我，复习之后；`app/streak/page.tsx` + `streak-board.tsx`，全屏响应式 手机单列 / ≥760 左右分栏）：① 每日目标（用户自定 10/20/40/60 XP + 进度环 + 达标庆祝弹层 `goal-celebrate.tsx`）② 35 天打卡日历（达成实心 / 有学习 hatch / 冻结盾牌 / 今日墨环，Intl 本地化星期）③ 断签保护 freeze（缺勤自动桥接、连胜每 5 天奖 1 个、最多持 2，与 Duolingo 同）。底座：`xp.ts` 升级为 `telos:daily`（每日 XP 流水 + goal + freezes + frozen + rewarded），从旧 `telos:streak` 自动迁移；连胜改为「按是否达成今日目标」计。「我」页只留档案+掌握+账户（玩法已迁出）。**已三档宽度 Preview 实测**（375/768/1180，连胜/环/日历/freeze/庆祝全对）。
 - **剩（按子项）**：④ 等级/成就徽章（可由累计 XP 派生 level + 里程碑徽章）⑤（后置）排行榜（需 Supabase 表 + 隐私开关）。
 - **原则（续作守住）**：XP 永远绑真实掌握/复习信号、绝不绑在线时长；Telos 结构上无法刷连胜（掌握靠 BKT 阈值、复习靠 FSRS 到期）；目标可调可「轻松档」、低压力、无愧疚式暗黑模式（防 over-justification）。
 - **待打磨（可选）**：每日进度目前**仅本地**（`localStorage`），换设备不同步连胜——要跨设备需新建 `user_meta`/`profiles` 表（用户须在 Supabase 跑 SQL，外部动作）；domain **D 动作 / F 习惯**节点本是「打卡而非遗忘曲线」，可进一步把日历与之打通。
