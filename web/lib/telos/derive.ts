@@ -54,6 +54,7 @@ export interface EndpointStatus {
   ok: boolean;
   model?: string;
   available?: boolean;
+  search?: { provider: string; available: boolean };
   error?: string;
 }
 
@@ -69,7 +70,13 @@ export async function testEndpoint(url?: string): Promise<EndpointStatus> {
   }
   if (!res.ok) return { ok: false, error: tStatic("epc.httpErr", { code: res.status }) };
   const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  return { ok: true, model: d.model ? String(d.model) : undefined, available: d.available !== false };
+  const s = d.search as { provider?: unknown; available?: unknown } | undefined;
+  return {
+    ok: true,
+    model: d.model ? String(d.model) : undefined,
+    available: d.available !== false,
+    search: s ? { provider: String(s.provider ?? "none"), available: s.available === true } : undefined,
+  };
 }
 
 export function setDeriveUrl(url: string): void {

@@ -78,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         if self.path.rstrip("/") in ("", "/health"):
             _, _, model = llm._config()
-            self._json(200, {"ok": True, "available": llm.available(), "model": model})
+            self._json(200, {"ok": True, "available": llm.available(), "model": model, "search": llm.search_status()})
         else:
             self._json(404, {"error": "not found"})
 
