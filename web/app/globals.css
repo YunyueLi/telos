@@ -594,6 +594,21 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .cal-cell.frozen .ic{width:13px;height:13px;color:var(--ink-2)}
 .cal-cell.today{box-shadow:0 0 0 2px var(--paper),0 0 0 3.6px var(--ink)}
 .cal-cell.blank{border:0;background:none}
+.cal-cell.future{border-style:dashed;background:none}
+.cal-cell .cal-d{font:500 11px var(--mono);color:var(--ink-2);line-height:1}
+.cal-cell.met .cal-d{color:var(--paper)}
+.cal-cell.partial .cal-d{color:var(--ink)}
+.cal-cell.miss .cal-d,.cal-cell.frozen .cal-d{color:var(--ink-3)}
+.cal-cell.future .cal-d{color:var(--hatch)}
+.cal-cell .cal-fz{position:absolute;top:3px;right:3px;width:10px;height:10px;color:var(--ink-2)}
+/* 月历翻页导航 */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.cal-month{font:500 14px var(--serif);color:var(--ink);letter-spacing:-.01em}
+.cal-navbtn{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--line-soft);border-radius:9px;background:var(--card);color:var(--ink-2);cursor:pointer;flex:none}
+.cal-navbtn:hover:not(:disabled){border-color:var(--ink-3);color:var(--ink)}
+.cal-navbtn:disabled{opacity:.35;cursor:default}
+.cal-navbtn .ic{width:15px;height:15px}
+.cal-navbtn .ic.flip{transform:rotate(180deg)}
 .cal-legend{display:flex;flex-wrap:wrap;gap:6px 15px;margin-top:13px;font:500 10px var(--mono);color:var(--ink-3)}
 .cal-legend span{display:inline-flex;align-items:center;gap:5px}
 .cal-legend .sw{width:12px;height:12px;border-radius:4px;border:1.4px solid var(--line-soft);display:inline-grid;place-items:center;flex:none}

@@ -37,10 +37,8 @@ import {
   computeXp,
   getDailyInfo,
   noteDerive,
-  recentDays,
   setDailyGoal,
   type DailyInfo,
-  type DayCell,
 } from "./xp";
 import { useAuth } from "./auth";
 import { cloudConfigured } from "./supabase";
@@ -59,7 +57,7 @@ interface ProjectContextValue {
   dailyPct: number; // 今日进度 0..1
   dailyGoalMet: boolean;
   freezes: number; // 可用断签保护
-  calendar: DayCell[]; // 最近若干天打卡格子
+  dailyVersion: number; // 每次学习/改目标自增 → 供月历等重算
   goalNonce: number; // 每次"刚达成今日目标"自增 → 触发庆祝
   setDailyGoal: (g: number) => void;
   composing: boolean; // 正在"新学习"（即使有旧项目也显示引导页）
@@ -149,10 +147,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   // 每日目标 / 连胜 / 断签保护：从 localStorage(telos:daily) 读，随每次学习/改目标重算。
   const daily = useMemo<DailyInfo | null>(
     () => (ready ? getDailyInfo() : null),
-    [ready, dailyVersion],
-  );
-  const calendar = useMemo<DayCell[]>(
-    () => (ready ? recentDays(35) : []),
     [ready, dailyVersion],
   );
   const streak = daily?.streak ?? 0;
@@ -342,7 +336,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     dailyPct: daily?.pct ?? 0,
     dailyGoalMet: daily?.goalMet ?? false,
     freezes: daily?.freezes ?? 0,
-    calendar,
+    dailyVersion,
     goalNonce,
     setDailyGoal: updateDailyGoal,
     composing,

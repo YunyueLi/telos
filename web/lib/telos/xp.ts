@@ -41,11 +41,13 @@ export interface Daily {
 
 export interface DayCell {
   date: string;
+  day: number; // 月内日期号 1..31
   xp: number;
   met: boolean; // 达成当日目标
   partial: boolean; // 有学习但未达标
   frozen: boolean; // 被 freeze 保护
   today: boolean;
+  future: boolean; // 今天之后（不可达，淡显）
   weekday: number; // 0=周日 .. 6=周六
 }
 
@@ -74,11 +76,6 @@ function shift(date: string, delta: number): string {
   dt.setDate(dt.getDate() + delta);
   return fmt(dt);
 }
-function weekdayOf(date: string): number {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(y, m - 1, d).getDay();
-}
-
 function fresh(): Daily {
   return { days: {}, goal: DEFAULT_GOAL, freezes: 0, frozen: [], rewarded: 0 };
 }
@@ -242,23 +239,27 @@ export function setDailyGoal(goal: number): void {
   persist(d);
 }
 
-// 最近 n 天的格子（旧 → 新，含今天），供打卡日历渲染。
-export function recentDays(n: number): DayCell[] {
+// 某个自然月的格子（1..月末），供月历翻页渲染。monthIndex: 0=一月 .. 11=十二月。
+export function monthGrid(year: number, monthIndex: number): DayCell[] {
   const d = load();
   const t = today();
+  const count = new Date(year, monthIndex + 1, 0).getDate();
   const cells: DayCell[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const date = shift(t, -i);
+  for (let day = 1; day <= count; day++) {
+    const dt = new Date(year, monthIndex, day);
+    const date = fmt(dt);
     const xp = d.days[date] ?? 0;
     const isMet = xp >= d.goal;
     cells.push({
       date,
+      day,
       xp,
       met: isMet,
       partial: !isMet && xp > 0,
       frozen: d.frozen.includes(date),
       today: date === t,
-      weekday: weekdayOf(date),
+      future: date > t,
+      weekday: dt.getDay(),
     });
   }
   return cells;
