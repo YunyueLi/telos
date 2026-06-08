@@ -7,7 +7,7 @@
 
 ## 0. 一句话现状
 
-倒推已是**多段层级化**（30–80 节点）、模型 **deepseek-v4-pro 非思考**；**账号 + 跨设备同步已真上线并实测通过**（Supabase）；顶栏/设置/账户的信息架构做了多轮重构。**唯一卡住线上核心的是：线上没有倒推端点（Worker 未部署）——访客能登录但不能倒推。见 P0。**
+倒推已是**多段层级化**（30–80 节点）、模型 **deepseek-v4-pro 非思考**；**账号 + 跨设备同步已真上线并实测通过**（Supabase）；顶栏/设置/账户的信息架构做了多轮重构。**线上倒推端点已部署并打通**——Cloudflare Worker `telos-derive.xuanlyy.workers.dev`（deepseek-v4-pro + tavily，CORS 收紧到 github.io），`NEXT_PUBLIC_TELOS_DERIVE_URL` 已注入构建，端到端实测输目标倒推 48 节点。**线上核心（注册/登录/倒推/学习/同步）现已全部可用。**
 
 ## 1. 怎么跑（本地）
 
@@ -27,8 +27,10 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 |---|---|
 | 账号登录/注册（邮箱+密码、魔法链接） | ✅ 可用（Supabase 变量已注入构建，实测通过）|
 | 跨设备同步 | ✅ 可用（`projects` 表 + RLS）|
-| **倒推 / 微课 / 诊断（核心）** | ❌ **不可用** —— 线上无 LLM 端点（`NEXT_PUBLIC_TELOS_DERIVE_URL` 未设、Worker 未部署）。访客「接入状态」显示 AI 引擎未连接，输目标无法倒推。**这是 P0。**|
-| Google / GitHub 登录 | ❌ 按钮在，但 Supabase 未开 provider（点了报未启用）|
+| **倒推 / 微课 / 诊断（核心）** | ✅ **可用** —— Cloudflare Worker `telos-derive.xuanlyy.workers.dev` 已部署（密钥已设 `available:true`、CORS=github.io），`NEXT_PUBLIC_TELOS_DERIVE_URL` 已注入构建。实测输目标倒推 48 节点。|
+| Google 登录 | ✅ 已开（provider 配好可登）。同意页显示 `*.supabase.co` 域名——免费版限制，需自有域名美化（见 P2）|
+| GitHub 登录 | ⬜ 待开（OAuth App 未建；流程同 Google，回调 `…supabase.co/auth/v1/callback`，见 P1）|
+| 魔法链接 | ✅ Redirect URLs 已配（`/account/`）|
 - 部署：push 到 main 自动触发 `.github/workflows/deploy.yml`；也可 `gh workflow run deploy.yml`。
 - **线上环境变量用 GitHub Actions Variables**（repo → Settings → Secrets and variables → Actions → Variables）。`deploy.yml` build step 已注入 `NEXT_PUBLIC_SUPABASE_*`。**我（助手）可用 `gh variable set <NAME> --body <VAL>` 直接设**（gh 已登录 YunyueLi，scope 含 repo）。
 
@@ -79,26 +81,27 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 
 | # | 待办 | 优先级 | 谁做 | 状态 | 能否独立由助手完成 |
 |---|---|---|---|---|---|
-| 1 | 线上倒推（部署 Cloudflare Worker） | **P0** | 用户 wrangler → 我接线 | 未开始，**线上核心卡这** | 否（需用户 deploy） |
+| 1 | ~~线上倒推（部署 Cloudflare Worker）~~ | ~~P0~~ | 用户 wrangler + 我接线 | **✅ 已完成**（实测倒推 48 节点） | — |
 | 2 | 多人周联赛 ⑤（全局周榜） | P1 | 用户建表 → 我接客户端 | 方案就绪，待建表 | 否（需用户建表） |
-| 3 | 额外登录（魔法链接/Google/GitHub） | P1 | 用户 Supabase 控制台 | UI 就绪，可选 | 否（需用户配置） |
+| 3 | GitHub 登录（魔法链接 + Google 已开） | P1 | 用户 Supabase + GitHub | Google/魔法链接 ✅；剩 GitHub | 否（需用户配置） |
 | 4 | 老项目「重新倒推」入口 | P2 | **我** | 未开始 | **是** |
 | 5 | 跨设备连胜同步（`user_meta` 表） | P2 | 用户建表 → 我接 | 可选 | 否 |
 | 6 | Supabase 邮件模板本地化 | P2 | 用户 Supabase | 可选 | 否 |
 | 7 | README 截图/GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 | 部分 |
 
-> 我能**完全独立**推进的只有 #4（老项目重新倒推入口）；其余都卡在需要用户做的外部动作（wrangler / Supabase 控制台）。**最该先做的是 #1**（不解决则线上访客登录后无法倒推，核心不可用）。
+> 我能**完全独立**推进的只有 #4（老项目重新倒推入口）；其余都卡在需要用户做的外部动作（建表 / OAuth 控制台）。
 
-### P0 · 让线上能倒推（当前唯一卡核心的事）
-线上没有 LLM 端点 → 访客登录后无法倒推/学习。要部署 Cloudflare Worker 并接线：
-1. **用户做**：`cd workers && wrangler login && wrangler deploy` → 得 `https://telos-derive.<子域>.workers.dev`。设密钥：`wrangler secret put TELOS_LLM_API_KEY`（DeepSeek），可选 `wrangler secret put TELOS_SEARCH_API_KEY`（Tavily）。`wrangler.toml` 已含 `TELOS_LLM_MODEL=deepseek-v4-pro`。
-2. **我做**：`gh variable set NEXT_PUBLIC_TELOS_DERIVE_URL --body "https://…workers.dev/derive"` → `gh workflow run deploy.yml`；并把 `workers/wrangler.toml` 的 `ALLOW_ORIGIN` 收紧到 `https://yunyueli.github.io`。验证：线上「接入状态」AI 引擎变已连接、输目标能倒推 30–80 节点。
-> 用户偏非技术；wrangler 比 Supabase 更硬核，需手把手（参照本程 Supabase 的「让用户截图、我逐步指」节奏）。或评估改用 Supabase Edge Function 托管倒推（备选）。
+### P0 · 让线上能倒推 —— ✅ 已完成
+- **Worker**：`telos-derive.xuanlyy.workers.dev`（用户 Cloudflare 账号 `xuanlyy`，`npx wrangler deploy` 部署；`wrangler.toml` name=telos-derive、model=deepseek-v4-pro、provider=tavily、`ALLOW_ORIGIN=https://yunyueli.github.io`）。
+- **密钥**（用户 `wrangler secret put` 设，**值只填 value 不要带 `KEY=` 前缀**——曾踩坑把整行当 name）：`TELOS_LLM_API_KEY`(DeepSeek) + `TELOS_SEARCH_API_KEY`(Tavily)。`/health` → `available:true`、`search.available:true`。
+- **接线**：`gh variable set NEXT_PUBLIC_TELOS_DERIVE_URL https://telos-derive.xuanlyy.workers.dev/derive` + `deploy.yml` build env 已加该行 → 重新部署，线上 JS 已含该 URL。
+- **实测**：curl POST /derive 返回 48 节点；CORS 预检 github.io → 204 放行。端点路由：`/derive /lesson /probe /title /health`（前端把 `/derive` 替换出其余）。
+- 改 `workers/derive.js` 后用户须重 `npx wrangler deploy`（助手可代跑 deploy，但 secret 须用户本人）。
 
-### P1 · 额外登录方式（可选 · 云同步本身已完成，与下列无关）
-> ⚠️ 别误会：**邮箱+密码登录已可用 → 跨设备同步随之已完整可用并实测通过**。同步对任何已登录用户都生效，与登录方式无关。下列只是让「魔法链接 / Google / GitHub」这些*别的登录入口*也能用。
-- **Redirect URLs**（Supabase → Authentication → URL Configuration）：加 `http://localhost:3000/account/` + `https://yunyueli.github.io/telos/app/account/`，Site URL 设 `https://yunyueli.github.io/telos/app/`。**魔法链接/邮件确认/OAuth 回跳依赖它**（密码登录因 autoconfirm=on 已能用，但魔法链接点开会落到默认页）。
-- **Google / GitHub OAuth**：Google Cloud / GitHub 建 OAuth 应用，回调 `https://gbvetfyudlbdiydapipr.supabase.co/auth/v1/callback`，client id/secret 填进 Supabase provider。登录页按钮已就绪，开了即生效。
+### P1 · GitHub 登录（魔法链接 + Google 已开）
+> 云同步对任何已登录用户都生效，与登录方式无关。邮箱+密码 / 魔法链接 / Google 均已可用。
+- **已完成**：Redirect URLs（`http://localhost:3000/account/` + `https://yunyueli.github.io/telos/app/account/`，Site URL `…/telos/app/`）；Google OAuth（client 配进 Supabase，provider 开，可登）。
+- **剩 GitHub**：GitHub → Settings → Developer settings → OAuth Apps 建一个，回调 `https://gbvetfyudlbdiydapipr.supabase.co/auth/v1/callback`，client id/secret 填进 Supabase Google→GitHub provider。登录页按钮已就绪，开了即生效（GitHub 同意页天然显示 OAuth App 名「Telos」，无 Google 那种 supabase.co 域名问题）。
 - 密码重置：`resetPasswordForEmail` 已接（「忘记密码」），同样需 Redirect URLs + 邮件模板。
 
 ### P1 · 多邻国式激励系统（①②③④ + ⑤本地 已交付 = 独立「坚持」Tab；剩 ⑤多人榜）
