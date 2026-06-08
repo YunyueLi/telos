@@ -105,7 +105,7 @@ function Onboarding({
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
-  const [elapsed, setElapsed] = useState(0); // 倒推实时耗时（秒）——替代固定的「约 10–20 秒」估值
+  const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
   const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -113,14 +113,14 @@ function Onboarding({
     setCfgUrl(getDeriveUrl());
   }, []);
 
-  // 倒推进行中：每 250ms 刷新已用秒数；结束清零。
+  // 倒推进行中：每 200ms 刷新；结束清零。
   useEffect(() => {
     if (!deriving) {
-      setElapsed(0);
+      setMs(0);
       return;
     }
     const t0 = Date.now();
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 250);
+    const id = setInterval(() => setMs(Date.now() - t0), 200);
     return () => clearInterval(id);
   }, [deriving]);
 
@@ -139,6 +139,17 @@ function Onboarding({
       ta.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   };
+
+  // 倒推进度：缓动逼近 92%（永不假装完成，成功即切到地图），阶段=流水线真实步骤、按经验时间推进。
+  const sec = Math.floor(ms / 1000);
+  const progPct = Math.round(92 * (1 - Math.exp(-ms / 22000)));
+  const PHASES: { at: number; key: string }[] = [
+    { at: 0, key: "ob.phUnderstand" },
+    { at: 6, key: "ob.phBlueprint" },
+    { at: 18, key: "ob.phExpand" },
+    { at: 52, key: "ob.phAssemble" },
+  ];
+  const phaseKey = (PHASES.filter((p) => sec >= p.at).pop() ?? PHASES[0]).key;
 
   return (
     <div className="ob">
@@ -177,8 +188,22 @@ function Onboarding({
           </div>
 
           {deriving && (
-            <div className="loadrow">
-              <span className="spinner" /> {t("ob.derivingLine", { goal, sec: elapsed })}
+            <div className="ob-prog" role="status" aria-live="polite">
+              <div className="ob-prog-bar">
+                <i style={{ width: `${progPct}%` }} />
+              </div>
+              <div className="ob-prog-row">
+                <span className="ob-prog-phase">
+                  {t(phaseKey)}
+                  <span className="ob-dots" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                </span>
+                <span className="ob-prog-sec">{t("ob.derivingSec", { sec })}</span>
+              </div>
+              <div className="ob-prog-goal">{t("ob.derivingFor", { goal })}</div>
             </div>
           )}
           {deriveError && <div className="errbox">{deriveError}</div>}
