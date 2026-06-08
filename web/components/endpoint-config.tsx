@@ -6,9 +6,20 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
-import { getDeriveUrl, setDeriveUrl, testEndpoint, LOCAL_ENDPOINT, type EndpointStatus } from "@/lib/telos/derive";
+import {
+  getDeriveUrl,
+  setDeriveUrl,
+  testEndpoint,
+  getLlmConfig,
+  setLlmConfig,
+  LOCAL_ENDPOINT,
+  type EndpointStatus,
+} from "@/lib/telos/derive";
 import { useAuth } from "@/lib/telos/auth";
+import { supabase } from "@/lib/telos/supabase";
 import { useT } from "@/lib/telos/i18n";
+
+const DEEPSEEK_KEYS_URL = "https://platform.deepseek.com/api_keys";
 
 const PRESETS = [
   { key: "local", labelKey: "epc.local", fill: LOCAL_ENDPOINT },
@@ -29,6 +40,12 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
   const [status, setStatus] = useState<EndpointStatus | null>(null);
   const [testing, setTesting] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  // BYOK：用户自带的 LLM key / base / model（存 localStorage，登录后随账号同步）。
+  const [llmKey, setLlmKey] = useState("");
+  const [llmBase, setLlmBase] = useState("");
+  const [llmModel, setLlmModel] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [keySaved, setKeySaved] = useState("");
 
   async function runTest(u: string) {
     setTesting(true);
@@ -43,8 +60,13 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
     const u = getDeriveUrl();
     setDraft(u);
     setSaved(u);
+    const c = getLlmConfig();
+    setLlmKey(c.key || "");
+    setLlmBase(c.base || "");
+    setLlmModel(c.model || "");
+    setKeySaved(c.key || "");
     if (u) void runTest(u);
-    else setAdvanced(true);
+    if (!u || !(c.key || "").trim()) setAdvanced(true); // 没端点或没 key → 自动展开
   }, []);
 
   function save() {
@@ -53,6 +75,22 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
     setSaved(v);
     onSaved?.(v);
     if (v) void runTest(v);
+  }
+
+  // 保存用户自带 key/base/model，并用新配置重测端点（key 经请求头发往端点，不进构建）。
+  function saveKey() {
+    const cfg = {
+      ...getLlmConfig(),
+      key: llmKey.trim() || undefined,
+      base: llmBase.trim() || undefined,
+      model: llmModel.trim() || undefined,
+    };
+    setLlmConfig(cfg);
+    setKeySaved(llmKey.trim());
+    // 登录后把 BYOK 配置同步到账号（Supabase user_metadata），跨设备带着走。
+    if (user) supabase()?.auth.updateUser({ data: { telos_llm: cfg } }).catch(() => {});
+    const u = saved.trim() || getDeriveUrl();
+    if (u) void runTest(u);
   }
 
   const trimmed = draft.trim();
@@ -155,6 +193,56 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
 
       {advanced && (
         <div className="conn-adv">
+          {/* BYOK：你自带的 LLM key —— 只存本机 + 你的账号，随请求发往端点，不落盘、不进构建 */}
+          <div className="epc-key">
+            <div className="epc-key-h">{t("conn.keyTitle")}</div>
+            <p className="epc-key-sub">
+              {t("conn.keySub")}{" "}
+              <a href={DEEPSEEK_KEYS_URL} target="_blank" rel="noreferrer">
+                {t("conn.keyGet")} <Icon name="arrow" />
+              </a>
+            </p>
+            <div className="epc-row">
+              <div className="auth-pwd" style={{ flex: 1 }}>
+                <input
+                  type={showKey ? "text" : "password"}
+                  placeholder="sk-..."
+                  value={llmKey}
+                  spellCheck={false}
+                  autoCapitalize="off"
+                  autoComplete="off"
+                  onChange={(e) => setLlmKey(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveKey();
+                  }}
+                />
+                <button type="button" className="auth-eye" onClick={() => setShowKey((v) => !v)}>
+                  {showKey ? t("auth.hide") : t("auth.show")}
+                </button>
+              </div>
+              <button className="btn btn-ink epc-btn" onClick={saveKey} disabled={!llmKey.trim()}>
+                {t("epc.save")}
+              </button>
+            </div>
+            <div className="epc-row2">
+              <input
+                placeholder={t("conn.basePh")}
+                value={llmBase}
+                spellCheck={false}
+                autoCapitalize="off"
+                onChange={(e) => setLlmBase(e.target.value)}
+              />
+              <input
+                placeholder={t("conn.modelPh")}
+                value={llmModel}
+                spellCheck={false}
+                autoCapitalize="off"
+                onChange={(e) => setLlmModel(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="epc-eplabel">{t("conn.epTitle")}</div>
           <div className="epc-chips">
             {PRESETS.map((p) => (
               <button key={p.key} className={`epc-chip ${active === p.key ? "on" : ""}`} onClick={() => setDraft(p.fill)}>

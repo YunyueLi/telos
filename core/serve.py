@@ -56,7 +56,11 @@ class Handler(BaseHTTPRequestHandler):
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        # BYOK：放行前端携带的自有 key/base/model 请求头（本地 serve.py 仍用 core/.env，忽略其值）。
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Content-Type, X-Telos-Key, X-Telos-Base, X-Telos-Model, X-Telos-Search-Key, X-Telos-Search-Provider",
+        )
 
     def _json(self, code: int, payload: dict) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")

@@ -38,8 +38,27 @@ function corsHeaders(env) {
   return {
     "Access-Control-Allow-Origin": env.ALLOW_ORIGIN || "*",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    // BYOK：放行调用方随请求携带的自有 key / base / model / 检索配置。
+    "Access-Control-Allow-Headers":
+      "Content-Type, X-Telos-Key, X-Telos-Base, X-Telos-Model, X-Telos-Search-Key, X-Telos-Search-Provider",
     "Access-Control-Max-Age": "86400",
+  };
+}
+
+// BYOK：用调用方请求头里的自有配置覆盖服务端 env（env 仅作站长自用回退）。key 不落盘、不记录。
+function effectiveEnv(env, request) {
+  const h = request.headers;
+  const pick = (hdr, key) => {
+    const v = h.get(hdr);
+    return v && v.trim() ? v.trim() : env[key];
+  };
+  return {
+    ...env,
+    TELOS_LLM_API_KEY: pick("X-Telos-Key", "TELOS_LLM_API_KEY"),
+    TELOS_LLM_BASE_URL: pick("X-Telos-Base", "TELOS_LLM_BASE_URL"),
+    TELOS_LLM_MODEL: pick("X-Telos-Model", "TELOS_LLM_MODEL"),
+    TELOS_SEARCH_API_KEY: pick("X-Telos-Search-Key", "TELOS_SEARCH_API_KEY"),
+    TELOS_SEARCH_PROVIDER: pick("X-Telos-Search-Provider", "TELOS_SEARCH_PROVIDER"),
   };
 }
 
@@ -745,17 +764,18 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, "");
+    const eenv = effectiveEnv(env, request); // BYOK：调用方自有 key/base/model 覆盖；env 仅回退
 
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
     if (request.method === "GET" && (path === "" || path === "/health")) {
-      const sc = searchConfig(env);
+      const sc = searchConfig(eenv);
       return json(
         {
           ok: true,
-          available: !!env.TELOS_LLM_API_KEY,
-          model: env.TELOS_LLM_MODEL || "deepseek-v4-pro",
+          available: !!eenv.TELOS_LLM_API_KEY,
+          model: eenv.TELOS_LLM_MODEL || "deepseek-v4-pro",
           search: { provider: sc.provider, available: sc.provider !== "none" && !!sc.key },
         },
         200,
@@ -774,8 +794,9 @@ export default {
       }
       if (!goal) return json({ error: "goal 不能为空" }, 400, env);
       if (goal.length > 200) return json({ error: "goal 过长" }, 400, env);
+      if (!eenv.TELOS_LLM_API_KEY) return json({ error: "NO_KEY" }, 401, env);
       try {
-        return json(await derive(goal, env, lang), 200, env);
+        return json(await derive(goal, eenv, lang), 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }
@@ -788,7 +809,7 @@ export default {
         return json({ error: "请求体需为 JSON" }, 400, env);
       }
       try {
-        return json(await lesson(body, env), 200, env);
+        return json(await lesson(body, eenv), 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }
@@ -802,7 +823,7 @@ export default {
       }
       const goal = String(body.goal || "").trim();
       if (!goal) return json({ error: "goal 不能为空" }, 400, env);
-      return json({ title: await summarizeTitle(goal, env, String(body.lang || "")) }, 200, env);
+      return json({ title: await summarizeTitle(goal, eenv, String(body.lang || "")) }, 200, env);
     }
     if (request.method === "POST" && path === "/probe") {
       let body;
@@ -812,7 +833,7 @@ export default {
         return json({ error: "请求体需为 JSON" }, 400, env);
       }
       try {
-        return json(await probes(body, env), 200, env);
+        return json(await probes(body, eenv), 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }
