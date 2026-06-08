@@ -77,13 +77,25 @@ Full details — local key, Cloudflare Worker, search providers, anti-abuse — 
 
 ## Deploy your own
 
-The public site is a static export (GitHub Pages) calling a Cloudflare Worker that holds the key server-side:
+A static frontend (**GitHub Pages**) + a **Cloudflare Worker** that holds the LLM key server-side. The Worker is the only required piece — everything else degrades gracefully.
 
-```bash
-cd workers && wrangler secret put TELOS_LLM_API_KEY && wrangler deploy
-```
+**1 · Backend — one click, no CLI:**
 
-Point the site at it via `NEXT_PUBLIC_TELOS_DERIVE_URL` (or paste the URL in-app). Step-by-step: **[DERIVE.md §B](DERIVE.md)**.
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YunyueLi/telos/tree/main/workers)
+
+Sign in to Cloudflare (free), then add a secret **`TELOS_LLM_API_KEY`** (your DeepSeek/OpenAI key) under the Worker's *Settings → Variables and Secrets*. You get a `https://telos-derive.<sub>.workers.dev` URL.
+
+**2 · Frontend:** fork → GitHub Pages builds automatically. Point it at your Worker via the Actions **Variable** `NEXT_PUBLIC_TELOS_DERIVE_URL` = `…workers.dev/derive` (or just paste the URL in-app, stored per-browser).
+
+**Optional — all degrade gracefully if skipped:**
+
+| Add | Enables | Skip → fallback |
+| --- | --- | --- |
+| Tavily key (Worker secret `TELOS_SEARCH_API_KEY`) | Real, clickable lesson links | Platform search links |
+| [Supabase](SUPABASE.md) project | Accounts + cross-device sync | Local-first (browser only) |
+| Google / GitHub OAuth | Social login | Email + magic-link |
+
+Full walkthrough — CLI alternative, secrets, anti-abuse, search providers: **[DERIVE.md](DERIVE.md)** · accounts & sync: **[SUPABASE.md](SUPABASE.md)**.
 
 ## Repo layout
 

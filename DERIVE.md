@@ -39,14 +39,27 @@ cd core && python3 derive.py "用 Rust 写一个高性能 HTTP 服务器"
 
 Worker 免费额度足够 Demo 用。**key 只存在 Worker 后端,前端只知道 Worker 的 URL。**
 
+### 最简:一键部署(推荐,无需命令行)
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YunyueLi/telos/tree/main/workers)
+
+点按钮 → 用 Cloudflare 账号登录(免费,建议**邮箱+密码**注册,社交登录偶尔串号)→ 它读 `workers/wrangler.toml` 自动建好 Worker。
+部署后进该 Worker 的 **Settings → Variables and Secrets**,加两个 **Secret**:
+
+| Name(只填名字) | Value(填你的 key) |
+|---|---|
+| `TELOS_LLM_API_KEY` | 你的 DeepSeek/OpenAI key(`sk-…`) |
+| `TELOS_SEARCH_API_KEY` | 可选,Tavily key(`tvly-…`) |
+
+> ⚠️ **常见坑**:Name 框只填 `TELOS_LLM_API_KEY`,Value 框单独填 key——**别把整行 `TELOS_LLM_API_KEY=sk-…` 都塞进 Name**,否则 Worker 读不到(`/health` 会一直 `available:false`)。
+
+### 或:命令行(wrangler)
+
 ```bash
-npm install -g wrangler
 cd workers
-wrangler login
-wrangler secret put TELOS_LLM_API_KEY      # 粘贴你自己的新 key（不会进仓库）
-# 可选:换模型 / 收紧来源
-#   wrangler secret put TELOS_LLM_MODEL     # 或改 wrangler.toml 里的 [vars]
-wrangler deploy
+npx wrangler deploy                          # 部署(首次会让你登录 + 起 workers.dev 子域)
+npx wrangler secret put TELOS_LLM_API_KEY    # 提示 Enter a secret value: 时,只粘 key 的值(不要带 KEY= 前缀)
+npx wrangler secret put TELOS_SEARCH_API_KEY # 可选:Tavily
 ```
 
 部署后会得到一个地址,如 `https://telos-derive.<你的子域>.workers.dev`。

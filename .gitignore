@@ -11,6 +11,12 @@ dist/
 .env
 .env*.local
 
+# cloudflare worker (local cache + local dev secrets)
+.wrangler/
+**/.wrangler/
+.dev.vars
+**/.dev.vars
+
 # logs
 *.log
 npm-debug.log*
