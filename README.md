@@ -21,7 +21,7 @@
 
 ---
 
-The hosted app above runs the full loop in your browser — type any goal and watch Telos build a complete, staged knowledge map. Nothing to install; paste a free LLM key once (it's sent per request to the derive endpoint, never stored, and syncs with your account).
+The hosted app above runs the full loop in your browser — type any goal and watch Telos build a complete, staged knowledge map. Nothing to install; paste your API key once (it's sent per request to the derive endpoint, never stored, and syncs with your account).
 
 ```
 goal ─▶ reverse-derive ─▶ a module-organized prerequisite map (30–80 trainable skills)
@@ -35,11 +35,11 @@ goal ─▶ reverse-derive ─▶ a module-organized prerequisite map (30–80 t
 | --- | --- | --- | --- |
 | **For** | Just want to learn | Try it / hack on it | Run your own public instance |
 | **Setup** | Nothing | `git clone` + 1 free key + `make` | Fork + 1-click Worker |
-| **Needs a key?** | Yes — free, paste once | Yes (free DeepSeek) | Yes (your users bring their own) |
+| **Needs a key?** | Yes — paste once | Yes (DeepSeek / OpenAI / compatible) | Yes (your users bring their own) |
 | **Your data** | Browser (+ optional account sync) | Your machine | Your users' browsers / your Supabase |
 | **Go** | **[Open the app ▶](https://yunyueli.github.io/telos/app/)** | [↓ Run it yourself](#run-it-yourself-one-command) | [↓ Deploy your own](#deploy-your-own) |
 
-> New here? **Just [open the hosted app](https://yunyueli.github.io/telos/app/)** — type a goal, watch it build your map. Zero setup, no key. The rest of this README is for running or hosting it yourself.
+> New here? **Just [open the hosted app](https://yunyueli.github.io/telos/app/)** — type a goal, watch it build your map. Nothing to install; you paste an API key once. The rest of this README is for running or hosting it yourself.
 
 ## Run it yourself (one command)
 
@@ -48,9 +48,9 @@ git clone https://github.com/YunyueLi/telos && cd telos
 make          # or: ./start.sh
 ```
 
-That's it. `make` copies `core/.env` from the template (and tells you where to get a **free** key), installs web deps on first run, then starts the derive proxy **and** the web app and opens your browser. The app auto-connects to the local proxy — no env vars, no second terminal.
+That's it. `make` copies `core/.env` from the template (and tells you where to get a key), installs web deps on first run, then starts the derive proxy **and** the web app and opens your browser. The app auto-connects to the local proxy — no env vars, no second terminal.
 
-> Need a key? **DeepSeek** is free to start — no credit card, ~5M free tokens. Grab one at **[platform.deepseek.com](https://platform.deepseek.com)**, paste it into `core/.env`, refresh. (You can also paste an endpoint directly in the app's *倒推 / Derive* page — no `.env` needed.)
+> Need a key? Telos works with any **OpenAI-compatible** provider — e.g. **DeepSeek** ([platform.deepseek.com](https://platform.deepseek.com)) or OpenAI. Paste the key into `core/.env` and refresh. (You can also paste your key + endpoint directly in the app under *Settings · Connections* — no `.env` needed.)
 
 | Command | What it does |
 | --- | --- |
@@ -67,6 +67,9 @@ That's it. `make` copies `core/.env` from the template (and tells you where to g
 - **Interactive micro-lessons.** Predict → intuition → worked example → self-explain → faded practice → an unscaffolded mastery check — plus real, linkable courses (optionally web-grounded so links never hallucinate).
 - **Spaced review (FSRS-4.5).** What you learn flows into a review queue; due cards reschedule on each grade.
 - **Six domain classes** (declarative · procedural · creative · motor · adversarial · habit) drive different diagnosis & review strategies — so it works for math *and* a sport *and* a habit.
+- **Keep-going system** (the *Streak* tab) — daily goal with a progress ring, a month-view check-in calendar, streak freeze, levels & tiers, and achievements. All bound to *real learning signals* (mastery & review), never time-on-app, with anti-dark-pattern guards.
+- **Accounts & cross-device sync** (optional, Supabase) — email/password, magic link, or Google; your projects and progress follow you across devices. Without it, everything stays local-first in your browser.
+- **Nine languages** with a self-built i18n layer (zh-CN/TW · en · fr · ja · ko · es · ru · de); dates & relative times localized via `Intl`.
 
 ## How it works
 
@@ -83,7 +86,7 @@ It splits the paradigm into three independently usable, interoperable data stand
 ## Configuration & API key
 
 - **Hosted app (BYOK):** paste your own free LLM key in *Settings · Connections*. It's sent with each request to the derive Worker (never stored there), kept on your device, and synced with your account — so it follows you across devices.
-- **Local:** put a free DeepSeek key in `core/.env` (see above), or paste a `/derive` endpoint in the app. **Never commit a key** — `core/.env` is git-ignored.
+- **Local:** put your API key (DeepSeek / OpenAI / any OpenAI-compatible) in `core/.env` (see above), or paste your key + endpoint in the app under *Settings · Connections*. **Never commit a key** — `core/.env` is git-ignored.
 - **Optional web search** (real, clickable lesson links instead of search pages): set `TELOS_SEARCH_PROVIDER=tavily` + a key in `core/.env`. Degrades gracefully if absent.
 
 Full details — local key, Cloudflare Worker, search providers, anti-abuse — in **[DERIVE.md](DERIVE.md)**.
@@ -117,7 +120,8 @@ Full walkthrough — CLI alternative, secrets, anti-abuse, search providers: **[
 | `core/` | Learning engine (Python, zero-dependency): KST · BKT+CBM diagnosis · FIRe credit propagation · FSRS review · multi-pass LLM reverse-derivation | ✅ tests pass |
 | `web/` | Product (Next.js + React + Tailwind + TypeScript, static export) | 🚧 active |
 | `workers/` | Cloudflare Worker LLM proxy (`/derive` · `/lesson` · `/probe` · `/title`) | ✅ |
-| `landing/` | Landing page (static HTML — the design reference) | ✅ |
+| `landing/` | Marketing landing page (static HTML) | ✅ |
+| `docs/DESIGN.md` | Design system reference (the visual baseline is the app) | ✅ |
 | `docs/STRATEGY.md` | Research-backed roadmap & decisions | ✅ |
 
 ## For contributors — the engine, bare
@@ -130,7 +134,7 @@ cd core && python3 derive.py "用 Rust 写高性能 HTTP 服务器"   # reverse-
 
 ## Design language
 
-Pure black-and-white on warm paper; a bold serif (Fraunces) + clean sans (Inter) + mono (JetBrains Mono); hand-drawn line icons; a young-teacher mascot in monochrome ink.
+Pure black-and-white on warm paper; a bold serif (Fraunces) + clean sans (Inter) + mono (JetBrains Mono); hand-drawn line icons; a young-teacher mascot in monochrome ink. Full system — tokens, components, gamification visuals, motion — in **[docs/DESIGN.md](docs/DESIGN.md)**.
 
 ## Research & prior art
 

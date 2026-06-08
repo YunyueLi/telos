@@ -1,15 +1,18 @@
 # 启用「倒推任意目标」
 
-倒推(目标 → 前置知识图谱)需要调用一个 LLM。**API key 必须放在服务端**——
-静态网页的前端代码是公开的,key 写进去等于公开泄露。所以有两条路径:
+倒推(目标 → 前置知识图谱)需要调用一个 LLM。Telos 走 **BYOK（自带 key）**：
 
-| 场景 | 用什么 | key 放在哪 |
+- 用户在应用 **设置 · 接入状态 → AI 引擎** 填自己的 API key（DeepSeek / OpenAI / 任意 OpenAI 兼容）。
+- key **只存在用户本机 + 其账号**（Supabase `user_metadata`），随**每次请求**经请求头发往倒推端点；端点**不落盘、不记录**，且 **绝不写进前端构建产物**。
+- 倒推的多段编排跑在一个端点上：本地 `core/serve.py`，公开 `workers/derive.js`（Cloudflare Worker）。公开 Worker **无需内置 key**——它用每个请求带来的用户 key。
+
+| 场景 | 端点 | key 来自 |
 |---|---|---|
 | 本地体验 / CLI / SKILL | `core/serve.py`（零依赖) | 你机器上的 `core/.env` |
-| 公开网页(GitHub Pages) | `workers/derive.js`（Cloudflare Worker) | Worker 的 secret |
+| 公开网页(GitHub Pages) | `workers/derive.js`（Cloudflare Worker） | **用户请求自带（BYOK）**；私有/自费实例可用 Worker secret 作回退 |
 
 > 安全须知:**任何曾经粘贴/提交到公开处的 key 都视为已泄露,先去控制台作废重建。**
-> `core/.env` 已被 `.gitignore` 忽略;Worker 的 key 用 `wrangler secret` 存,不进仓库。
+> `core/.env` 已被 `.gitignore` 忽略;私有实例的 Worker key 用 `wrangler secret` 存,不进仓库。
 
 ---
 
@@ -37,14 +40,16 @@ cd core && python3 derive.py "用 Rust 写一个高性能 HTTP 服务器"
 
 ## B. 公开网页(Cloudflare Worker)
 
-Worker 免费额度足够 Demo 用。**key 只存在 Worker 后端,前端只知道 Worker 的 URL。**
+Worker 免费额度足够用。默认 **BYOK**：Worker 用每个请求带来的用户 key（不内置、不留存）。
+**只有**当你想要一个由你自费、访客零配置的「私有/演示」实例时,才给 Worker 设一个 LLM secret 作回退(下面"可选"步骤)；纯 BYOK 公开实例**不要**设,免得替所有访客买单。
 
 ### 最简:一键部署(推荐,无需命令行)
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YunyueLi/telos/tree/main/workers)
 
-点按钮 → 用 Cloudflare 账号登录(免费,建议**邮箱+密码**注册,社交登录偶尔串号)→ 它读 `workers/wrangler.toml` 自动建好 Worker。
-部署后进该 Worker 的 **Settings → Variables and Secrets**,加两个 **Secret**:
+点按钮 → 用 Cloudflare 账号登录(免费,建议**邮箱+密码**注册,社交登录偶尔串号)→ 它读 `workers/wrangler.toml` 自动建好 Worker,得到一个 `…workers.dev` 地址。**到这一步,纯 BYOK 公开实例就部署好了**(访客自带 key)。
+
+**可选 · 仅当你要做"由你自费、访客零配置"的私有/演示实例**:进该 Worker 的 **Settings → Variables and Secrets**,加 **Secret** 作回退(没填 key 的请求才用它):
 
 | Name(只填名字) | Value(填你的 key) |
 |---|---|
