@@ -80,8 +80,9 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 2. **我做**：`gh variable set NEXT_PUBLIC_TELOS_DERIVE_URL --body "https://…workers.dev/derive"` → `gh workflow run deploy.yml`；并把 `workers/wrangler.toml` 的 `ALLOW_ORIGIN` 收紧到 `https://yunyueli.github.io`。验证：线上「接入状态」AI 引擎变已连接、输目标能倒推 30–80 节点。
 > 用户偏非技术；wrangler 比 Supabase 更硬核，需手把手（参照本程 Supabase 的「让用户截图、我逐步指」节奏）。或评估改用 Supabase Edge Function 托管倒推（备选）。
 
-### P1 · 账号增强
-- **Redirect URLs**（Supabase → Authentication → URL Configuration）：加 `http://localhost:3000/account/` + `https://yunyueli.github.io/telos/app/account/`，Site URL 设 `https://yunyueli.github.io/telos/app/`。**魔法链接/邮件确认/OAuth 回跳都依赖它**（现密码登录因 autoconfirm=on 能用，但魔法链接点开会落到默认页）。
+### P1 · 额外登录方式（可选 · 云同步本身已完成，与下列无关）
+> ⚠️ 别误会：**邮箱+密码登录已可用 → 跨设备同步随之已完整可用并实测通过**。同步对任何已登录用户都生效，与登录方式无关。下列只是让「魔法链接 / Google / GitHub」这些*别的登录入口*也能用。
+- **Redirect URLs**（Supabase → Authentication → URL Configuration）：加 `http://localhost:3000/account/` + `https://yunyueli.github.io/telos/app/account/`，Site URL 设 `https://yunyueli.github.io/telos/app/`。**魔法链接/邮件确认/OAuth 回跳依赖它**（密码登录因 autoconfirm=on 已能用，但魔法链接点开会落到默认页）。
 - **Google / GitHub OAuth**：Google Cloud / GitHub 建 OAuth 应用，回调 `https://gbvetfyudlbdiydapipr.supabase.co/auth/v1/callback`，client id/secret 填进 Supabase provider。登录页按钮已就绪，开了即生效。
 - 密码重置：`resetPasswordForEmail` 已接（「忘记密码」），同样需 Redirect URLs + 邮件模板。
 
