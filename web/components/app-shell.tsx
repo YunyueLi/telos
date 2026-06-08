@@ -11,6 +11,7 @@ import { useT } from "@/lib/telos/i18n";
 import { LangSwitch } from "@/components/lang-switch";
 import { ProjectSwitcher } from "@/components/project-switcher";
 import { AccountMenu } from "@/components/account-menu";
+import { GoalCelebrate } from "@/components/goal-celebrate";
 
 type Tab = "map" | "review" | "me" | "settings";
 
@@ -77,7 +78,7 @@ export function AppShell({
             <div className="appprog">
               {streak > 0 && (
                 <span className="appprog-seg" title={t("shell.streakTitle")}>
-                  <Icon name="spark" /> {streak}
+                  <Icon name="flame" /> {streak}
                 </span>
               )}
               <span className="appprog-seg" title={t("shell.xpTitle")}>
@@ -107,6 +108,8 @@ export function AppShell({
       </header>
 
       <main className="appmain">{children}</main>
+
+      <GoalCelebrate />
 
       <nav className="apptabs">
         {TABS.map((tb) => (
