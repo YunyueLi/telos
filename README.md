@@ -13,7 +13,7 @@
 &nbsp;[![Stars](https://img.shields.io/github/stars/YunyueLi/telos?style=flat&color=111&label=Stars)](https://github.com/YunyueLi/telos)
 &nbsp;[![中文](https://img.shields.io/badge/README-中文-111.svg)](README.zh-CN.md)
 
-### ▶ [**Try it now**](https://yunyueli.github.io/telos/app/) — no install, no API key
+### ▶ [**Try it now**](https://yunyueli.github.io/telos/app/) — no install, bring a free key
 
 <sub>[Landing](https://yunyueli.github.io/telos/) · [Run it yourself](#run-it-yourself-one-command) · [How it works](#how-it-works) · [Deploy your own](#deploy-your-own)</sub>
 
@@ -21,7 +21,7 @@
 
 ---
 
-The hosted demo above runs the full loop in your browser — type any goal and watch Telos build a complete, staged knowledge map. Nothing to install; the API key lives server-side.
+The hosted app above runs the full loop in your browser — type any goal and watch Telos build a complete, staged knowledge map. Nothing to install; paste a free LLM key once (it's sent per request to the derive endpoint, never stored, and syncs with your account).
 
 ```
 goal ─▶ reverse-derive ─▶ a module-organized prerequisite map (30–80 trainable skills)
@@ -35,7 +35,7 @@ goal ─▶ reverse-derive ─▶ a module-organized prerequisite map (30–80 t
 | --- | --- | --- | --- |
 | **For** | Just want to learn | Try it / hack on it | Run your own public instance |
 | **Setup** | Nothing | `git clone` + 1 free key + `make` | Fork + 1-click Worker |
-| **Needs a key?** | No (server-side) | Yes (free DeepSeek) | Yes (in your Worker) |
+| **Needs a key?** | Yes — free, paste once | Yes (free DeepSeek) | Yes (your users bring their own) |
 | **Your data** | Browser (+ optional account sync) | Your machine | Your users' browsers / your Supabase |
 | **Go** | **[Open the app ▶](https://yunyueli.github.io/telos/app/)** | [↓ Run it yourself](#run-it-yourself-one-command) | [↓ Deploy your own](#deploy-your-own) |
 
@@ -82,7 +82,7 @@ It splits the paradigm into three independently usable, interoperable data stand
 
 ## Configuration & API key
 
-- **Hosted demo:** nothing to configure — derivation runs through a Cloudflare Worker whose key stays server-side.
+- **Hosted app (BYOK):** paste your own free LLM key in *Settings · Connections*. It's sent with each request to the derive Worker (never stored there), kept on your device, and synced with your account — so it follows you across devices.
 - **Local:** put a free DeepSeek key in `core/.env` (see above), or paste a `/derive` endpoint in the app. **Never commit a key** — `core/.env` is git-ignored.
 - **Optional web search** (real, clickable lesson links instead of search pages): set `TELOS_SEARCH_PROVIDER=tavily` + a key in `core/.env`. Degrades gracefully if absent.
 
@@ -90,7 +90,7 @@ Full details — local key, Cloudflare Worker, search providers, anti-abuse — 
 
 ## Deploy your own
 
-A static frontend (**GitHub Pages**) + a **Cloudflare Worker** that holds the LLM key server-side. The Worker is the only required piece — everything else degrades gracefully.
+A static frontend (**GitHub Pages**) + a **Cloudflare Worker** that orchestrates the multi-pass derivation. In **BYOK** mode the Worker uses each user's own key (passed per request, never stored); for a private instance it can hold your key as a fallback. The Worker is the only required backend — everything else degrades gracefully.
 
 **1 · Backend — one click, no CLI:**
 
