@@ -24,7 +24,7 @@
 
 ## 约定
 
-- **设计语言**：纯黑白 + 暖灰纸感；Fraunces 衬线 + Inter + JetBrains Mono；**手绘线性图标**（`components/icon.tsx`，带手抖滤镜）。**禁用 emoji**。看板娘=年轻女老师，黑白墨线。
+- **设计语言**：纯黑白 + 暖灰纸感；Fraunces 衬线 + Inter + JetBrains Mono；**手绘线性图标**（`components/icon.tsx`，带手抖滤镜）。**禁用 emoji**。看板娘=年轻女老师，黑白墨线。**完整设计参考见 `docs/DESIGN.md`**（色彩/字体/图标/状态/组件/游戏化/动效/IA 全量规范）。
 - commit：conventional（`feat:`/`fix:`/`chore:`），结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。
 - 代码改动**默认直接提交 + push + 部署**，不用问（用户已授权）。
 - 回复用**中文**；不写"总结"段落。
