@@ -9,6 +9,7 @@
 *说出你想达成的结果 —— Telos 倒推出一张按模块组织的能力地图，诊断你已会的，只教你缺的。*
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-111.svg)](LICENSE)
+&nbsp;[![Release](https://img.shields.io/github/v/release/YunyueLi/telos?style=flat&color=111&label=Release)](https://github.com/YunyueLi/telos/releases)
 &nbsp;[![Stars](https://img.shields.io/github/stars/YunyueLi/telos?style=flat&color=111&label=Stars)](https://github.com/YunyueLi/telos)
 &nbsp;[![English](https://img.shields.io/badge/README-English-111.svg)](README.md)
 

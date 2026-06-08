@@ -9,6 +9,7 @@
 *Name what you want to achieve — Telos reverse-derives a module-by-module map of the skills you actually need, diagnoses what you already know, and teaches only your gaps.*
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-111.svg)](LICENSE)
+&nbsp;[![Release](https://img.shields.io/github/v/release/YunyueLi/telos?style=flat&color=111&label=Release)](https://github.com/YunyueLi/telos/releases)
 &nbsp;[![Stars](https://img.shields.io/github/stars/YunyueLi/telos?style=flat&color=111&label=Stars)](https://github.com/YunyueLi/telos)
 &nbsp;[![中文](https://img.shields.io/badge/README-中文-111.svg)](README.zh-CN.md)
 
