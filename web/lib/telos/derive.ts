@@ -50,6 +50,48 @@ export function getHealthUrl(url?: string): string {
   return u.replace(/\/(derive|lesson|probe)\/?$/, "") + "/health";
 }
 
+// ---- BYOK：用户自带的 LLM 配置（key/base/model + 联网检索）。存 localStorage，登录后随账号同步。----
+// key 只随请求发往倒推端点（你的 Worker 或本地 serve.py），端点不落盘、不记录；绝不进任何前端构建产物。
+const LLM_KEY = "telos:llm";
+export interface LlmConfig {
+  key?: string;
+  base?: string;
+  model?: string;
+  searchProvider?: string;
+  searchKey?: string;
+}
+export function getLlmConfig(): LlmConfig {
+  if (typeof window === "undefined") return {};
+  try {
+    return (JSON.parse(window.localStorage.getItem(LLM_KEY) || "{}") as LlmConfig) || {};
+  } catch {
+    return {};
+  }
+}
+export function setLlmConfig(c: LlmConfig): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LLM_KEY, JSON.stringify(c));
+  } catch {
+    /* ignore */
+  }
+}
+export function hasLlmKey(): boolean {
+  return !!(getLlmConfig().key || "").trim();
+}
+
+// 把用户自带配置拼成请求头（随每次倒推/微课/诊断调用发出）。
+function llmHeaders(): Record<string, string> {
+  const c = getLlmConfig();
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (c.key && c.key.trim()) h["X-Telos-Key"] = c.key.trim();
+  if (c.base && c.base.trim()) h["X-Telos-Base"] = c.base.trim();
+  if (c.model && c.model.trim()) h["X-Telos-Model"] = c.model.trim();
+  if (c.searchProvider && c.searchProvider.trim()) h["X-Telos-Search-Provider"] = c.searchProvider.trim();
+  if (c.searchKey && c.searchKey.trim()) h["X-Telos-Search-Key"] = c.searchKey.trim();
+  return h;
+}
+
 export interface EndpointStatus {
   ok: boolean;
   model?: string;
@@ -64,7 +106,7 @@ export async function testEndpoint(url?: string): Promise<EndpointStatus> {
   if (!health) return { ok: false, error: tStatic("epc.needUrl") };
   let res: Response;
   try {
-    res = await fetch(health, { method: "GET" });
+    res = await fetch(health, { method: "GET", headers: llmHeaders() });
   } catch {
     return { ok: false, error: tStatic("epc.cantConnect") };
   }
@@ -141,7 +183,7 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: llmHeaders(),
       body: JSON.stringify({ goal, lang: outputLang() }),
       signal,
     });
@@ -210,7 +252,7 @@ export async function generateLesson(
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: llmHeaders(),
       body: JSON.stringify({ ...input, lang: outputLang() }),
       signal,
     });
@@ -270,7 +312,7 @@ export async function generateTitle(goal: string): Promise<string> {
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: llmHeaders(),
       body: JSON.stringify({ goal, lang: outputLang() }),
     });
     if (!res.ok) return "";
@@ -292,7 +334,7 @@ export async function generateProbes(
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: llmHeaders(),
       body: JSON.stringify({ points, goal, lang: outputLang() }),
       signal,
     });

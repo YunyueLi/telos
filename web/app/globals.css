@@ -382,6 +382,15 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .epc-row input{flex:1;min-width:180px;font-family:var(--mono);font-size:12px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:10px;background:var(--paper);color:var(--ink)}
 .epc-row input:focus{outline:none;border-color:var(--ink)}
 .epc-btn{padding:9px 15px;font-size:13px;white-space:nowrap}
+.epc-key{margin-bottom:14px}
+.epc-key-h{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin-bottom:5px}
+.epc-key-sub{font-size:12px;color:var(--ink-3);line-height:1.55;margin-bottom:10px}
+.epc-key-sub a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.epc-key-sub a .ic{width:11px;height:11px;vertical-align:-1px}
+.epc-row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.epc-row2 input{flex:1;min-width:150px;font-family:var(--mono);font-size:11.5px;padding:9px 11px;border:1px solid var(--line-soft);border-radius:10px;background:var(--paper);color:var(--ink-2)}
+.epc-row2 input:focus{outline:none;border-color:var(--ink)}
+.epc-eplabel{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);margin:4px 0 9px;padding-top:13px;border-top:1px dashed var(--line-soft)}
 .epc-status{display:flex;align-items:center;gap:7px;margin-top:11px;font-family:var(--mono);font-size:12px}
 .epc-status .dot{width:8px;height:8px;border-radius:50%;flex:none}
 .epc-status.ok{color:#2f7d4f}

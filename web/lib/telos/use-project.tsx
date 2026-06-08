@@ -31,7 +31,7 @@ import {
   setActiveId,
   upsertProject,
 } from "./project";
-import { deriveGraph, generateTitle } from "./derive";
+import { deriveGraph, generateTitle, getLlmConfig, hasLlmKey, setLlmConfig, type LlmConfig } from "./derive";
 import {
   addDailyXp,
   computeXp,
@@ -210,6 +210,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
     if (syncedRef.current === user.id) return;
     syncedRef.current = user.id;
+    // BYOK：登录时把账号里的 LLM 配置拉回本机（仅当本机还没配 key，不覆盖刚在本设备设的）。
+    const remoteLlm = (user.user_metadata as { telos_llm?: LlmConfig } | undefined)?.telos_llm;
+    if (remoteLlm && typeof remoteLlm === "object" && (remoteLlm.key || "").trim() && !hasLlmKey()) {
+      setLlmConfig({ ...getLlmConfig(), ...remoteLlm });
+    }
     void syncNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -245,7 +250,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         return true;
       } catch (e) {
         const msg = e instanceof Error ? e.message : t("err.deriveFailedShort");
-        setDeriveError(msg === "NO_ENDPOINT" ? t("err.noEndpointDerive") : msg);
+        setDeriveError(
+          msg === "NO_ENDPOINT"
+            ? t("err.noEndpointDerive")
+            : msg === "NO_KEY"
+              ? t("err.noKeyDerive")
+              : msg,
+        );
         setDeriving(false);
         return false;
       }
