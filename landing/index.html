@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Telos · 从结果倒推，学会任何事</title>
+<meta name="description" content="Telos 是一个逆向设计的学习引擎：说出目标，倒推出带前置依赖的知识点图谱，诊断你已会的，只教你缺的，边教边验证，并用间隔复习把会的变成不会忘的。开源 · Apache-2.0。" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -16,119 +17,122 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 36px}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 32px}
   a{color:inherit;text-decoration:none}
   .mono{font-family:var(--mono)}
   svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   .sk{filter:url(#sk)} .skL{filter:url(#skL)}
-  /* peep characters forced to B&W */
   .peep{filter:grayscale(1) contrast(1.18) brightness(1.02)}
   .pcirc{border-radius:50%;overflow:hidden;background:var(--card);border:1.6px solid var(--ink);display:block;position:relative}
-  .pcirc img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+  .pcirc img{width:100%;height:100%;object-fit:cover;object-position:50% 18%}
   .pmini{width:48px;height:48px;border-radius:13px;overflow:hidden;background:var(--paper);border:1px solid var(--line-soft);flex:none}
   .pmini img{width:100%;height:100%;object-fit:cover;object-position:50% 16%}
-
-  /* dark panel + contour texture */
   .dark{position:relative;overflow:hidden;background:var(--ink);color:var(--paper);border-radius:20px}
   .contour{position:absolute;inset:0;width:100%;height:100%;color:#fff;pointer-events:none}
   .dark>:not(.contour){position:relative;z-index:1}
 
   .btn{font:600 14px/1 var(--sans);padding:13px 22px;border-radius:999px;cursor:pointer;border:1.6px solid var(--ink);display:inline-flex;align-items:center;gap:9px;transition:.15s}
-  .btn-ink{background:var(--ink);color:var(--paper)} .btn-ink:hover{background:#000}
+  .btn-ink{background:var(--ink);color:var(--paper)} .btn-ink:hover{background:#000;transform:translateY(-1px)}
   .btn-line{background:transparent;color:var(--ink)} .btn-line:hover{background:rgba(20,19,16,.05)}
   .btn-light{background:var(--paper);color:var(--ink);border-color:var(--paper)}
 
   /* masthead */
-  .mast{border-bottom:1px solid var(--line)}
-  .mast .wrap{display:flex;align-items:center;gap:16px;height:74px}
-  .word{display:flex;align-items:center;gap:11px;font-family:var(--serif);font-weight:600;font-size:24px;letter-spacing:-.01em}
-  .word svg{width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:1.8}
-  .mast .nav{display:flex;gap:20px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);letter-spacing:.02em}
+  .mast{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:saturate(1.1) blur(8px)}
+  .mast .wrap{display:flex;align-items:center;gap:18px;height:66px}
+  .word{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:600;font-size:23px;letter-spacing:-.01em}
+  .word svg{width:25px;height:25px;stroke:var(--ink);fill:none;stroke-width:1.8}
+  .mast .nav{display:flex;gap:22px;margin-left:14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);letter-spacing:.02em}
   .mast .nav a{white-space:nowrap;padding-bottom:2px;border-bottom:1px solid transparent}
-  .mast .nav a:hover{border-color:var(--ink)}
-  .mast .meta{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:right;line-height:1.6}
+  .mast .nav a:hover{border-color:var(--ink);color:var(--ink)}
+  .mast .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .ghlink{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:6px 12px}
+  .ghlink:hover{border-color:var(--ink);color:var(--ink)}
+  .ghlink svg{width:14px;height:14px}
 
   /* hero */
-  .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center;padding:70px 0 48px}
+  .hero{display:grid;grid-template-columns:1.08fr .92fr;gap:40px;align-items:center;padding:72px 0 50px}
   .hero .kick{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--ink-2);text-transform:uppercase}
-  .hero h1{font-family:var(--serif);font-weight:500;font-size:62px;line-height:1.02;letter-spacing:-.022em;margin:18px 0 0}
+  .hero h1{font-family:var(--serif);font-weight:500;font-size:60px;line-height:1.03;letter-spacing:-.022em;margin:18px 0 0}
   .hero h1 em{font-style:italic;position:relative;white-space:nowrap}
   .hand-u{position:absolute;left:-2%;bottom:-12px;width:104%;height:15px;stroke:var(--ink);stroke-width:2.4;fill:none}
-  .hero .lead{color:var(--ink-2);font-size:17.5px;line-height:1.6;max-width:440px;margin-top:26px}
-  .hero .cta{display:flex;gap:12px;margin-top:30px}
-  .heroart{position:relative;justify-self:center;width:380px;height:380px}
-  .heroart .pcirc{width:300px;height:300px;position:absolute;left:40px;top:40px}
+  .hero .lead{color:var(--ink-2);font-size:17px;line-height:1.62;max-width:468px;margin-top:26px}
+  .hero .cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .trust{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:26px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em}
+  .trust span{display:inline-flex;align-items:center;gap:6px}
+  .trust .ic{width:13px;height:13px;color:var(--ink-2)}
+  .heroart{position:relative;justify-self:center;width:370px;height:370px}
+  .heroart .pcirc{width:296px;height:296px;position:absolute;left:37px;top:37px}
   .heroart .deco{position:absolute;inset:0;width:100%;height:100%;stroke:var(--ink);fill:none}
 
   /* section head */
-  section{padding:34px 0}
-  .shead{display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:28px}
+  section{padding:46px 0}
+  .shead{display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:30px}
   .shead .no{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .shead h2{font-family:var(--serif);font-weight:500;font-size:31px;letter-spacing:-.01em}
   .shead .sub{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px}
 
-  /* style guide */
-  .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
-  .box h3{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:16px}
-  .sw{display:flex;flex-wrap:wrap;gap:16px}
-  .sw .c i{display:block;width:60px;height:60px;border-radius:10px;border:1px solid var(--line-soft)}
-  .sw .c span{display:block;font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:7px;text-align:center}
-  .ty>div{padding:9px 0;border-bottom:1px dashed var(--line-soft);display:flex;align-items:baseline;justify-content:space-between}
-  .ty>div:last-child{border:0}
-  .ty .lbl{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
-  .iconset{display:grid;grid-template-columns:repeat(5,1fr);gap:18px 6px;text-align:center}
-  .iconset .it{font-size:23px}.iconset .it span{display:block;font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:7px}
-  .states{display:flex;flex-wrap:wrap;gap:11px}
-  .stt{min-width:118px;padding:10px 12px;border-radius:11px;font-size:12.5px;font-weight:600;text-align:center}
-  .stt s{display:block;font:500 9.5px var(--mono);text-decoration:none;text-transform:uppercase;letter-spacing:.03em;margin-top:3px}
-  .stt.done{background:var(--ink);color:var(--paper)}.stt.done s{color:rgba(240,238,233,.7)}
-  .stt.now{border:1.8px solid var(--ink)}.stt.now s{color:var(--ink)}
-  .stt.learn{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--hatch) 5px 6px),var(--card);border:1px solid var(--ink-3)}.stt.learn s{color:var(--ink-2)}
-  .stt.lock{border:1.4px dashed var(--line-soft);color:var(--ink-3)}.stt.lock s{color:var(--ink-3)}
+  /* manifesto */
+  .quote{padding:52px 44px;text-align:center;margin:6px 0}
+  .quote p{font-family:var(--serif);font-style:italic;font-weight:400;font-size:30px;line-height:1.3;letter-spacing:-.01em;max-width:760px;margin:0 auto}
+  .quote .src{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,238,233,.55);margin-top:22px}
 
-  /* how it works */
-  .hiw{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-  .vcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:4px}
+  /* how it works — 4 step loop */
+  .hiw{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .vcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:4px}
   .vcard.dk{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  .vcard .vt{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-  .vcard .pcirc{width:70px;height:70px;flex:none}
+  .vcard .vt{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .vcard .pcirc{width:56px;height:56px;flex:none}
   .vcard.dk .pcirc{border-color:var(--paper)}
   .vcard .step{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ink-3)}
   .vcard.dk .step{color:rgba(240,238,233,.6)}
-  .vcard h4{font-family:var(--serif);font-weight:500;font-size:21px}
-  .vcard p{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin-top:4px}
+  .vcard h4{font-family:var(--serif);font-weight:500;font-size:20px}
+  .vcard p{font-size:13px;color:var(--ink-2);line-height:1.55;margin-top:2px}
   .vcard.dk p{color:rgba(240,238,233,.8)}
 
-  /* quote */
-  .quote{padding:56px 48px;text-align:center;margin:18px 0}
-  .quote p{font-family:var(--serif);font-style:italic;font-weight:400;font-size:31px;line-height:1.3;letter-spacing:-.01em;max-width:780px;margin:0 auto}
-  .quote .src{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,238,233,.55);margin-top:22px}
+  /* bento features */
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+  .tile{background:var(--card);border:1px solid var(--line-soft);border-radius:18px;padding:22px;display:flex;flex-direction:column;min-height:150px}
+  .tile.big{grid-column:span 4}.tile.sm{grid-column:span 2}.tile.md{grid-column:span 3}
+  .tile .th{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:500;font-size:18px;color:var(--ink)}
+  .tile .th .ic{width:18px;height:18px;color:var(--ink);flex:none}
+  .tile p{font-size:13px;color:var(--ink-2);line-height:1.55;margin-top:8px}
+  .tile.dk{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .tile.dk .th,.tile.dk .th .ic{color:var(--paper)}
+  .tile.dk p{color:rgba(240,238,233,.82)}
 
-  /* plate */
+  /* mini map (for big tile) */
+  .minimap{position:relative;flex:1;min-height:150px;margin-top:14px}
+  .minimap svg.net{position:absolute;inset:0;width:100%;height:100%}
+  .net .edge{stroke:var(--ink-3);stroke-width:1.6;fill:none}.net .edge.s{stroke:var(--ink);stroke-width:2.4}.net .edge.l{stroke:var(--line-soft);stroke-width:1.5;stroke-dasharray:4 6}
+  .nn{position:absolute;transform:translate(-50%,-50%);padding:6px 10px;border-radius:9px;font-size:11px;font-weight:600;background:var(--card);border:1.4px solid var(--line-soft);white-space:nowrap}
+  .nn.done{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .nn.now{border:1.8px solid var(--ink)}
+  .nn.learn{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--hatch) 5px 6px),var(--card);border-color:var(--ink-3)}
+  .nn.lock{border:1.4px dashed var(--line-soft);color:var(--ink-3)}
+
+  /* streak mini (for dark tile) */
+  .smini{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+  .sflame{display:flex;align-items:baseline;gap:9px}
+  .sflame .ic{width:24px;height:24px;color:var(--paper);align-self:center}
+  .sflame b{font-family:var(--serif);font-weight:500;font-size:34px;line-height:1}
+  .sflame span{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:rgba(240,238,233,.6)}
+  .scal{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+  .scal i{aspect-ratio:1;border-radius:3px;border:1px solid rgba(240,238,233,.25)}
+  .scal i.on{background:var(--paper);border-color:var(--paper)}
+  .scal i.hf{background:repeating-linear-gradient(45deg,transparent 0 2px,rgba(240,238,233,.4) 2px 3px)}
+
+  /* science */
+  .sci{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 32px}
+  .sci .r{display:flex;gap:14px;padding:14px 0;border-bottom:1px dashed var(--line-soft)}
+  .sci .r .k{font-family:var(--serif);font-weight:500;font-size:16px;white-space:nowrap;flex:none;min-width:150px}
+  .sci .r .v{font-size:13px;color:var(--ink-2);line-height:1.5}
+
+  /* plate (product preview) */
   .cap{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;display:flex;gap:12px;margin-bottom:10px}
   .plate{border:1px solid var(--line);border-radius:18px;background:var(--card);overflow:hidden}
   .ptop{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line-soft)}
   .ptop .u{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
   .ptop .br{display:flex;gap:6px;margin-left:auto}.ptop .br i{width:9px;height:9px;border-radius:50%;border:1.3px solid var(--ink-3)}
-
-  /* goal screen */
-  .goal{padding:52px 44px;display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
-  .goal .eye{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-2);text-transform:uppercase}
-  .goal h2{font-family:var(--serif);font-weight:500;font-size:42px;letter-spacing:-.02em;margin:12px 0 22px;line-height:1.04}
-  .gbox{border:1.6px solid var(--ink);border-radius:18px;padding:16px 16px 13px;background:var(--paper)}
-  .gbox .txt{font-size:16px;padding:4px 4px 16px}.gbox .txt .cur{display:inline-block;width:1.5px;height:18px;background:var(--ink);vertical-align:-3px;margin-left:1px;animation:bl 1.1s steps(1) infinite}
-  @keyframes bl{50%{opacity:0}}
-  .gbox .bar{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line-soft);padding-top:12px}
-  .chip{font:500 12.5px var(--sans);padding:7px 13px;border:1px solid var(--line-soft);border-radius:999px;background:var(--card);color:var(--ink-2);display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-  .chip:hover{border-color:var(--ink);color:var(--ink)}
-  .egs{margin-top:18px;display:flex;flex-direction:column;gap:11px}
-  .egs .e{display:flex;gap:9px;align-items:center;font-size:14px;color:var(--ink-2)}
-  .goalart{justify-self:center;position:relative;width:300px;height:330px}
-  .goalart .pcirc{width:262px;height:262px;position:absolute;left:19px;top:30px}
-  .goalart .deco{position:absolute;inset:0;width:100%;height:100%;stroke:var(--ink);fill:none}
-
-  /* map */
   .mtop{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line-soft)}
   .mtop .pmini{width:40px;height:40px;border-radius:11px}
   .mtop .hi{font-weight:600;font-size:14px}.mtop .hi span{font-family:var(--mono);font-size:11px;color:var(--ink-3);display:block;font-weight:400;margin-top:1px}
@@ -137,12 +141,11 @@
   .leg i.d{background:var(--ink)}.leg i.l{background:repeating-linear-gradient(45deg,transparent 0 3px,var(--hatch) 3px 4px),var(--card)}.leg i.k{border-style:dashed;border-color:var(--line-soft)}
   .mbody{display:grid;grid-template-columns:1fr 280px}
   .stagewrap{overflow:auto;padding:16px}
-  .stage{position:relative;width:720px;height:430px;margin:0 auto}
+  .stage{position:relative;width:680px;height:400px;margin:0 auto}
   .stage svg.net{position:absolute;inset:0}
-  .net .edge{stroke:var(--ink-3);stroke-width:1.6;fill:none}.net .edge.strong{stroke:var(--ink);stroke-width:2.4}.net .edge.lock{stroke:var(--line-soft);stroke-width:1.5;stroke-dasharray:4 6}
   .net .ah{stroke:var(--ink-3);stroke-width:1.6;fill:none}.net .ah.s{stroke:var(--ink);stroke-width:2.4}
   .net .ring{stroke:var(--ink);stroke-width:2.2;fill:none}
-  .n{position:absolute;transform:translate(-50%,-50%);min-width:116px;padding:9px 12px;border-radius:11px;text-align:center;font-size:12.5px;font-weight:600;background:var(--card);border:1.5px solid var(--line-soft)}
+  .n{position:absolute;transform:translate(-50%,-50%);min-width:112px;padding:9px 12px;border-radius:11px;text-align:center;font-size:12.5px;font-weight:600;background:var(--card);border:1.5px solid var(--line-soft)}
   .n s{display:block;font:500 10px var(--mono);text-decoration:none;text-transform:uppercase;margin-top:3px;color:var(--ink-3)}
   .n.done{background:var(--ink);color:var(--paper);border-color:var(--ink)}.n.done s{color:rgba(240,238,233,.7)}
   .n.now{border:1.9px solid var(--ink)}.n.now s{color:var(--ink)}
@@ -154,80 +157,33 @@
   .big{font-family:var(--serif);font-size:42px;font-weight:500;line-height:1}.big sup{font-family:var(--mono);font-size:13px;color:var(--ink-3);font-weight:400}
   .bar2{height:7px;border-radius:999px;background:var(--paper);border:1px solid var(--line-soft);overflow:hidden;margin:12px 0 6px}.bar2 i{display:block;height:100%;width:42%;background:var(--ink)}
   .nextc{margin-top:22px;border-radius:14px;padding:17px}
-  .nextc .pcirc{width:46px;height:46px;border-color:var(--paper)}
   .nextc .l{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,238,233,.6)}
   .nextc .t{font-family:var(--serif);font-weight:500;font-size:18px;margin:3px 0}
   .nextc .d{font-size:12.5px;color:rgba(240,238,233,.78);line-height:1.5}
-  .due{margin-top:22px}
-  .due .r{display:flex;align-items:center;gap:9px;font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line-soft);color:var(--ink-2)}
-  .due .r b{color:var(--ink);font-weight:500}.due .r .t{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
 
-  /* lesson */
-  .lhead{display:flex;align-items:center;gap:22px;padding:26px 30px;margin:0}
-  .lhead .pcirc{width:96px;height:96px;border-color:var(--paper);flex:none}
-  .lhead .m{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:rgba(240,238,233,.6);text-transform:uppercase}
-  .lhead h2{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:-.01em;margin:6px 0 12px}
-  .lhead .pills{display:flex;gap:7px;flex-wrap:wrap}
-  .lhead .pill{font:500 11px var(--mono);padding:5px 11px;border-radius:999px;border:1px solid rgba(240,238,233,.3);color:rgba(240,238,233,.85)}
-  .lhead .pill.on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
-  .lbody{display:grid;grid-template-columns:1fr 250px}
-  .lmain{padding:28px 32px}
-  .lmain p{color:#2c2a25;font-size:15.5px;line-height:1.65;margin-bottom:14px}
-  .analogy{display:flex;gap:16px;border:1px solid var(--ink);border-radius:14px;padding:16px;margin:8px 0 18px;align-items:center}
-  .analogy .pmini{width:60px;height:60px;border-radius:12px}
-  .analogy .l{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-bottom:5px}
-  .analogy p{margin:0;font-size:14.5px;color:#2c2a25}
-  .code{background:var(--ink);border-radius:12px;padding:16px 18px;font-family:var(--mono);font-size:13px;color:#e9e6df;line-height:1.75;overflow:auto}
-  .code .c{color:#8b857a}.code .k{color:#fff;font-weight:500}.code .s{color:#cfcabf}
-  .runbar{display:flex;align-items:center;gap:12px;margin-top:14px}
-  .pass{display:flex;align-items:center;gap:9px;font-size:13px;border:1px solid var(--ink);border-radius:10px;padding:10px 13px;margin-top:12px;background:repeating-linear-gradient(45deg,transparent 0 7px,rgba(20,19,16,.04) 7px 8px)}
-  .lside{border-left:1px solid var(--line-soft);padding:24px 20px}
-  .lside h4{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:9px}
-  .lside .why{font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:22px}.lside .why b{color:var(--ink);font-weight:600}
-  .gauge{display:flex;align-items:center;gap:14px}.gauge .g{width:64px;height:64px;position:relative;display:grid;place-items:center;flex:none}
-  .gauge .g svg{position:absolute;inset:0;transform:rotate(-90deg)}.gauge .g circle{fill:none;stroke-width:5}.gauge .tk{stroke:var(--line-soft)}.gauge .fg{stroke:var(--ink);stroke-linecap:round;stroke-dasharray:163;stroke-dashoffset:46}
-  .gauge .v{font-family:var(--serif);font-size:17px;font-weight:500}.gauge .lab{font-size:12px;color:var(--ink-2);line-height:1.45}
+  /* open source band + final cta */
+  .band{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center;padding:44px 46px}
+  .band h3{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:-.01em;line-height:1.1}
+  .band p{color:rgba(240,238,233,.8);font-size:14.5px;line-height:1.6;margin-top:12px;max-width:520px}
+  .band .acts{display:flex;flex-direction:column;gap:11px}
 
-  /* mobile */
-  .phones{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
-  .phone{width:290px;border:9px solid var(--ink);border-radius:44px;background:var(--ink);box-shadow:0 20px 54px rgba(20,19,16,.18)}
-  .phone .scr{background:var(--paper);border-radius:34px;overflow:hidden;height:610px;position:relative}
-  .pst{display:flex;justify-content:space-between;align-items:center;padding:15px 24px 6px;font:600 12px var(--sans)}
-  .pst .r{display:flex;gap:5px;align-items:center}.pst .r i{display:block;background:var(--ink)}.pst .r .b1{width:3px;height:7px}.pst .r .b2{width:3px;height:10px}.pst .r .bt{width:18px;height:10px;border:1.4px solid var(--ink);border-radius:3px;position:relative}.pst .r .bt::after{content:"";position:absolute;inset:2px;right:6px;background:var(--ink)}
-  .pbody{height:calc(100% - 44px);overflow:auto;padding:6px 18px 18px}
-  /* phone onboarding */
-  .ob{text-align:center;padding-top:6px}
-  .ob .eye{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-2);text-transform:uppercase}
-  .ob h3{font-family:var(--serif);font-weight:500;font-size:27px;letter-spacing:-.01em;margin:8px 0 6px;line-height:1.08}
-  .ob .pcirc{width:188px;height:188px;margin:14px auto 8px}
-  .ob .deco{position:relative;width:188px;height:0;margin:0 auto}
-  .ob p{font-size:13px;color:var(--ink-2);padding:0 10px;line-height:1.55}
-  .dots{display:flex;gap:6px;justify-content:center;margin:16px 0}.dots i{width:6px;height:6px;border-radius:50%;background:var(--line-soft)}.dots i.on{background:var(--ink);width:18px;border-radius:3px}
-  .obbtn{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
-  /* phone home */
-  .ph-top{display:flex;align-items:center;gap:11px;padding:6px 2px 4px}
-  .ph-top .pmini{width:42px;height:42px}
-  .ph-top .nm{font-family:var(--serif);font-weight:500;font-size:18px}.ph-top .nm span{display:block;font:400 11px var(--mono);color:var(--ink-3)}
-  .cats{display:flex;gap:8px;margin:14px 0}
-  .cat{flex:1;border:1px solid var(--line-soft);border-radius:14px;padding:11px 8px;text-align:center;font-size:11.5px;font-weight:600;background:var(--card)}
-  .cat.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  .cat .ic{display:block;margin:0 auto 5px;font-size:18px}
-  .msec{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin:14px 2px 10px;display:flex;justify-content:space-between}
-  .mrow{display:flex;align-items:center;gap:12px;border:1px solid var(--line-soft);border-radius:16px;padding:11px;margin-bottom:10px;background:var(--card)}
-  .mrow.dk{background:var(--ink);border-color:var(--ink)}
-  .mrow .pmini{width:50px;height:50px}.mrow.dk .pmini{border-color:#3a382f}
-  .mrow .nm{font-size:14px;font-weight:600}.mrow.dk .nm{color:var(--paper)}
-  .mrow .ds{font:500 10.5px var(--mono);color:var(--ink-3);margin-top:2px}
-  .mrow .go{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1.4px solid var(--ink-3);display:grid;place-items:center;flex:none}
-  .mrow.dk .go{border-color:var(--paper);background:var(--paper);color:var(--ink)}
-  .fab{position:absolute;right:20px;bottom:74px;width:54px;height:54px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;box-shadow:0 8px 20px rgba(20,19,16,.3)}
-  .pnav{position:absolute;left:0;right:0;bottom:0;height:60px;background:var(--card);border-top:1px solid var(--line-soft);display:flex;justify-content:space-around;align-items:center;color:var(--ink-3)}
-  .pnav .on{color:var(--ink)}
-  .pcap{text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:14px}
+  footer{border-top:1px solid var(--line);margin-top:10px;padding:34px 0 70px}
+  footer .frow{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap}
+  footer .flinks{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:12px}
+  footer .flinks a{color:var(--ink-2);border-bottom:1px solid transparent;padding-bottom:1px}
+  footer .flinks a:hover{color:var(--ink);border-color:var(--ink)}
+  footer .fnote{font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.8;margin-top:18px}
 
-  footer{border-top:1px solid var(--line);margin-top:38px;padding:34px 0 74px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);line-height:1.8}
-
-  @media(max-width:980px){.hero,.goal{grid-template-columns:1fr}.heroart,.goalart{display:none}.sgrid,.hiw{grid-template-columns:1fr}.mbody,.lbody{grid-template-columns:1fr}.aside,.lside{border-left:0;border-top:1px solid var(--line-soft)}}
+  @media(max-width:920px){
+    .hero{grid-template-columns:1fr;padding:48px 0 30px}.heroart{display:none}
+    .hero h1{font-size:46px}
+    .hiw{grid-template-columns:repeat(2,1fr)}
+    .bento{grid-template-columns:1fr}.tile.big,.tile.sm,.tile.md{grid-column:auto}
+    .sci{grid-template-columns:1fr}
+    .mbody{grid-template-columns:1fr}.aside{border-left:0;border-top:1px solid var(--line-soft)}
+    .band{grid-template-columns:1fr;padding:34px 26px}
+  }
+  @media(max-width:560px){.wrap{padding:0 20px}.mast .nav,.ghlink{display:none}.btn{white-space:nowrap}.hero h1{font-size:38px}.hiw{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -240,164 +196,147 @@
   <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4M6 5c4-2 8 2 12 0v8c-4 2-8-2-12 0"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-up" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
   <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M5 16a8 8 0 1 1 14 0M12 16l4-5"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 6l11 6-11 6z"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.2-5.1M19 4v4h-4"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
-  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10"/></symbol>
   <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L4 6v14l5-2 6 2 5-2V4l-5 2-6-2zM9 4v14M15 6v14"/></symbol>
-  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
   <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M16 8l-3 5-5 3 3-5z"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M13 2.5c.6 3.4-1.4 4.9-3 6.4C8.6 7.6 8.1 6.6 8 5.2 5.6 7.2 4.6 10.6 5 13.6a7 7 0 0 0 14 0c0-3.4-2.4-5.4-3.4-7.9-.8 1.2-1.3 2-1.6 3.3C13.7 6.2 13.4 4.3 13 2.5z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 2.5v5.6c0 4.6-3 7.6-7 9.4-4-1.8-7-4.8-7-9.4V5.5z"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6"/></symbol>
+  <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8.5 8.5L6 3M15.5 8.5L18 3"/><circle cx="12" cy="14" r="6"/><path d="M12 11l.85 1.7 1.9.28-1.37 1.34.32 1.88L12 15.4l-1.7.9.32-1.88-1.37-1.34 1.9-.28z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 2.4 3 15.6 0 18M12 3c-3 2.4-3 15.6 0 18"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 1.5A10.5 10.5 0 0 0 8.68 22c.53.1.72-.23.72-.5v-1.86c-2.92.63-3.54-1.4-3.54-1.4-.48-1.22-1.17-1.55-1.17-1.55-.95-.65.08-.64.08-.64 1.06.07 1.61 1.09 1.61 1.09.94 1.6 2.46 1.14 3.06.87.1-.68.37-1.14.67-1.4-2.34-.27-4.79-1.17-4.79-5.2 0-1.15.41-2.09 1.09-2.83-.11-.27-.47-1.35.1-2.8 0 0 .88-.29 2.88 1.07a10 10 0 0 1 5.24 0c2-1.36 2.88-1.07 2.88-1.07.57 1.45.21 2.53.1 2.8.68.74 1.09 1.68 1.09 2.83 0 4.04-2.46 4.93-4.8 5.19.38.33.72.97.72 1.96v2.9c0 .28.19.61.73.5A10.5 10.5 0 0 0 12 1.5Z"/></symbol>
 </defs></svg>
 
 <!-- MASTHEAD -->
 <div class="mast"><div class="wrap">
-  <div class="word"><svg class="sk" viewBox="0 0 24 24"><use href="#i-compass"/></svg> Telos</div>
-  <nav class="nav"><a href="#sg">设计语言</a><a href="#hiw">工作方式</a><a href="#s1">目标输入</a><a href="#s2">学习地图</a><a href="#s3">学习中</a><a href="#s4">移动端</a></nav>
-  <div class="meta">开源学习框架<br/>Apache-2.0 · Backward Design</div>
+  <a class="word" href="./"><svg class="sk" viewBox="0 0 24 24"><use href="#i-compass"/></svg> Telos</a>
+  <nav class="nav"><a href="#hiw">工作方式</a><a href="#map">学习地图</a><a href="#streak">坚持系统</a><a href="#science">学习科学</a></nav>
+  <div class="right">
+    <a class="ghlink" href="https://github.com/YunyueLi/telos" target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24"><use href="#i-github"/></svg> 开源 · Apache-2.0</a>
+    <a class="btn btn-ink" href="app/">进入 App <svg class="ic sk"><use href="#i-arrow"/></svg></a>
+  </div>
 </div></div>
 
 <!-- HERO -->
 <div class="wrap"><div class="hero">
   <div>
-    <div class="kick">从结果倒推，学会任何事</div>
-    <h1>说出你想<br/>达成的，<br/>其余交给<em>倒推<svg class="hand-u skL" viewBox="0 0 200 16" preserveAspectRatio="none"><path d="M4 9C46 15 150 3 196 8"/></svg></em>。</h1>
-    <p class="lead">Telos 把目标拆成技能与知识点，对照你已会的，只教你缺的——边教边验证，直到你真正做得到。</p>
-    <div class="cta"><a class="btn btn-ink" href="app/">进入 Demo <svg class="ic sk"><use href="#i-arrow"/></svg></a><a class="btn btn-line" href="#hiw">看看怎么运作</a></div>
+    <div class="kick">逆向设计学习引擎</div>
+    <h1>说出目标，<br/>其余交给<em>倒推<svg class="hand-u skL" viewBox="0 0 200 16" preserveAspectRatio="none"><path d="M4 9C46 15 150 3 196 8"/></svg></em>。</h1>
+    <p class="lead">别再从第一章啃到放弃。Telos 把你的目标倒推成带前置依赖的知识点图谱，诊断你已经会的，<b style="color:var(--ink);font-weight:600">只教你缺的</b>——边教边验证，再用间隔复习把会的变成不会忘的。</p>
+    <div class="cta">
+      <a class="btn btn-ink" href="app/">免费进入 App <svg class="ic sk"><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-line" href="#hiw">看看怎么运作</a>
+    </div>
+    <div class="trust">
+      <span><svg class="ic sk"><use href="#i-github"/></svg> 开源 Apache-2.0</span>
+      <span><svg class="ic sk"><use href="#i-refresh"/></svg> 跨设备同步</span>
+      <span><svg class="ic sk"><use href="#i-globe"/></svg> 9 种语言</span>
+      <span><svg class="ic sk"><use href="#i-check"/></svg> 完全免费</span>
+    </div>
   </div>
   <div class="heroart">
-    <svg class="deco skL" viewBox="0 0 380 380"><circle cx="190" cy="190" r="168" stroke-dasharray="2 10"/><path d="M40 190A150 150 0 0 1 150 45" stroke-width="2.4"/><path d="M300 70l3 9 9 3-9 3-3 9-3-9-9-3 9-3z"/><path d="M330 250l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/><path d="M52 300l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg>
-    <span class="pcirc"><img src="assets/portraits/hero.png" alt="Telos 老师"/></span>
+    <svg class="deco skL" viewBox="0 0 370 370"><circle cx="185" cy="185" r="164" stroke-dasharray="2 10"/><path d="M40 185A145 145 0 0 1 145 48" stroke-width="2.4"/><path d="M292 70l3 9 9 3-9 3-3 9-3-9-9-3 9-3z"/><path d="M320 244l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/><path d="M50 292l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg>
+    <span class="pcirc"><img class="peep" src="assets/portraits/hero.png" alt="Telos 看板娘 · 年轻女老师"/></span>
   </div>
 </div></div>
 
-<!-- 01 STYLE -->
-<section class="wrap" id="sg">
-  <div class="shead"><span class="no">01</span><h2>设计语言</h2><span class="sub">Monochrome · Hand-drawn · Editorial</span></div>
-  <div class="sgrid">
-    <div class="box"><h3>色彩 — 只有黑白与暖灰</h3>
-      <div class="sw">
-        <div class="c"><i style="background:#141310"></i><span>#141310</span></div>
-        <div class="c"><i style="background:#56524A"></i><span>#56524A</span></div>
-        <div class="c"><i style="background:#928E84"></i><span>#928E84</span></div>
-        <div class="c"><i style="background:#E2DFD7"></i><span>#E2DFD7</span></div>
-        <div class="c"><i style="background:#FFFFFF"></i><span>CARD</span></div>
-        <div class="c"><i style="background:#F0EEE9"></i><span>PAPER</span></div>
-      </div>
-      <p style="font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:16px">零彩色。人物为品牌看板娘（年轻女老师），黑白二次元墨线。</p>
-    </div>
-    <div class="box"><h3>字体 — 衬线显赫 + 无衬线干净</h3>
-      <div class="ty">
-        <div><span style="font-family:var(--serif);font-size:30px;font-weight:500">倒推 Telos</span><span class="lbl">Fraunces · Display</span></div>
-        <div><span style="font-family:var(--serif);font-style:italic;font-size:24px">学习的目的</span><span class="lbl">Fraunces · Italic</span></div>
-        <div><span style="font-size:15px">正文：只教你缺的那部分。</span><span class="lbl">Inter · Body</span></div>
-        <div><span class="mono" style="font-size:12px">FRONTIER · 25 MIN</span><span class="lbl">JetBrains Mono</span></div>
-      </div>
-    </div>
-    <div class="box"><h3>手绘图标 — 线性 + 手抖滤镜</h3>
-      <div class="iconset">
-        <div class="it"><svg class="ic sk"><use href="#i-target"/></svg><span>目标</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-check"/></svg><span>完成</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-lock"/></svg><span>未解锁</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-spark"/></svg><span>学习中</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-flag"/></svg><span>里程碑</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-clock"/></svg><span>时间</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-gauge"/></svg><span>掌握度</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-play"/></svg><span>运行</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-refresh"/></svg><span>复习</span></div>
-        <div class="it"><svg class="ic sk"><use href="#i-arrow"/></svg><span>下一步</span></div>
-      </div>
-    </div>
-    <div class="box"><h3>状态 — 填充/描边/斜纹/虚线，非颜色</h3>
-      <div class="states">
-        <div class="stt done">HTTP 基础<s>已掌握</s></div>
-        <div class="stt now">JWT 原理<s>现在学</s></div>
-        <div class="stt learn">REST 设计<s>学习中</s></div>
-        <div class="stt lock">部署上线<s>未解锁</s></div>
-      </div>
-      <p style="font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:18px">人物：Telos 看板娘（年轻女老师），同一角色多姿态，黑白二次元。</p>
-    </div>
-  </div>
-</section>
-
-<!-- 02 HOW IT WORKS -->
-<section class="wrap" id="hiw">
-  <div class="shead"><span class="no">02</span><h2>工作方式</h2><span class="sub">倒推 → 诊断 → 教学，三步闭环</span></div>
-  <div class="hiw">
-    <div class="vcard"><div class="vt"><span class="pcirc"><img src="assets/portraits/point.png" alt=""/></span><div><div class="step">STEP 01</div><h4>倒推</h4></div></div><p>说出你想达成的结果，Telos 倒推出所需技能，拆成带前置依赖的知识点图谱。</p></div>
-    <div class="vcard"><div class="vt"><span class="pcirc"><img src="assets/portraits/think.png" alt=""/></span><div><div class="step">STEP 02</div><h4>诊断</h4></div></div><p>用 ~25 题自适应测评，定位你已经掌握的，找出真正的缺口与学习前沿。</p></div>
-    <div class="vcard dk"><div class="vt"><span class="pcirc"><img src="assets/portraits/teach.png" alt=""/></span><div><div class="step">STEP 03</div><h4>教学</h4></div></div><p>按你的水平定制讲解、用你已会的做类比，跑测试客观验证掌握，并安排间隔复习。</p></div>
-  </div>
-</section>
-
-<!-- QUOTE -->
-<section class="wrap"><div class="dark quote">
+<!-- MANIFESTO -->
+<div class="wrap"><section style="padding-top:8px"><div class="dark quote">
   <svg class="contour skL" viewBox="0 0 1000 240" preserveAspectRatio="none"><g stroke="currentColor" fill="none" stroke-width="1.5" opacity="0.12"><path d="M-20 50C250 20 520 80 1020 40"/><path d="M-20 100C250 70 520 130 1020 90"/><path d="M-20 150C250 120 520 180 1020 140"/><path d="M-20 200C250 170 520 230 1020 190"/></g></svg>
-  <p>“从你想成为的样子，倒推回此刻你该迈出的第一步。”</p><div class="src">Telos · 逆向设计学习范式</div>
-</div></section>
+  <p>“从你想成为的样子，倒推回此刻该迈出的第一步。”</p><div class="src">Telos · 逆向设计学习范式</div>
+</div></section></div>
 
-<!-- 03 GOAL -->
-<section class="wrap" id="s1">
-  <div class="shead"><span class="no">03</span><h2>目标输入</h2><span class="sub">说出目标，而非逐条提问</span></div>
-  <div class="cap"><span>图 03</span><span>telos.app/new</span></div>
-  <div class="plate"><div class="ptop"><span class="u">telos.app/new</span><span class="br"><i></i><i></i><i></i></span></div>
-    <div class="goal">
-      <div>
-        <div class="eye">TELOS</div>
-        <h2>你想达成什么？</h2>
-        <div class="gbox"><div class="txt">用 FastAPI 写一个带 JWT 鉴权的 REST API，并部署上线<span class="cur"></span></div>
-          <div class="bar"><span class="chip"><svg class="ic sk"><use href="#i-clock"/></svg> 2 周</span><span class="chip"><svg class="ic sk"><use href="#i-gauge"/></svg> 能独立做出</span><button class="btn btn-ink" style="margin-left:auto;padding:11px 18px">倒推 <svg class="ic sk"><use href="#i-arrow"/></svg></button></div></div>
-        <div class="egs">
-          <div class="e"><svg class="ic sk"><use href="#i-arrow"/></svg> 看懂并复现一篇 Transformer 论文</div>
-          <div class="e"><svg class="ic sk"><use href="#i-arrow"/></svg> 两周内能用 React 独立做个网站</div>
-          <div class="e"><svg class="ic sk"><use href="#i-arrow"/></svg> 通过 AWS 解决方案架构师认证</div>
-        </div>
+<!-- HOW IT WORKS -->
+<section class="wrap" id="hiw">
+  <div class="shead"><span class="no">01</span><h2>工作方式</h2><span class="sub">倒推 → 诊断 → 教学 → 复习</span></div>
+  <div class="hiw">
+    <div class="vcard"><div class="vt"><span class="pcirc"><img class="peep" src="assets/portraits/point.png" alt=""/></span><div><div class="step">STEP 01</div><h4>倒推</h4></div></div><p>说出你想达成的结果，Telos 倒推出所需技能，拆成带前置依赖的知识点图谱。</p></div>
+    <div class="vcard"><div class="vt"><span class="pcirc"><img class="peep" src="assets/portraits/think.png" alt=""/></span><div><div class="step">STEP 02</div><h4>诊断</h4></div></div><p>用自适应测评定位你已掌握的，找出真正的缺口与「学习前沿」。</p></div>
+    <div class="vcard"><div class="vt"><span class="pcirc"><img class="peep" src="assets/portraits/teach.png" alt=""/></span><div><div class="step">STEP 03</div><h4>教学</h4></div></div><p>按你的水平定制讲解，用你已会的做类比，跑测试客观验证掌握。</p></div>
+    <div class="vcard dk"><div class="vt"><span class="pcirc"><img class="peep" src="assets/portraits/reading.png" alt=""/></span><div><div class="step">STEP 04</div><h4>复习</h4></div></div><p>基于 FSRS 记忆模型安排间隔复习，把刚学会的变成长久不会忘的。</p></div>
+  </div>
+</section>
+
+<!-- BENTO FEATURES -->
+<section class="wrap" id="feat">
+  <div class="shead"><span class="no">02</span><h2>为什么不一样</h2><span class="sub">不是又一个课程平台</span></div>
+  <div class="bento">
+    <div class="tile big">
+      <div class="th"><svg class="ic sk"><use href="#i-map"/></svg> 学习地图 · 永远知道下一步</div>
+      <p>前置依赖图谱 + 高亮「学习前沿」——已掌握的跳过，未解锁的锁住，你只需专注此刻最该学的那一个。这是 Telos 的差异化王牌。</p>
+      <div class="minimap">
+        <svg class="net skL" viewBox="0 0 460 150" preserveAspectRatio="none">
+          <path class="edge s" d="M60 38C140 40 200 74 250 74"/>
+          <path class="edge s" d="M60 112C140 110 200 76 250 74"/>
+          <path class="edge l" d="M300 74C350 50 380 40 410 38"/>
+          <path class="edge l" d="M300 74C350 98 380 110 410 112"/>
+        </svg>
+        <div class="nn done" style="left:55px;top:38px">HTTP 基础</div>
+        <div class="nn done" style="left:55px;top:112px">Python</div>
+        <div class="nn now" style="left:255px;top:74px">JWT 原理</div>
+        <div class="nn lock" style="left:408px;top:38px">FastAPI</div>
+        <div class="nn lock" style="left:408px;top:112px">部署上线</div>
       </div>
-      <div class="goalart">
-        <svg class="deco skL" viewBox="0 0 300 330"><circle cx="150" cy="160" r="140" stroke-dasharray="2 10"/><path d="M270 120l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/><path d="M28 230l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/><path d="M250 250c8-6 16-6 22 0" stroke-width="2.2"/></svg>
-        <span class="pcirc"><img src="assets/portraits/present.png" alt=""/></span>
-      </div>
+    </div>
+    <div class="tile sm">
+      <div class="th"><svg class="ic sk"><use href="#i-gauge"/></svg> 诊断而非重教</div>
+      <p>已经会的直接跳过，只在真正的缺口上花时间——不浪费你一分钟。</p>
+    </div>
+    <div class="tile sm">
+      <div class="th"><svg class="ic sk"><use href="#i-spark"/></svg> 用你已会的类比</div>
+      <p>新知识挂靠到你已掌握的概念上，理解一步到位。</p>
+    </div>
+    <div class="tile sm">
+      <div class="th"><svg class="ic sk"><use href="#i-play"/></svg> 跑测试验证掌握</div>
+      <p>不是「读完就算」，用客观测试确认你真的会了，掌握度才上涨。</p>
+    </div>
+    <div class="tile md">
+      <div class="th"><svg class="ic sk"><use href="#i-refresh"/></svg> 间隔复习</div>
+      <p>FSRS 记忆模型按你的遗忘曲线安排复习，把短期记住变成长期掌握。</p>
+    </div>
+    <div class="tile md">
+      <div class="th"><svg class="ic sk"><use href="#i-globe"/></svg> 跨设备 · 多语言</div>
+      <p>登录即云端同步，换设备接着学；界面支持 9 种语言。</p>
     </div>
   </div>
 </section>
 
-<!-- 04 MAP -->
-<section class="wrap" id="s2">
-  <div class="shead"><span class="no">04</span><h2>学习地图</h2><span class="sub">前置依赖图 + 学习前沿 · 差异化王牌</span></div>
-  <div class="cap"><span>图 04</span><span>telos.app/map</span></div>
-  <div class="plate"><div class="ptop"><span class="u">telos.app/map</span><span class="br"><i></i><i></i><i></i></span></div>
+<!-- PRODUCT PREVIEW · MAP -->
+<section class="wrap" id="map">
+  <div class="shead"><span class="no">03</span><h2>学习地图</h2><span class="sub">前置依赖图 + 学习前沿</span></div>
+  <div class="cap"><span>实际界面</span><span>telos · 地图</span></div>
+  <div class="plate"><div class="ptop"><span class="u">telos / 地图</span><span class="br"><i></i><i></i><i></i></span></div>
     <div class="mtop">
-      <span class="pmini"><img src="assets/portraits/avatar.png" alt=""/></span>
+      <span class="pmini"><img class="peep" src="assets/portraits/avatar.png" alt=""/></span>
       <span class="hi">继续，Alex<span>用 FastAPI 写带 JWT 鉴权的 REST API · 倒推出 12 个知识点</span></span>
       <div class="leg"><span><i class="d"></i>已掌握</span><span><i></i>现在学</span><span><i class="l"></i>学习中</span><span><i class="k"></i>未解锁</span></div>
     </div>
     <div class="mbody">
       <div class="stagewrap"><div class="stage">
-        <svg class="net skL" viewBox="0 0 720 430">
-          <path class="edge" d="M90 66C170 68 230 66 300 66"/><path class="ah" d="M292 61l9 5-9 5"/>
-          <path class="edge" d="M90 66C70 126 78 166 90 194"/><path class="ah" d="M85 186l5 9 6-8"/>
-          <path class="edge strong" d="M90 214C160 216 230 214 300 214"/><path class="ah s" d="M291 208l10 6-10 6"/>
-          <path class="edge strong" d="M300 86C300 126 300 156 300 190"/><path class="ah s" d="M294 182l6 9 6-9"/>
-          <path class="edge" d="M90 234C120 294 200 342 296 352"/><path class="ah" d="M288 346l9 6-11 3"/>
-          <path class="edge lock" d="M340 209C420 174 470 146 506 130"/><path class="ah" d="M499 126l8-1-3 8"/>
-          <path class="edge lock" d="M340 220C420 254 470 280 506 292"/><path class="ah" d="M499 287l8 6-9 2"/>
-          <path class="edge lock" d="M360 352C440 342 480 322 512 298"/><path class="ah" d="M506 302l7-5 0 8"/>
-          <path class="edge lock" d="M560 130C600 156 624 180 642 200"/><path class="ah" d="M635 195l8 6-9 2"/>
-          <path class="edge lock" d="M560 292C600 268 624 240 642 218"/><path class="ah" d="M636 223l7-6 1 8"/>
-          <ellipse class="ring" cx="300" cy="214" rx="84" ry="42"/>
+        <svg class="net skL" viewBox="0 0 680 400">
+          <path class="edge" d="M86 60C160 62 220 60 286 60"/><path class="ah" d="M278 55l9 5-9 5"/>
+          <path class="edge" d="M86 60C68 116 76 154 86 180"/><path class="ah" d="M81 172l5 9 6-8"/>
+          <path class="edge s" d="M86 200C152 202 218 200 286 200"/><path class="ah s" d="M277 194l10 6-10 6"/>
+          <path class="edge s" d="M286 80C286 116 286 146 286 178"/><path class="ah s" d="M280 170l6 9 6-9"/>
+          <path class="edge" d="M86 218C114 274 188 318 282 328"/><path class="ah" d="M274 322l9 6-11 3"/>
+          <path class="edge l" d="M326 196C402 162 448 136 482 122"/><path class="ah" d="M475 118l8-1-3 8"/>
+          <path class="edge l" d="M326 206C402 238 448 262 482 274"/><path class="ah" d="M475 269l8 6-9 2"/>
+          <path class="edge l" d="M530 122C568 146 590 168 606 186"/><path class="ah" d="M599 181l8 6-9 2"/>
+          <path class="edge l" d="M530 274C568 252 590 226 606 206"/><path class="ah" d="M600 211l7-6 1 8"/>
+          <ellipse class="ring" cx="286" cy="200" rx="80" ry="40"/>
         </svg>
-        <div class="n done" style="left:90px;top:66px">Python 基础<s>已掌握</s></div>
-        <div class="n done" style="left:300px;top:66px">函数与类型<s>已掌握</s></div>
-        <div class="n done" style="left:90px;top:214px">HTTP 基础<s>已掌握</s></div>
-        <div class="n now" style="left:300px;top:214px">JWT 原理<s>现在学这个</s></div>
-        <div class="n learn" style="left:300px;top:352px">REST 设计<s>学习中 62%</s></div>
-        <div class="n lock" style="left:512px;top:124px">FastAPI 路由<s>未解锁</s></div>
-        <div class="n lock" style="left:512px;top:292px">鉴权中间件<s>未解锁</s></div>
-        <div class="n lock" style="left:645px;top:209px">部署上线<s>目标</s></div>
-        <div class="nowtag" style="left:352px;top:148px">↙ 你的学习前沿</div>
+        <div class="n done" style="left:86px;top:60px">Python 基础<s>已掌握</s></div>
+        <div class="n done" style="left:286px;top:60px">函数与类型<s>已掌握</s></div>
+        <div class="n done" style="left:86px;top:200px">HTTP 基础<s>已掌握</s></div>
+        <div class="n now" style="left:286px;top:200px">JWT 原理<s>现在学这个</s></div>
+        <div class="n learn" style="left:286px;top:328px">REST 设计<s>学习中 62%</s></div>
+        <div class="n lock" style="left:488px;top:116px">FastAPI 路由<s>未解锁</s></div>
+        <div class="n lock" style="left:488px;top:274px">鉴权中间件<s>未解锁</s></div>
+        <div class="n lock" style="left:608px;top:196px">部署上线<s>目标</s></div>
+        <div class="nowtag" style="left:336px;top:140px">↙ 你的学习前沿</div>
       </div></div>
       <div class="aside">
         <h4>你的进度</h4>
@@ -409,91 +348,85 @@
           <div class="l">推荐下一步</div>
           <div class="t">JWT 原理</div>
           <div class="d">前置已全部掌握，正处你的学习前沿。约 25 分钟。</div>
-          <button class="btn btn-light" style="width:100%;justify-content:center;margin-top:13px">开始学习 <svg class="ic sk"><use href="#i-arrow"/></svg></button>
-        </div>
-        <div class="due">
-          <h4>今日待复习</h4>
-          <div class="r"><svg class="ic sk"><use href="#i-refresh"/></svg><b>HTTP 状态码</b><span class="t">该复习</span></div>
-          <div class="r"><svg class="ic sk"><use href="#i-refresh"/></svg><b>Python 字典</b><span class="t">该复习</span></div>
+          <a class="btn btn-light" href="app/" style="width:100%;justify-content:center;margin-top:13px">开始学习 <svg class="ic sk"><use href="#i-arrow"/></svg></a>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 05 LESSON -->
-<section class="wrap" id="s3">
-  <div class="shead"><span class="no">05</span><h2>学习中</h2><span class="sub">定制讲解 · 用你已会的类比 · 跑测试验证</span></div>
-  <div class="cap"><span>图 05</span><span>telos.app/learn/jwt</span></div>
-  <div class="plate">
-    <div class="dark lhead">
-      <svg class="contour skL" viewBox="0 0 900 200" preserveAspectRatio="none"><g stroke="currentColor" fill="none" stroke-width="1.5" opacity="0.12"><path d="M-20 50C220 20 460 80 920 40"/><path d="M-20 100C220 70 460 130 920 90"/><path d="M-20 150C220 120 460 180 920 140"/></g></svg>
-      <span class="pcirc"><img src="assets/portraits/teach.png" alt="Telos 老师"/></span>
-      <div><div class="m">学习前沿 · 为你定制 · 第 3 / 4 步</div><h2>动手：签发一个 JWT</h2>
-        <div class="pills"><span class="pill">什么是 token ✓</span><span class="pill">签名与篡改 ✓</span><span class="pill on">动手：签发</span><span class="pill">掌握验证</span></div>
+<!-- STREAK / GAMIFICATION -->
+<section class="wrap" id="streak">
+  <div class="shead"><span class="no">04</span><h2>坚持系统</h2><span class="sub">把学习变成习惯</span></div>
+  <div class="bento">
+    <div class="tile dk md">
+      <div class="th"><svg class="ic sk"><use href="#i-flame"/></svg> 连胜 · 每日目标 · 打卡日历</div>
+      <p>每天达成可调的小目标，连胜不断；月历清晰记录你坚持的每一天。</p>
+      <div class="smini">
+        <div class="sflame"><svg class="ic sk"><use href="#i-flame"/></svg><b>39</b><span>天连胜</span></div>
+        <div class="scal">
+          <i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="hf"></i><i></i><i></i><i></i>
+          <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="hf"></i><i></i>
+        </div>
       </div>
     </div>
-    <div class="lbody">
-      <div class="lmain">
-        <p>JWT 就是一段「带签名的 JSON」。服务器把用户信息写进去，再用密钥签名；之后任何人都能读，但只有持密钥者能伪造。</p>
-        <div class="analogy"><span class="pmini"><img src="assets/portraits/think.png" alt=""/></span><div><div class="l">用你已会的来理解</div><p>还记得你掌握的 <b>HTTP 基础</b> 里的 Cookie 吗？JWT 就像一张「自带防伪钢印的 Cookie」——服务器不查库，验下钢印就知真假。</p></div></div>
-        <div class="code"><span class="c"># 用 PyJWT 签发一个 token</span><br/><span class="k">import</span> jwt<br/>token = jwt.<span class="k">encode</span>(<br/>&nbsp;&nbsp;{<span class="s">"user_id"</span>: 42, <span class="s">"role"</span>: <span class="s">"admin"</span>},<br/>&nbsp;&nbsp;<span class="s">"my-secret-key"</span>, algorithm=<span class="s">"HS256"</span><br/>)</div>
-        <div class="runbar"><button class="btn btn-ink"><svg class="ic sk"><use href="#i-play"/></svg> 运行测试</button><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">通过测试 = 客观确认掌握</span></div>
-        <div class="pass"><svg class="ic sk"><use href="#i-check"/></svg> 2/2 测试通过 · token 可正确解码且签名有效 — 掌握度 +18%</div>
-      </div>
-      <div class="lside">
-        <h4>为什么学这个</h4>
-        <div class="why">你的目标 <b>带 JWT 鉴权的 API</b> 直接依赖它。学完它，<b>FastAPI 路由</b> 与 <b>鉴权中间件</b> 会解锁。</div>
-        <h4>当前掌握度</h4>
-        <div class="gauge"><div class="g"><svg viewBox="0 0 64 64"><circle class="tk" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26"/></svg><span class="v">72%</span></div><div class="lab">再做对 1 道<br/>即标记为<br/><b style="font-weight:600">已掌握</b></div></div>
-        <h4 style="margin-top:24px">本节覆盖</h4>
-        <div class="why">token 结构 · HS256 签名 · 过期校验</div>
-      </div>
+    <div class="tile sm">
+      <div class="th"><svg class="ic sk"><use href="#i-shield"/></svg> 断签保护</div>
+      <p>偶尔漏一天，自动用保护卡守住连胜——不因一次中断前功尽弃。</p>
+    </div>
+    <div class="tile md">
+      <div class="th"><svg class="ic sk"><use href="#i-medal"/></svg> 等级 · 段位 · 成就</div>
+      <p>真实学习累积 XP，从见习升到钻石；解锁里程碑徽章。XP 永远绑掌握与复习，绝不绑在线时长。</p>
+    </div>
+    <div class="tile sm">
+      <div class="th"><svg class="ic sk"><use href="#i-target"/></svg> 不挤出兴趣</div>
+      <p>目标可调可「轻松档」，低压力、无愧疚式设计——动力来自进步本身。</p>
     </div>
   </div>
 </section>
 
-<!-- 06 MOBILE -->
-<section class="wrap" id="s4">
-  <div class="shead"><span class="no">06</span><h2>移动端</h2><span class="sub">一套设计语言 · Web 与移动端一致体验</span></div>
-  <div class="phones">
-    <div class="phone"><div class="scr">
-      <div class="pst"><span>9:41</span><span class="r"><i class="b1"></i><i class="b2"></i><i class="bt"></i></span></div>
-      <div class="pbody"><div class="ob">
-        <div class="eye">TELOS</div>
-        <h3>你想<br/>达成什么？</h3>
-        <span class="pcirc"><img src="assets/portraits/welcome.png" alt=""/></span>
-        <p>说出目标，Telos 倒推出你要学的一切，只教你缺的。</p>
-        <div class="dots"><i class="on"></i><i></i><i></i></div>
-        <div class="obbtn"><span class="mono" style="font-size:11px;color:var(--ink-3)">跳过</span><button class="btn btn-ink">开始 <svg class="ic sk"><use href="#i-arrow"/></svg></button></div>
-      </div></div>
-    </div></div>
-    <div class="phone"><div class="scr">
-      <div class="pst"><span>9:41</span><span class="r"><i class="b1"></i><i class="b2"></i><i class="bt"></i></span></div>
-      <div class="pbody">
-        <div class="ph-top"><span class="pmini"><img src="assets/portraits/avatar.png" alt=""/></span><div class="nm">继续学习<span>Alex · 连续 6 天</span></div></div>
-        <div class="cats">
-          <div class="cat on"><span class="ic"><svg class="ic sk" style="width:18px"><use href="#i-map"/></svg></span>地图</div>
-          <div class="cat"><span class="ic"><svg class="ic sk" style="width:18px"><use href="#i-spark"/></svg></span>学习</div>
-          <div class="cat"><span class="ic"><svg class="ic sk" style="width:18px"><use href="#i-refresh"/></svg></span>复习</div>
-        </div>
-        <div class="msec"><span>推荐下一步</span></div>
-        <div class="mrow dk"><span class="pmini" style="display:grid;place-items:center"><svg class="ic sk" style="width:20px"><use href="#i-spark"/></svg></span><div><div class="nm">JWT 原理</div><div class="ds" style="color:rgba(240,238,233,.6)">现在学 · 25 MIN</div></div><span class="go"><svg class="ic sk" style="width:16px"><use href="#i-arrow"/></svg></span></div>
-        <div class="msec"><span>今日待复习</span><span>2</span></div>
-        <div class="mrow"><span class="pmini" style="display:grid;place-items:center"><svg class="ic sk" style="width:20px"><use href="#i-refresh"/></svg></span><div><div class="nm">HTTP 状态码</div><div class="ds">该复习</div></div><span class="go"><svg class="ic sk" style="width:16px"><use href="#i-refresh"/></svg></span></div>
-        <div class="mrow"><span class="pmini" style="display:grid;place-items:center"><svg class="ic sk" style="width:20px"><use href="#i-refresh"/></svg></span><div><div class="nm">Python 字典</div><div class="ds">该复习</div></div><span class="go"><svg class="ic sk" style="width:16px"><use href="#i-refresh"/></svg></span></div>
-      </div>
-      <div class="fab"><svg class="ic sk"><use href="#i-plus"/></svg></div>
-      <div class="pnav"><svg class="ic sk on"><use href="#i-home"/></svg><svg class="ic sk"><use href="#i-map"/></svg><svg class="ic sk"><use href="#i-refresh"/></svg><svg class="ic sk"><use href="#i-user"/></svg></div>
-    </div></div>
+<!-- SCIENCE -->
+<section class="wrap" id="science">
+  <div class="shead"><span class="no">05</span><h2>建立在学习科学之上</h2><span class="sub">不是凭感觉</span></div>
+  <div class="sci">
+    <div class="r"><div class="k">逆向设计</div><div class="v">Backward Design（Wiggins &amp; McTighe）：从想达成的结果倒推该学什么。</div></div>
+    <div class="r"><div class="k">知识空间 KST</div><div class="v">Knowledge Space Theory：用前置依赖图刻画「学习前沿」，永远学最该学的。</div></div>
+    <div class="r"><div class="k">贝叶斯知识追踪</div><div class="v">BKT + CBM：从作答动态估计掌握概率与信心，诊断而非猜测。</div></div>
+    <div class="r"><div class="k">间隔复习 FSRS</div><div class="v">基于现代记忆模型安排复习时机，对抗遗忘曲线。</div></div>
+    <div class="r"><div class="k">大模型倒推</div><div class="v">用 LLM 把任意目标拆成结构化、带依赖的知识点图谱与微课。</div></div>
+    <div class="r"><div class="k">动机设计</div><div class="v">游戏化只绑真实学习信号，守住内在动机，不做暗黑模式。</div></div>
   </div>
-  <div class="pcap">左：目标输入（大圆形人物肖像 + 黑色药丸按钮）· 右：首页（配人物的列表行 + 深色当前项 + 黑色 FAB + 线性底栏）</div>
 </section>
+
+<!-- OPEN SOURCE + FINAL CTA -->
+<div class="wrap"><section><div class="dark band">
+  <svg class="contour skL" viewBox="0 0 1000 260" preserveAspectRatio="none"><g stroke="currentColor" fill="none" stroke-width="1.5" opacity="0.12"><path d="M-20 60C250 30 520 90 1020 50"/><path d="M-20 120C250 90 520 150 1020 110"/><path d="M-20 180C250 150 520 210 1020 170"/></g></svg>
+  <div>
+    <h3>开源 · 免费 · 可自部署</h3>
+    <p>Telos 在 Apache-2.0 下完全开源。学习引擎是零依赖的 Python，前端静态导出，可自托管。看看代码，或者直接开始学。</p>
+  </div>
+  <div class="acts">
+    <a class="btn btn-light" href="app/" style="justify-content:center">免费进入 App <svg class="ic sk"><use href="#i-arrow"/></svg></a>
+    <a class="btn btn-line" href="https://github.com/YunyueLi/telos" target="_blank" rel="noreferrer" style="color:var(--paper);border-color:rgba(240,238,233,.4);justify-content:center"><svg class="ic sk"><use href="#i-github"/></svg> 在 GitHub 上查看</a>
+  </div>
+</div></section></div>
 
 <footer><div class="wrap">
-  TELOS — 从结果倒推，学会任何事。<br/>
-  把目标拆成技能与知识点，对照你已会的，只教你缺的，边教边验证，直到你真正做得到。<br/>
-  开源项目 · Apache-2.0 License
+  <div class="frow">
+    <a class="word" href="./"><svg class="sk" viewBox="0 0 24 24"><use href="#i-compass"/></svg> Telos</a>
+    <div class="flinks">
+      <a href="app/">进入 App</a>
+      <a href="#hiw">工作方式</a>
+      <a href="app/privacy/">隐私政策</a>
+      <a href="app/terms/">服务条款</a>
+      <a href="https://github.com/YunyueLi/telos" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </div>
+  <div class="fnote">
+    TELOS — 从结果倒推，学会任何事。<br/>
+    把目标拆成技能与知识点，对照你已会的，只教你缺的，边教边验证，直到你真正做得到。<br/>
+    开源项目 · Apache-2.0 License
+  </div>
 </div></footer>
 
 </body>
