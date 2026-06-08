@@ -33,6 +33,9 @@ import {
 } from "./project";
 import { deriveGraph, generateTitle } from "./derive";
 import { computeXp, getStreak, touchStreak } from "./xp";
+import { useAuth } from "./auth";
+import { cloudConfigured } from "./supabase";
+import { deleteRemoteProject, pullProjects, pushProject } from "./cloud";
 
 interface ProjectContextValue {
   ready: boolean;
@@ -53,6 +56,10 @@ interface ProjectContextValue {
   startNew: () => void;
   cancelNew: () => void;
   removeProject: (id: string) => void;
+  cloudOn: boolean;
+  syncing: boolean;
+  lastSync: number | null;
+  syncNow: () => Promise<void>;
 }
 
 const Ctx = createContext<ProjectContextValue | null>(null);
@@ -68,6 +75,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [streak, setStreak] = useState(0);
   const [deriving, setDeriving] = useState(false);
   const [deriveError, setDeriveError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const userIdRef = useRef<string | null>(null);
+  const syncedRef = useRef<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
+  const cloudOn = cloudConfigured() && !!user;
 
   useEffect(() => {
     setProjects(listProjects());
@@ -115,6 +128,52 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProjects((prev) => [p, ...prev.filter((x) => x.id !== p.id)].sort(byRecent));
   }, []);
 
+  // 云端推送（已配置且已登录时）——即发即忘，失败不打断本地。
+  const pushCloud = useCallback((p: Project) => {
+    if (cloudConfigured() && userIdRef.current) pushProject(p).catch(() => {});
+  }, []);
+
+  // 拉取远端 + 按 updatedAt 合并（per-project 最后写入者胜）+ 回推本地更新者。
+  const syncNow = useCallback(async () => {
+    if (!cloudConfigured() || !userIdRef.current) return;
+    setSyncing(true);
+    try {
+      const remote = await pullProjects();
+      const m = new Map<string, Project>();
+      for (const p of [...remote, ...listProjects()]) {
+        const ex = m.get(p.id);
+        if (!ex || (p.updatedAt || 0) > (ex.updatedAt || 0)) m.set(p.id, p);
+      }
+      const merged = [...m.values()].sort(byRecent);
+      for (const p of merged) upsertProject(p);
+      setProjects(merged);
+      if (!getActiveId() && merged[0]) {
+        setActiveId(merged[0].id);
+        setActive(merged[0].id);
+      }
+      for (const p of merged) {
+        const r = remote.find((x) => x.id === p.id);
+        if (!r || (p.updatedAt || 0) > (r.updatedAt || 0)) await pushProject(p);
+      }
+      setLastSync(Date.now());
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  // 登录后自动同步一次（按 user.id 去重，token 刷新不重复触发）。
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+    if (!cloudConfigured() || !user) {
+      syncedRef.current = null;
+      return;
+    }
+    if (syncedRef.current === user.id) return;
+    syncedRef.current = user.id;
+    void syncNow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const derive = useCallback(
     async (goal: string): Promise<boolean> => {
       const g = goal.trim();
@@ -136,6 +195,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         upsertProject(p);
         setActiveId(p.id);
         merge(p);
+        pushCloud(p);
         setActive(p.id);
         setComposing(false);
         setStreak(touchStreak());
@@ -161,6 +221,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         fn(g, state);
         const p: Project = { ...cur, state, updatedAt: Date.now() };
         upsertProject(p);
+        pushCloud(p);
         return [p, ...prev.filter((x) => x.id !== cur.id)].sort(byRecent);
       });
       setStreak(touchStreak());
@@ -213,6 +274,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const removeProject = useCallback((id: string) => {
     delProject(id);
+    if (cloudConfigured() && userIdRef.current) deleteRemoteProject(id).catch(() => {});
     setProjects(listProjects());
     setActive(getActiveId());
   }, []);
@@ -236,6 +298,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     startNew,
     cancelNew,
     removeProject,
+    cloudOn,
+    syncing,
+    lastSync,
+    syncNow,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

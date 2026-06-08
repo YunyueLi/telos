@@ -1,99 +1,56 @@
-// Optional cloud sync via Supabase (REST + Auth), using plain fetch — no SDK dependency.
-// Activates only when NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY are set.
-// Until then everything runs local-first. See SUPABASE.md to enable.
+"use client";
 
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+// 跨设备同步：把学习项目库（telos:projects）按「每项一行」存到 Supabase。
+// 表 public.projects(user_id uuid default auth.uid(), id text, data jsonb, updated_at timestamptz, pk(user_id,id))，
+// 受 RLS 保护（仅本人可读写）。合并策略：按 data.updatedAt 最后写入者胜（per-project）。
+// 见 SUPABASE.md 建表脚本。未配置 / 未登录时所有函数安全空转。
+import { supabase } from "./supabase";
+import type { Project } from "./project";
 
-const TOKEN_KEY = "telos:cloud:token";
+const TABLE = "projects";
 
-export function cloudConfigured(): boolean {
-  return Boolean(SB_URL && SB_KEY);
+function valid(p: unknown): p is Project {
+  const o = p as Project | null;
+  return !!o && typeof o.id === "string" && Array.isArray(o.points) && o.points.length > 0 && !!o.state;
 }
 
-export function cloudToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+async function uid(): Promise<string | null> {
+  const sb = supabase();
+  if (!sb) return null;
+  const { data } = await sb.auth.getSession();
+  return data.session?.user.id ?? null;
 }
 
-export function setCloudToken(token: string | null): void {
-  if (typeof window === "undefined") return;
-  try {
-    if (token) window.localStorage.setItem(TOKEN_KEY, token);
-    else window.localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* ignore */
-  }
+export async function pullProjects(): Promise<Project[]> {
+  const sb = supabase();
+  if (!sb) return [];
+  const { data, error } = await sb.from(TABLE).select("data");
+  if (error || !data) return [];
+  return data.map((r) => (r as { data: unknown }).data).filter(valid);
 }
 
-// Supabase magic-link redirects back with the token in the URL hash; capture it.
-export function captureTokenFromHash(): boolean {
-  if (typeof window === "undefined") return false;
-  const h = window.location.hash;
-  if (h && h.includes("access_token=")) {
-    const params = new URLSearchParams(h.slice(1));
-    const t = params.get("access_token");
-    if (t) {
-      setCloudToken(t);
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      return true;
-    }
-  }
-  return false;
-}
-
-export async function cloudSendMagicLink(email: string): Promise<{ ok: boolean; error?: string }> {
-  if (!cloudConfigured()) return { ok: false, error: "云同步未配置" };
-  try {
-    const r = await fetch(`${SB_URL}/auth/v1/otp`, {
-      method: "POST",
-      headers: { apikey: SB_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ email, create_user: true }),
-    });
-    return r.ok ? { ok: true } : { ok: false, error: `HTTP ${r.status}` };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
-}
-
-export async function cloudPush(profileId: string, state: unknown): Promise<{ ok: boolean; error?: string }> {
-  const token = cloudToken();
-  if (!cloudConfigured() || !token) return { ok: false, error: "未登录云端" };
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/learner_states?on_conflict=profile_id`, {
-      method: "POST",
-      headers: {
-        apikey: SB_KEY,
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-        prefer: "resolution=merge-duplicates",
-      },
-      body: JSON.stringify({ profile_id: profileId, state }),
-    });
-    return r.ok ? { ok: true } : { ok: false, error: `HTTP ${r.status}` };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
-}
-
-export async function cloudPull(
-  profileId: string,
-): Promise<{ ok: boolean; state?: unknown; error?: string }> {
-  const token = cloudToken();
-  if (!cloudConfigured() || !token) return { ok: false, error: "未登录云端" };
-  try {
-    const r = await fetch(
-      `${SB_URL}/rest/v1/learner_states?profile_id=eq.${encodeURIComponent(profileId)}&select=state`,
-      { headers: { apikey: SB_KEY, authorization: `Bearer ${token}` } },
+export async function pushProject(p: Project): Promise<{ ok: boolean; error?: string }> {
+  const sb = supabase();
+  if (!sb) return { ok: false, error: "unconfigured" };
+  const user_id = await uid();
+  if (!user_id) return { ok: false, error: "signed-out" };
+  const { error } = await sb
+    .from(TABLE)
+    .upsert(
+      { user_id, id: p.id, data: p, updated_at: new Date(p.updatedAt || Date.now()).toISOString() },
+      { onConflict: "user_id,id" },
     );
-    if (!r.ok) return { ok: false, error: `HTTP ${r.status}` };
-    const rows = (await r.json()) as { state: unknown }[];
-    return { ok: true, state: rows?.[0]?.state ?? null };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+export async function pushAll(projects: Project[]): Promise<void> {
+  for (const p of projects) await pushProject(p);
+}
+
+export async function deleteRemoteProject(id: string): Promise<void> {
+  const sb = supabase();
+  if (!sb) return;
+  const user_id = await uid();
+  if (!user_id) return;
+  await sb.from(TABLE).delete().eq("user_id", user_id).eq("id", id);
 }

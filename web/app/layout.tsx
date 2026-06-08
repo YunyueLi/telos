@@ -3,6 +3,7 @@ import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SketchDefs } from "@/components/sketch-defs";
 import { ProjectProvider } from "@/lib/telos/use-project";
+import { AuthProvider } from "@/lib/telos/auth";
 import { LangProvider } from "@/lib/telos/i18n";
 
 const fraunces = Fraunces({
@@ -39,7 +40,9 @@ export default function RootLayout({
       <body>
         <SketchDefs />
         <LangProvider>
-          <ProjectProvider>{children}</ProjectProvider>
+          <AuthProvider>
+            <ProjectProvider>{children}</ProjectProvider>
+          </AuthProvider>
         </LangProvider>
       </body>
     </html>
