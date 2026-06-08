@@ -3,9 +3,11 @@
 // 接入状态（重构）：用户只看「需要接入什么 + 现在通不通」——AI 引擎 / 联网搜索两张能力卡 + 实时状态点。
 // 技术细节（端点 URL、模式、测试/保存）收进「高级」折叠，给需要的人。key 永远在服务端，前端只选端点。
 // 本机 localhost 零配置默认指向 serve.py，绝大多数用户无需展开高级。
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
 import { getDeriveUrl, setDeriveUrl, testEndpoint, LOCAL_ENDPOINT, type EndpointStatus } from "@/lib/telos/derive";
+import { useAuth } from "@/lib/telos/auth";
 import { useT } from "@/lib/telos/i18n";
 
 const PRESETS = [
@@ -21,6 +23,7 @@ function provLabel(p?: string): string {
 
 export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void }) {
   const { t } = useT();
+  const { configured: cloudCfg, user } = useAuth();
   const [draft, setDraft] = useState("");
   const [saved, setSaved] = useState("");
   const [status, setStatus] = useState<EndpointStatus | null>(null);
@@ -117,6 +120,33 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
             )}
           </div>
         </div>
+
+        {/* 跨设备同步（账号）—— 登录后多设备同步，点进 /account 登录/管理 */}
+        <Link href="/account" className="conn-card conn-card-link">
+          <span className="conn-ic">
+            <Icon name="refresh" />
+          </span>
+          <div className="conn-main">
+            <div className="conn-name">{t("conn.syncTitle")}</div>
+            <div className="conn-sub">{t("conn.syncSub")}</div>
+          </div>
+          <div className="conn-stat">
+            {!cloudCfg ? (
+              <>
+                <span className="dot dot-off" /> {t("conn.optional")}
+              </>
+            ) : user ? (
+              <>
+                <span className="dot dot-ok" /> {t("auth.signedIn")}
+              </>
+            ) : (
+              <>
+                <span className="dot dot-off" /> {t("conn.signedOut")}
+              </>
+            )}
+            <Icon name="arrow" className="conn-go" />
+          </div>
+        </Link>
       </div>
 
       <button className="conn-adv-toggle" onClick={() => setAdvanced((v) => !v)} aria-expanded={advanced}>

@@ -345,6 +345,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .conn-adv-toggle .ic{width:13px;height:13px;transition:transform .2s}
 .conn-adv-toggle .up{transform:rotate(180deg)}
 .conn-adv{margin-top:12px;padding-top:14px;border-top:1px dashed var(--line-soft)}
+.conn-card-link{text-decoration:none;color:inherit;transition:border-color .15s}
+.conn-card-link:hover{border-color:var(--ink-3)}
+.conn-go{width:14px;height:14px;color:var(--ink-3);flex:none;margin-left:2px}
 @media(max-width:560px){
   .conn-card{flex-wrap:wrap}
   .conn-stat{width:100%;padding-left:51px}
