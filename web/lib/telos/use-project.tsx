@@ -31,7 +31,7 @@ import {
   setActiveId,
   upsertProject,
 } from "./project";
-import { deriveGraph, generateTitle, getLlmConfig, setLlmConfig, type LlmConfig } from "./derive";
+import { cleanBaseUrl, deriveGraph, generateTitle, getLlmConfig, setLlmConfig, type LlmConfig } from "./derive";
 import {
   addDailyXp,
   computeXp,
@@ -222,9 +222,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       // 账号端更新（或本机没配）→ 拉回本机（setLlmConfig 会广播事件，接入状态卡即时重测）。
       setLlmConfig({ ...localLlm, ...remoteLlm });
     } else if (lKey && (!rKey || lT > rT)) {
-      // 本机更新（或账号端还没有）→ 推到账号，让其它设备登录后拿得到。
+      // 本机更新（或账号端还没有）→ 推到账号，让其它设备登录后拿得到（base 规整后再推，不存脏值）。
       supabase()
-        ?.auth.updateUser({ data: { telos_llm: { ...localLlm, updatedAt: lT || Date.now() } } })
+        ?.auth.updateUser({ data: { telos_llm: { ...localLlm, base: cleanBaseUrl(localLlm.base), updatedAt: lT || Date.now() } } })
         .catch(() => {});
     }
     void syncNow();
