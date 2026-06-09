@@ -31,7 +31,16 @@ import {
   setActiveId,
   upsertProject,
 } from "./project";
-import { cleanBaseUrl, deriveGraph, generateTitle, getLlmConfig, setKeyActive, setLlmConfig, type LlmConfig } from "./derive";
+import {
+  cleanBaseUrl,
+  cleanupStaleEndpointOverride,
+  deriveGraph,
+  generateTitle,
+  getLlmConfig,
+  setKeyActive,
+  setLlmConfig,
+  type LlmConfig,
+} from "./derive";
 import {
   addDailyXp,
   computeXp,
@@ -100,6 +109,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const cloudOn = cloudConfigured() && !!user;
 
   useEffect(() => {
+    cleanupStaleEndpointOverride(); // 生产页清掉残留的 localhost 端点覆盖（早期调试遗留）
+    // 规整本机残留的脏 base（如历史误填的 "DeepSeek"）：直连模式不靠它，但清掉免得同步到别的设备/迷惑排查
+    const c = getLlmConfig();
+    if (c.key && c.base && cleanBaseUrl(c.base) !== c.base) {
+      setLlmConfig({ ...c, base: cleanBaseUrl(c.base), updatedAt: c.updatedAt || Date.now() });
+    }
     setProjects(listProjects());
     setActive(getActiveId());
     setReady(true);

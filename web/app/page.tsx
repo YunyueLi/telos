@@ -13,7 +13,7 @@ import NodePanel from "@/components/node-panel";
 import PathView from "@/components/path-view";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
-import { getDeriveUrl } from "@/lib/telos/derive";
+import { engineReady, LLM_EVENT } from "@/lib/telos/derive";
 import { useT, tStatic } from "@/lib/telos/i18n";
 
 // 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
@@ -110,7 +110,10 @@ function Onboarding({
 
   useEffect(() => {
     setMounted(true);
-    setCfgUrl(getDeriveUrl());
+    const sync = () => setCfgUrl(engineReady() ? "ready" : "");
+    sync();
+    window.addEventListener(LLM_EVENT, sync); // 配好 key/端点后即时收起「需配置」提示
+    return () => window.removeEventListener(LLM_EVENT, sync);
   }, []);
 
   // 倒推进行中：每 200ms 刷新；结束清零。

@@ -5,6 +5,7 @@
 
 import type { DomainClass } from "./engine";
 import { currentLang, llmName, tStatic } from "./i18n";
+import { deriveDirect, lessonDirect, probesDirect, testDirect, titleDirect, type DirectCfg } from "./derive-direct";
 
 // 当前界面语言对应的 LLM 输出语言名（注入后端 prompt，让倒推/微课/诊断都用该语言生成）。
 function outputLang(): string {
@@ -128,6 +129,37 @@ export function cleanBaseUrl(raw?: string): string | undefined {
   return u.origin + path;
 }
 
+// ---- 直连模式（真·BYOK）：用户配了自己的 key 且激活 → 浏览器直连 provider，绕过代理 Worker。----
+// 为什么：线上倒推 Worker 在 `*.workers.dev`，被 GFW 屏蔽（中国网络连接挂起）；用户自带的
+// DeepSeek/Tavily 可直连且允许浏览器 CORS。直连零代理、零单点故障、各地都通。key 只发往用户自己的 provider。
+export function directMode(): boolean {
+  return keyActive() && hasLlmKey();
+}
+function directCfg(): DirectCfg {
+  const c = getLlmConfig();
+  return {
+    key: (c.key || "").trim(),
+    base: cleanBaseUrl(c.base),
+    model: (c.model || "").trim() || undefined,
+    searchProvider: (c.searchProvider || "").trim() || undefined,
+    searchKey: (c.searchKey || "").trim() || undefined,
+  };
+}
+// 引擎是否就绪（供 UI 门控）：直连(本机有 key) 或 配了倒推端点(Worker/serve.py)。
+export function engineReady(): boolean {
+  return directMode() || !!getDeriveUrl();
+}
+
+// 一次性清理：生产页（非 localhost）若残留指向 localhost 的 `telos:derive-url` 覆盖（早期本地调试遗留），
+// 直接删掉——它只会让无 key 的 Worker 回退路径去打一个本机打不通的地址。getDeriveUrl 已忽略它，这里再物理清除。
+export function cleanupStaleEndpointOverride(): void {
+  if (typeof window === "undefined" || isLocalHost()) return;
+  const override = (window.localStorage.getItem(LS_KEY) || "").trim();
+  if (override && /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|\/|$)/i.test(override)) {
+    window.localStorage.removeItem(LS_KEY);
+  }
+}
+
 // 把用户自带配置拼成请求头（随每次倒推/微课/诊断调用发出）。
 function llmHeaders(): Record<string, string> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -150,8 +182,21 @@ export interface EndpointStatus {
   error?: string;
 }
 
-// 测试端点连通性 + key 是否就绪（打一次 /health，零成本，不调用 LLM）。
+// 测试端点连通性 + key 是否就绪。
 export async function testEndpoint(url?: string): Promise<EndpointStatus> {
+  // 直连模式：直接对用户自己的 provider 打一个极小请求，验可达性 + key 是否有效（不经任何代理）。
+  if (directMode()) {
+    const r = await testDirect(directCfg());
+    if (!r.reachable) return { ok: false, error: tStatic("epc.cantConnect") };
+    const c = getLlmConfig();
+    const hasSearch = !!(c.searchKey && c.searchKey.trim());
+    return {
+      ok: true,
+      model: r.model,
+      available: r.keyOk,
+      search: { provider: (c.searchProvider || "tavily").trim() || "tavily", available: hasSearch },
+    };
+  }
   const health = getHealthUrl(url);
   if (!health) return { ok: false, error: tStatic("epc.needUrl") };
   let res: Response;
@@ -179,7 +224,7 @@ export function setDeriveUrl(url: string): void {
 }
 
 export function deriveConfigured(): boolean {
-  return !!getDeriveUrl();
+  return engineReady();
 }
 
 export interface DerivedPoint {
@@ -227,6 +272,11 @@ function normalize(points: unknown[]): DerivedPoint[] {
 }
 
 export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<DerivedGraph> {
+  if (directMode()) {
+    const raw = await deriveDirect(goal, outputLang(), directCfg(), signal);
+    if (!Array.isArray(raw.points) || raw.points.length === 0) throw new Error(tStatic("err.noPoints"));
+    return { goal: String(raw.goal ?? goal), title: String(raw.title ?? "").trim() || undefined, points: normalize(raw.points) };
+  }
   const url = getDeriveUrl();
   if (!url) throw new Error("NO_ENDPOINT");
   let res: Response;
@@ -292,25 +342,8 @@ export function getLessonUrl(): string {
   return u ? u.replace(/\/derive\/?$/, "/lesson") : "";
 }
 
-export async function generateLesson(
-  input: { name: string; domain?: string; prereqs?: string[]; goal?: string },
-  signal?: AbortSignal,
-): Promise<Lesson> {
-  const url = getLessonUrl();
-  if (!url) throw new Error("NO_ENDPOINT");
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      method: "POST",
-      headers: llmHeaders(),
-      body: JSON.stringify({ ...input, lang: outputLang() }),
-      signal,
-    });
-  } catch {
-    throw new Error(tStatic("err.cantReachLesson"));
-  }
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
+// 微课后处理（worker 与直连共用）：剥选项序号前缀 + 规整资源。
+function finalizeLesson(data: Record<string, unknown>): Lesson {
   const steps = (Array.isArray(data.steps) ? data.steps : []) as LessonStep[];
   if (!steps.length) throw new Error(tStatic("err.lessonIncomplete"));
   // 去掉选项里 LLM 自带的 A./B、序号前缀，避免和角标重复
@@ -336,6 +369,32 @@ export async function generateLesson(
   return { concept: String(data.concept ?? ""), steps, resources };
 }
 
+export async function generateLesson(
+  input: { name: string; domain?: string; prereqs?: string[]; goal?: string },
+  signal?: AbortSignal,
+): Promise<Lesson> {
+  if (directMode()) {
+    const data = await lessonDirect(input, outputLang(), directCfg(), signal);
+    return finalizeLesson(data as Record<string, unknown>);
+  }
+  const url = getLessonUrl();
+  if (!url) throw new Error("NO_ENDPOINT");
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: llmHeaders(),
+      body: JSON.stringify({ ...input, lang: outputLang() }),
+      signal,
+    });
+  } catch {
+    throw new Error(tStatic("err.cantReachLesson"));
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
+  return finalizeLesson(data);
+}
+
 // ---- 起点诊断题（批量客观探针）----
 
 export interface Probe {
@@ -357,8 +416,16 @@ export function getTitleUrl(): string {
 }
 
 export async function generateTitle(goal: string): Promise<string> {
+  if (!goal.trim()) return "";
+  if (directMode()) {
+    try {
+      return await titleDirect(goal, outputLang(), directCfg());
+    } catch {
+      return "";
+    }
+  }
   const url = getTitleUrl();
-  if (!url || !goal.trim()) return "";
+  if (!url) return "";
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -373,11 +440,22 @@ export async function generateTitle(goal: string): Promise<string> {
   }
 }
 
+function finalizeProbes(data: Record<string, unknown>): Record<string, Probe> {
+  const probes = data.probes as Record<string, Probe> | undefined;
+  if (!probes || !Object.keys(probes).length) throw new Error(tStatic("err.probeEmpty"));
+  for (const k of Object.keys(probes)) probes[k].options = (probes[k].options || []).map(stripOptionLabel);
+  return probes;
+}
+
 export async function generateProbes(
   points: { id: string; name: string; domain?: string }[],
   goal: string,
   signal?: AbortSignal,
 ): Promise<Record<string, Probe>> {
+  if (directMode()) {
+    const data = await probesDirect(points, goal, outputLang(), directCfg(), signal);
+    return finalizeProbes(data as Record<string, unknown>);
+  }
   const url = getProbeUrl();
   if (!url) throw new Error("NO_ENDPOINT");
   let res: Response;
@@ -393,8 +471,5 @@ export async function generateProbes(
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
-  const probes = data.probes as Record<string, Probe> | undefined;
-  if (!probes || !Object.keys(probes).length) throw new Error(tStatic("err.probeEmpty"));
-  for (const k of Object.keys(probes)) probes[k].options = (probes[k].options || []).map(stripOptionLabel);
-  return probes;
+  return finalizeProbes(data);
 }

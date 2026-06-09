@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import styles from "./app.module.css";
 import { AGAIN, GOOD, KnowledgeGraph, type LearnerState, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
-import { generateLesson, generateProbes, getLessonUrl, type Lesson, type Probe } from "@/lib/telos/derive";
+import { engineReady, generateLesson, generateProbes, type Lesson, type Probe } from "@/lib/telos/derive";
 import LessonRunner from "@/components/lesson-runner";
 import { TierText } from "@/components/tier-text";
 import { useT } from "@/lib/telos/i18n";
@@ -62,7 +62,7 @@ export default function NodePanel({
     pct: Math.round((state.mastery[id] ?? 0) * 100),
   }));
   const unlocks = graph.dependents(pid).map((id) => graph.get(id).name);
-  const lessonReady = !!getLessonUrl();
+  const lessonReady = engineReady();
   const drill = (node.drill ?? "").trim();
   const benchmark = (node.benchmark ?? "").trim();
   const dom = domainLabel(node.domain, t);
