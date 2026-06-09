@@ -44,22 +44,16 @@ export default function PathView({
 
   return (
     <div className={styles.pathWrap}>
+      {/* 顶部纤细进度条（sticky）：只表进度，不再复述「下一步 + 节点名」——节点名留给 trail 高亮节点与右栏 CTA，避免一屏内重复出现。 */}
       <div className={styles.pathHead}>
-        {view.next ? (
-          <button className={styles.pathHeadNext} onClick={() => onOpenNode(view.next!.id)}>
-            <span className={styles.pathHeadEb}>{t("path.nextStep")}</span>
-            <b>{view.next.name}</b>
-            <Icon name="arrow" style={{ width: 13, height: 13, flex: "none" }} />
-          </button>
-        ) : (
-          <span className={styles.pathHeadNext}>
-            <Icon name="flag" style={{ width: 14, height: 14, flex: "none" }} />
-            <b>{t("path.goalReached")}</b>
-          </span>
-        )}
         <span className={styles.pathHeadCount}>
-          {view.mastered}/{view.total}
+          <b>{view.mastered}</b>
+          <i>/{view.total}</i> {t("word.mastered")}
         </span>
+        <span className={styles.pathHeadTrack} aria-hidden="true">
+          <i style={{ width: `${view.pct}%` }} />
+        </span>
+        <span className={styles.pathHeadPct}>{view.pct}%</span>
       </div>
 
       <div className={styles.pathTrail}>

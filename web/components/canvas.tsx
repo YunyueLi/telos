@@ -10,6 +10,7 @@ import {
   Panel,
   Position,
   ReactFlow,
+  useReactFlow,
   type Edge,
   type Node,
   type NodeProps,
@@ -43,7 +44,7 @@ function detectDir(): Direction {
 
 function TelosNode({ data }: NodeProps) {
   const d = data as TelosData;
-  const vertical = d.dir === "TB";
+  // 块内恒为 TB（向下）流向 → 连线锚点统一用 上(入)/下(出)，跨阶段块的连线也据此走
   return (
     <div
       className={`${styles.rfNode} ${styles[d.status]}`}
@@ -54,12 +55,7 @@ function TelosNode({ data }: NodeProps) {
         if (e.key === "Enter" || e.key === " ") d.onOpen();
       }}
     >
-      <Handle
-        type="target"
-        position={vertical ? Position.Top : Position.Left}
-        className={styles.handle}
-        isConnectable={false}
-      />
+      <Handle type="target" position={Position.Top} className={styles.handle} isConnectable={false} />
       <span className={styles.rfBadge} title={d.typeTitle}>
         {d.domainLabel}
       </span>
@@ -72,22 +68,29 @@ function TelosNode({ data }: NodeProps) {
         {d.name}
       </div>
       <s>{d.sub}</s>
-      <Handle
-        type="source"
-        position={vertical ? Position.Bottom : Position.Right}
-        className={styles.handle}
-        isConnectable={false}
-      />
+      <Handle type="source" position={Position.Bottom} className={styles.handle} isConnectable={false} />
     </div>
   );
 }
 
 // 阶段/模块区域：画在节点簇背后的浅色虚线框 + 左上「01 模块名」标签，把"阶段"标在图上。
+// 标签可点击 → 缩放定位到该阶段（区域本身 pointer-events:none 不挡平移，标签 auto 接管点击）；当前阶段高亮。
 function StageNode({ data }: NodeProps) {
-  const d = data as { label: string };
+  const d = data as { label: string; current?: boolean; bbox?: { x: number; y: number; width: number; height: number } };
+  const rf = useReactFlow(); // 当前 live 实例（context），避免手存 ref 在 dev 双挂载下指向陈旧实例
   return (
-    <div className={styles.rfStage}>
-      <span className={styles.rfStageLabel}>{d.label}</span>
+    <div className={`${styles.rfStage} ${d.current ? styles.rfStageCur : ""}`}>
+      <button
+        className={styles.rfStageLabel}
+        onClick={(e) => {
+          e.stopPropagation();
+          // 即时缩放定位到该阶段（duration:0 —— 动画版在本配置下会被取消，与 onInit 同样用瞬时）
+          if (d.bbox) rf.fitBounds(d.bbox, { padding: 0.16, duration: 0 });
+        }}
+        title={d.label}
+      >
+        {d.label}
+      </button>
     </div>
   );
 }
@@ -136,7 +139,6 @@ export default function DeriveCanvas({
 
   const { nodes, edges, focus } = useMemo(() => {
     const layout = layeredLayout(graph, dir);
-    const vertical = dir === "TB";
     const ns: Node[] = Object.values(layout.nodes).map((n) => ({
       id: n.id,
       type: "telos",
@@ -152,8 +154,8 @@ export default function DeriveCanvas({
         onOpen: () => onOpenNode?.(n.id),
       } satisfies TelosData,
       style: { width: layout.nodeW, height: layout.nodeH },
-      sourcePosition: vertical ? Position.Bottom : Position.Right,
-      targetPosition: vertical ? Position.Top : Position.Left,
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
       connectable: false,
       zIndex: 1, // 真实节点压在阶段区域之上
     }));
@@ -181,18 +183,31 @@ export default function DeriveCanvas({
     }
     const PADB = 22;
     const LABEL = 26; // 顶部给标签留空
-    const stageNodes: Node[] = Object.entries(mb).map(([m, b]) => ({
-      id: `__stage__${m}`,
-      type: "stage",
-      position: { x: b.x0 - PADB, y: b.y0 - PADB - LABEL },
-      data: { label: `${String((modOrder.get(m) ?? 0) + 1).padStart(2, "0")}  ${b.title}` },
-      style: { width: b.x1 - b.x0 + PADB * 2, height: b.y1 - b.y0 + PADB * 2 + LABEL, pointerEvents: "none" },
-      zIndex: 0, // 沉在真实节点(zIndex 1)背后
-      selectable: false,
-      draggable: false,
-      connectable: false,
-      focusable: false,
-    }));
+    // 当前阶段 = 含「现在学/下一步」节点的模块，标签高亮，作为视觉锚点
+    const nowId = view.next?.id ?? Object.keys(view.visual).find((id) => view.visual[id] === "now");
+    const nowMod = nowId ? graph.get(nowId).module || "" : "";
+    const stageNodes: Node[] = Object.entries(mb).map(([m, b]) => {
+      const x = b.x0 - PADB;
+      const y = b.y0 - PADB - LABEL;
+      const w = b.x1 - b.x0 + PADB * 2;
+      const h = b.y1 - b.y0 + PADB * 2 + LABEL;
+      return {
+        id: `__stage__${m}`,
+        type: "stage",
+        position: { x, y },
+        data: {
+          label: `${String((modOrder.get(m) ?? 0) + 1).padStart(2, "0")}  ${b.title}`,
+          current: m === nowMod,
+          bbox: { x, y, width: w, height: h }, // 点击阶段标签 → fitBounds 缩放定位到该阶段
+        },
+        style: { width: w, height: h, pointerEvents: "none" },
+        zIndex: 0, // 沉在真实节点(zIndex 1)背后
+        selectable: false,
+        draggable: false,
+        connectable: false,
+        focusable: false,
+      };
+    });
     const es: Edge[] = layout.edges.map((e) => {
       const locked = view.visual[e.to] === "lock";
       const strong = e.to === view.next?.id || e.from === view.next?.id;
@@ -294,47 +309,54 @@ export default function DeriveCanvas({
         panOnDrag
         zoomOnScroll={false}
         onInit={(inst) => {
-          // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用更大的可读比例尺(看不全可拖)
-          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 1.2, duration: 0 });
-          else inst.fitView({ padding: 0.16, maxZoom: 1.25 });
+          // 簇打包后整图较紧凑：节点不多时 fitView 铺满整片「岛屿群」；很大时把活动区域放中央、保可读比例尺(可拖)
+          if (graph.ids().length > 18 && focus) inst.setCenter(focus.x, focus.y, { zoom: 1.05, duration: 0 });
+          else inst.fitView({ padding: 0.18, maxZoom: 1.15 });
         }}
       >
         <Background gap={24} size={1} color="#e2dfd7" />
         <Controls showInteractive={false} />
-        <Panel position="top-right">
-          <button className={styles.dirToggle} onClick={toggle} title={t("canvas.toggleTitle")}>
-            {dir === "TB" ? t("canvas.toHorizontal") : t("canvas.toVertical")}
-          </button>
-        </Panel>
-        <Panel position="top-left">
-          <div className={styles.exportWrap}>
-            <button
-              className={styles.dirToggle}
-              onClick={() => setMenuOpen((o) => !o)}
-              disabled={exporting}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              title={t("export.btn")}
-            >
-              <Icon name="up" style={{ width: 12, height: 12, verticalAlign: -1, marginRight: 4 }} />
-              {exporting ? t("export.exporting") : t("export.btn")}
+        {/* 浮动工具栏「右段」：导出 + 方向 合成一枚等高纸感胶囊（中段是 page.tsx 的 路径/地图 切换） */}
+        <Panel position="top-right" style={{ margin: 10 }}>
+          <div className={styles.mapTools}>
+            <div className={styles.exportWrap}>
+              <button
+                className={styles.mapToolBtn}
+                onClick={() => setMenuOpen((o) => !o)}
+                disabled={exporting}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                title={t("export.btn")}
+              >
+                <Icon name="up" style={{ width: 13, height: 13 }} />
+                {exporting ? t("export.exporting") : t("export.btn")}
+                <Icon
+                  name="chevron"
+                  style={{ width: 11, height: 11 }}
+                  className={menuOpen ? styles.mapToolCvUp : styles.mapToolCv}
+                />
+              </button>
+              {menuOpen && (
+                <>
+                  <div className={styles.exportBackdrop} onClick={() => setMenuOpen(false)} />
+                  <div className={styles.exportMenu} role="menu">
+                    <button role="menuitem" onClick={() => exportImage("png")}>
+                      {t("export.png")}
+                    </button>
+                    <button role="menuitem" onClick={() => exportImage("pdf")}>
+                      {t("export.pdf")}
+                    </button>
+                    <button role="menuitem" onClick={exportMarkdown}>
+                      {t("export.mindmap")}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+            <span className={styles.mapToolDiv} />
+            <button className={styles.mapToolBtn} onClick={toggle} title={t("canvas.toggleTitle")}>
+              {dir === "TB" ? t("canvas.toHorizontal") : t("canvas.toVertical")}
             </button>
-            {menuOpen && (
-              <>
-                <div className={styles.exportBackdrop} onClick={() => setMenuOpen(false)} />
-                <div className={styles.exportMenu} role="menu">
-                  <button role="menuitem" onClick={() => exportImage("png")}>
-                    {t("export.png")}
-                  </button>
-                  <button role="menuitem" onClick={() => exportImage("pdf")}>
-                    {t("export.pdf")}
-                  </button>
-                  <button role="menuitem" onClick={exportMarkdown}>
-                    {t("export.mindmap")}
-                  </button>
-                </div>
-              </>
-            )}
           </div>
         </Panel>
       </ReactFlow>
