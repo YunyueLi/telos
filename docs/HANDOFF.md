@@ -7,7 +7,7 @@
 
 ## 0. 一句话现状
 
-倒推多段层级化（30–80 节点）、模型 deepseek-v4-pro。账号+跨设备同步上线（Supabase：邮箱/密码、魔法链接、Google ✅；GitHub 待开）。**线上为 BYOK，且 key 跟账号绑定**：Worker `telos-derive.xuanlyy.workers.dev` 编排倒推，**用每个用户自带的 key**（登录后在「接入状态」绑定 → 存 Supabase `user_metadata` + 本机镜像；随请求经 `X-Telos-Key` 头发出、Worker 不留存）；**登录自动连接、退出登录即休眠 key（停止发送→未连接，但不删除本机副本）**（未登录刷新也是未连接，云端已配置时 AI/搜索弹层只显示「登录后绑定」面板）；站长已**删除 Worker env key** → 纯 BYOK 零成本。多人激励「坚持」Tab、营销落地页、隐私/条款页、设计参考 `docs/DESIGN.md`、首个 Release **v0.1.0** 均已上线。
+倒推多段层级化（30–80 节点）、模型 deepseek-v4-pro。账号+跨设备同步上线（Supabase：邮箱/密码、魔法链接、Google ✅；GitHub 待开）。**线上为 BYOK，且 key 跟账号绑定**：**（`9a001e6` 起）有 key 的用户走「浏览器直连 provider」**（`directMode`→`derive-direct.ts`，绕过被墙的 `*.workers.dev`，key 只发往用户自己的 DeepSeek/Tavily）；**无 key 访客/非受限网络才回退 Worker** `telos-derive.xuanlyy.workers.dev`（编排镜像、随请求经 `X-Telos-Key` 头发出、Worker 不留存）。key 登录后在「接入状态」绑定 → 存 Supabase `user_metadata` + 本机镜像；**登录自动连接、退出登录即休眠 key（停止发送→未连接，但不删除本机副本）**（未登录刷新也是未连接，云端已配置时 AI/搜索弹层只显示「登录后绑定」面板）；站长已**删除 Worker env key** → 纯 BYOK 零成本。多人激励「坚持」Tab、营销落地页、隐私/条款页、设计参考 `docs/DESIGN.md`、首个 Release **v0.1.0** 均已上线。
 > **BYOK 三处根因已全部修复并上线**（用户反馈"线上填 key 没用 / 配置不随账号走"）：
 > 1. `telos:derive-url=127.0.0.1` 残留覆盖 → 线上去打本机 serve.py。修：非本机页面忽略 localhost 覆盖（`61885dc`）。
 > 2. **接口地址被填成 `"DeepSeek"` 等非 URL** → Worker 拼 `DeepSeek/chat/completions` 抛 `Invalid URL`。修：新增 `cleanBaseUrl()`（缺协议补 https://、剥误粘的 `/chat/completions`、主机不像域名判无效）；`llmHeaders` 只发合法 base（自愈脏值，无需用户操作即可倒推）；保存时校验+提示、加载时显示规整值（`73c5708`）。
@@ -17,21 +17,20 @@
 
 ---
 
-### 🔴 续作第一件事 · 当前唯一未解决：线上「连不上」（cantConnect）
+### ✅ 已解决（`9a001e6`）：线上「连不上」真因＝`*.workers.dev` 被墙 → 改用浏览器直连 BYOK
 
-> **症状**：用户在线上 `yunyueli.github.io/telos/app/settings/`（已确认是线上、非 localhost），已登录、真实 key 已填、base 空、model `deepseek-v4-pro`，AI 引擎仍显示红字 **「连不上 — 确认服务在运行、地址与端口正确」**。**这是 `epc.cantConnect`** —— `testEndpoint` 打 `/health` 的 fetch **直接抛错**（端点不可达），**与 key / 账号 / CORS 全都无关**（卡片上历史的「未连接」其实也都是这个 `status.ok=false`，不是「缺 key」；「缺 key」文案是 `conn.noKey`＝"已连通·缺 key"）。一天多没修好就是因为前面一直在查 key/账号那条线，方向错了。
+> **真根因（实测坐实，非推测）**：用 Claude-in-Chrome 直接在用户浏览器（Browser 1 `51ade0a5…`，中国网络）跑可达性探针——
+> **整个 `*.workers.dev` 域不可达**：`telos-derive.xuanlyy.workers.dev` 与对照组 `example.workers.dev` 都**连接挂起 7–8s 超时**（不是快速失败，典型 GFW 对 Cloudflare 共享 workers.dev 的封锁）；同一浏览器 `api.deepseek.com`(90ms)、`api.tavily.com`、`cloudflare.com` 主站、`github.io`、`google` **全部可达**。
+> → 所以 `testEndpoint` 打 Worker `/health` 的 fetch 挂起抛错 = `cantConnect`。**前 1 天多查的 localStorage 覆盖 / key / 账号同步全是红鲱鱼**——Worker 代码/CORS/env 注入都没错，错在它的域名在中国连不上。（`telos:derive-url=127.0.0.1` 那条覆盖确实在，但只是 HTTPS→HTTP 混合内容 2ms 秒拒，不是主因；`23af077` 也不解决——清掉覆盖后照样去打打不通的 Worker。）
 >
-> **已逐一排除（都正常）**：① 线上 Worker `https://telos-derive.xuanlyy.workers.dev/health` → curl 200 `{ok:true,available:false,...}`；② CORS 预检 OPTIONS → 204，Allow-Origin=github.io、Allow-Headers 含全部 `X-Telos-*`、Allow-Methods 齐；③ gh variable `NEXT_PUBLIC_TELOS_DERIVE_URL=…workers.dev/derive` 已设；④ `deploy.yml` 的 `env:` 正确挂在 build 步骤（L38）；⑤ 本地带该 env 跑 `npm run build`，URL **确被内联**进按需分包（`out/_next/static/chunks/2150ide5qqv-s.js`）——所以 **env 注入机制是好的**（之前 curl grep 线上 HTML 引用的分包找不到 URL，是因为含 `getDeriveUrl` 的分包是 webpack 按需加载、不在 HTML `<script>` 里，**不是**没注入）。
+> **修复＝真·BYOK 浏览器直连**（`9a001e6`）：用户配了自己的 key 时，前端**直接调用 provider**（DeepSeek/Tavily，均实测 200+CORS 放行），不再经任何代理 Worker。
+> - 新增 `web/lib/telos/derive-direct.ts`：把 `workers/derive.js` 的三段式层级倒推（蓝图→并行展开模块→汇编/断环）+ 微课/诊断/标题/Tavily 检索**移植到浏览器端**（第三处镜像，改编排要三处同步：llm.py / derive.js / derive-direct.ts）。
+> - `derive.ts` 路由：`directMode()=keyActive()&&hasLlmKey()` → 走直连；否则回退 Worker（无 key 访客 / 非受限网络）。`deriveGraph`/`generateLesson`/`generateProbes`/`generateTitle`/`testEndpoint` 全部分流；新增 `engineReady()` 供 UI 门控（page/node-panel 改用它，不再依赖端点 URL）。
+> - 顺手清理：生产页**物理删除**残留的 localhost 端点覆盖（`cleanupStaleEndpointOverride`，挂 Provider mount）；规整本机脏 base（如 `"DeepSeek"` → 用默认）。
 >
-> **最可能根因（高置信）**：用户这台浏览器里残留了 `telos:derive-url` 覆盖（早期本地调试遗留，指向 localhost 或某个打不通的旧地址），线上版照它去打 → fetch 抛错 → cantConnect。
+> **已端到端验证（用户真实浏览器）**：①三张接入卡 = 已连接·deepseek-v4-pro / 已启用·Tavily / 已登录；②真实倒推「学会冲泡手冲咖啡」走完整 pipeline（蓝图→展开→汇编）产 **41 节点 6 模块**的图、渲染正常、节点名是动宾短语；③残留 localhost 覆盖已被自动清除、脏 base 已规整。**「连不上」彻底消失**。
 >
-> **已部署的自愈修复（`23af077`，待在用户浏览器确认）**：`getDeriveUrl()` 改为——**生产页（非 localhost）以构建期 env 端点为权威，忽略任何本机 `telos:derive-url` 覆盖**；仅当无构建端点（裸静态部署）才允许运行时粘贴的非 localhost 覆盖；本机开发/自托管不变（覆盖优先）。Node 复核 9 情形全过。**部署后生产页最差只会是「缺 key」，不该再「连不上」**。上一张截图的 cantConnect **很可能早于该修复刷到用户浏览器**（Fastly 边缘缓存 + 未硬刷新）；最后那次「直接从用户浏览器实测」的诊断 eval 被工具内部错误打断、未拿到返回。
->
-> **续作第一步（决定性，二选一）**：
-> - **A. 用 Claude-in-Chrome 直接查用户浏览器**（本程已连上：Browser 1，`deviceId 51ade0a5-7406-494c-9d72-6b3a5add72fe`，macOS；已开一个空标签导航到线上 settings，同源共享 localStorage）。跑一段 eval：读 `localStorage['telos:derive-url']`、并从该页 `fetch('https://telos-derive.xuanlyy.workers.dev/health')` 实测可达性。
-> - **B. 让用户在该设备 Console 跑**：`localStorage.getItem('telos:derive-url')` 看值；再 `localStorage.removeItem('telos:derive-url'); location.reload()` 清掉覆盖后硬刷新。
->
-> **判定**：① 若清掉覆盖（或 `23af077` 生效）后变「已连接/已连通·缺 key」→ 就是残留覆盖，结案；② 若从用户浏览器 fetch Worker `/health` 也失败（而我这边 curl 成功）→ 是该网络/设备/插件/地区拦截，另查；③ 若 `getDeriveUrl` 返回空→「请先填写端点地址」(`needUrl`)＝该构建没注入 env（与本地结论矛盾，需复查那次部署的 build log）。**务必先确认 `23af077` 已刷到用户浏览器（硬刷新）再下结论。**
+> **遗留小事**：验证时创建的测试项目「手冲咖啡入门」可能还在用户项目列表（自动化删除时删「当前项目」会让 CDP 渲染卡住、没删成；用户正常点两下即可删，或留着也无害）。**根因若复发**（如用户换到能直连 Worker 的网络又退化）：记住 workers.dev 在中国不可达是常态，长久解法是给 Worker 挂**自有域名**（见 P2，需买域名），但有 BYOK 直连后 Worker 已非必需。
 
 ## 1. 怎么跑（本地）
 
@@ -106,8 +105,8 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 
 | # | 待办 | 优先级 | 谁做 | 状态 |
 |---|---|---|---|---|
-| 0 | **🔴 线上「连不上」(cantConnect)** | **P0·最高** | **续作首做（见 §0「续作第一件事」）** | 端点不可达，**与 key/账号无关**。Worker/CORS/env 注入均已验 OK；最可能＝用户浏览器残留 `telos:derive-url` 覆盖。自愈修复 `23af077`（生产页忽略覆盖、强制构建端点）已部署，**待在用户浏览器确认**（Claude-in-Chrome 已连，或让用户清覆盖+硬刷新） |
-| 0b | ~~BYOK key 绑账号（登录连/登出休眠）+ 三根因~~ | ~~P0~~ | — | ✅ 已修上线（见 §0 1–4：`61885dc`/`73c5708`/`fc0592b`/`fba9184`/`860737b`/`c4139d6`）。注意「连不上」是**另一条线**，与此无关 |
+| 0 | ~~🔴 线上「连不上」(cantConnect)~~ | ~~P0·最高~~ | — | ✅ **已解决**（`9a001e6`）。真因＝`*.workers.dev` 被 GFW 屏蔽（实测对照组也不通），与 key/账号/CORS 全无关。改为浏览器直连 BYOK（`derive-direct.ts`），已在用户真实浏览器端到端验证（41 节点真实倒推 + 三卡全绿）。详见 §0 |
+| 0b | ~~BYOK key 绑账号（登录连/登出休眠）+ 三根因~~ | ~~P0~~ | — | ✅ 已修上线（见 §0 1–4：`61885dc`/`73c5708`/`fc0592b`/`fba9184`/`860737b`/`c4139d6`） |
 | 1 | ~~线上倒推端点（Worker 部署）~~ | ~~P0~~ | — | ✅ 已完成 |
 | 2 | GitHub 登录（魔法链接 + Google 已开） | P1 | 用户 GitHub+Supabase | 剩 GitHub（建 OAuth App，回调 `…supabase.co/auth/v1/callback`，填进 Supabase provider，开了即生效；GitHub 同意页天然显示「Telos」） |
 | 3 | 多人周联赛 ⑤（全局周榜） | P1 | 用户建表 → 我接客户端 | 方案+SQL 就绪（SUPABASE.md §2b），待建表 |
@@ -116,17 +115,15 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 | 6 | 文档继续扫（STRATEGY/ROADMAP 过时项） | P2 | **我（可独立）** | README/DERIVE 本程已扫 |
 | 7 | Supabase 邮件模板本地化 · README 截图GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 |
 
-> 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#2 GitHub、#3 建表。**#0「连不上」续作可直接用 Claude-in-Chrome 查用户浏览器（已连），不必等用户。**
+> 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#2 GitHub、#3 建表。
 
-### P0 排查清单
-**先分清两种红字**：① **「连不上 — 确认服务在运行…」=`cantConnect`**＝端点 fetch 抛错（端点不可达，**当前 #0**，与 key 无关）；② **「已连通·缺 key」=`conn.noKey`**＝端点通了但没 key。卡片「未连接」＝`status.ok=false`＝①。
+### 连接排查清单（#0 已解决，留作回归参考）
+**先分清两种红字**：① **「连不上」=`cantConnect`**＝fetch 抛错；② **「已连通·缺 key」=`conn.noKey`**＝通了但没 key。卡片「未连接」＝`status.ok=false`。
 
-A) **cantConnect（#0，当前）**：
-1. 读用户该设备 `localStorage['telos:derive-url']`——是否残留 localhost/旧地址。`23af077` 后生产页应忽略它；确认已硬刷新到新构建。
-2. 从用户浏览器 `fetch('https://telos-derive.xuanlyy.workers.dev/health')`——我这边 curl 是 200；若用户那边失败＝网络/插件/地区拦截。
-3. 若 `getDeriveUrl()` 返回空 → 显示的是 `needUrl`（不是 cantConnect），那才是 env 没注入，复查部署 build log。
+A) **现在的连接路径（`9a001e6` 后）**：有 key → `directMode` 直连 provider（`testEndpoint` 打一次极小 DeepSeek 请求验证）。**若直连也报 cantConnect**：从用户浏览器实测 `api.deepseek.com`(或其 base) 可达性 + CORS——若挂起＝该 provider 域被该网络拦（换 base/provider）；若 200 但 testEndpoint 仍失败＝key 无效（401）。
+> ⚠️ **历史教训**：`*.workers.dev` 在中国被墙（连接挂起 7–8s 而非快速失败），别再回去查 localStorage 覆盖/key/账号那条线——那拖了一天多全是红鲱鱼。验证可达性永远**在用户浏览器实测**（Claude-in-Chrome），别只信本机 curl（本机网络 ≠ 用户网络）。
 
-B) **倒推/key（已基本闭环，留作回归）**：
+B) **倒推/key（已闭环，留作回归）**：
 1. **已确认 OK**：Worker + 用户 key 经 curl 实测返回 42 节点（`curl -X POST .../derive -H "X-Telos-Key: <key>" -d '{"goal":"…"}'`）。Worker/CORS/key 都没问题。
 2. devtools → Application → Local Storage：`telos:derive-url`（应为空或 `…workers.dev/derive`，**不能是 127.0.0.1**）、`telos:llm`（应含 `key`；`base` 留空或合法 http(s) URL——**绝不能是 `"DeepSeek"` 这类非 URL**，否则 Worker 拼 `DeepSeek/chat/completions` 报 `Invalid URL`。新代码已自动忽略脏 base，但确认线上是新构建）。
 3. Network 看 `/derive`：带 `X-Telos-Key` 头吗？`X-Telos-Base` 若有，须是合法 URL。响应码：401/NO_KEY=没带 key（config 没存上）；502 + `Invalid URL`=base 脏；CORS 错=预检头。
