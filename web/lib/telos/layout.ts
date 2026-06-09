@@ -1,6 +1,7 @@
-// 分层自动布局：把任意前置依赖 DAG 算成可渲染的坐标 + 连线。
-// 这是 Sugiyama 分层思路的轻量实现（零依赖）——倒推出的任意图谱都能立刻成图。
-// 后续上 React Flow 时，可把布局换成 d3-dag/elkjs，渲染层照样消费这套坐标。
+// 阶段块布局：把倒推图谱按「阶段(module)」分块——每块内部做局部分层(Sugiyama 思路、TB 向下)，
+// 再把各块当作带尺寸的矩形在平面上二维打包，列数按目标长宽比(≈3:2)自适应选取。
+// 这样整图不再是「全局最长路径」拉出的长条，而是一片紧凑、错落、像地图的「阶段岛屿群」。
+// 完全确定性(同输入同输出，利于导出/快照)、零依赖。详见 layout 调研（簇内 layered + 簇间 rectpacking）。
 import { KnowledgeGraph } from "./engine";
 
 export interface LayoutNode {
@@ -12,9 +13,9 @@ export interface LayoutNode {
 export interface LayoutEdge {
   from: string;
   to: string;
-  d: string; // SVG path
+  d: string; // SVG path（渲染层用 React Flow 自带连线，此字段保留兼容）
 }
-export type Direction = "LR" | "TB"; // 左→右（横屏）/ 上→下（竖屏）
+export type Direction = "LR" | "TB"; // LR=横向网格(宽屏) / TB=单列纵向(竖屏/手机)
 
 export interface Layout {
   width: number;
@@ -28,107 +29,187 @@ export interface Layout {
 
 const NODE_W = 208;
 const NODE_H = 88;
-const MARGIN = 36;
-// 层间距(rank：LR=列间距 / TB=行间距) 与 层内铺开间距(cross)
-const LR_RANK_GAP = 92;
-const LR_CROSS_GAP = 28;
-const TB_RANK_GAP = 60;
-const TB_CROSS_GAP = 38;
+const MARGIN = 44;
+// 块内（局部 TB 分层）间距：层间(向下) / 同层兄弟(横向)——偏紧，让每座「岛」更聚拢
+const L_RANK_GAP = 44;
+const L_CROSS_GAP = 24;
+// 块间打包间距：留足空间给阶段虚线框(每侧 22 + 顶部标签 26)互不相撞
+const BLOCK_GAP_X = 96;
+const BLOCK_GAP_Y = 116;
+const ASPECT_TARGET = 1.5; // 期望整图 宽/高 ≈ 3:2
+const MAX_COLS = 3; // 列数上限：再多又会横向变长条
 
-function topoOrder(g: KnowledgeGraph): string[] {
-  const indeg: Record<string, number> = {};
-  for (const id of g.ids()) indeg[id] = g.prerequisites(id).length;
-  const q = g.ids().filter((id) => indeg[id] === 0);
-  const out: string[] = [];
-  while (q.length) {
-    const x = q.shift()!;
-    out.push(x);
-    for (const d of g.dependents(x)) if (--indeg[d] === 0) q.push(d);
-  }
-  // 有环时兜底：把剩余节点补到末尾（理论上倒推图无环）
-  for (const id of g.ids()) if (!out.includes(id)) out.push(id);
-  return out;
+interface Block {
+  ids: string[];
+  pos: Record<string, { x: number; y: number }>; // 块内相对中心坐标
+  w: number;
+  h: number;
 }
 
-export function layeredLayout(g: KnowledgeGraph, direction: Direction = "LR"): Layout {
-  const order = topoOrder(g);
+// 单个阶段的局部分层（只看阶段内部的前置依赖，向下 TB）。复用 Sugiyama：最长路径分层 + 一遍 barycenter 降交叉。
+function layoutModule(g: KnowledgeGraph, ids: string[]): Block {
+  const set = new Set(ids);
+  const pre = (id: string) => g.prerequisites(id).filter((p) => set.has(p));
+  const dep = (id: string) => g.dependents(id).filter((d) => set.has(d));
 
-  // 1) 最长路径分层：layer(n) = 0 若无前置，否则 max(layer(前置)) + 1
+  // 块内稳定拓扑序（保留 ids 给定顺序）
+  const indeg: Record<string, number> = {};
+  for (const id of ids) indeg[id] = pre(id).length;
+  const q = ids.filter((id) => indeg[id] === 0);
+  const order: string[] = [];
+  const seen = new Set<string>();
+  while (q.length) {
+    const x = q.shift()!;
+    if (seen.has(x)) continue;
+    seen.add(x);
+    order.push(x);
+    for (const d of dep(x)) if (--indeg[d] === 0) q.push(d);
+  }
+  for (const id of ids) if (!seen.has(id)) order.push(id); // 有环兜底
+
+  // 最长路径分层（块内）
   const layer: Record<string, number> = {};
   for (const id of order) {
-    const pre = g.prerequisites(id);
-    layer[id] = pre.length ? Math.max(...pre.map((p) => (layer[p] ?? 0) + 1)) : 0;
+    const ps = pre(id);
+    layer[id] = ps.length ? Math.max(...ps.map((p) => (layer[p] ?? 0) + 1)) : 0;
   }
   const maxLayer = Math.max(0, ...Object.values(layer));
-
-  // 2) 分组到各层
   const byLayer: string[][] = Array.from({ length: maxLayer + 1 }, () => []);
   for (const id of order) byLayer[layer[id]].push(id);
 
-  // 3) 一遍 barycenter：每层内按"前置在上一层的平均行位"排序，降低连线交叉
+  // 一遍 barycenter：每层按前置在上一层的平均位置排序，降低块内连线交叉
   const rowIndex: Record<string, number> = {};
+  const bary = (id: string) => {
+    const ps = pre(id);
+    if (!ps.length) return 0;
+    return ps.reduce((s, p) => s + (rowIndex[p] ?? 0), 0) / ps.length;
+  };
   byLayer.forEach((col, li) => {
-    if (li > 0) {
-      col.sort((a, b) => bary(a) - bary(b));
-    }
+    if (li > 0) col.sort((a, b) => bary(a) - bary(b));
     col.forEach((id, i) => (rowIndex[id] = i));
   });
-  function bary(id: string): number {
-    const pre = g.prerequisites(id);
-    if (!pre.length) return 0;
-    const rows = pre.map((p) => rowIndex[p] ?? 0);
-    return rows.reduce((s, r) => s + r, 0) / rows.length;
-  }
 
-  // 4) 坐标：rank 轴 = 层推进方向（LR→X，TB→Y）；cross 轴 = 层内铺开方向
-  const vertical = direction === "TB";
-  const rankSize = vertical ? NODE_H : NODE_W;
-  const crossSize = vertical ? NODE_W : NODE_H;
-  const rankGap = vertical ? TB_RANK_GAP : LR_RANK_GAP;
-  const crossGap = vertical ? TB_CROSS_GAP : LR_CROSS_GAP;
-  const rankPitch = rankSize + rankGap;
-  const crossPitch = crossSize + crossGap;
+  const rankPitch = NODE_H + L_RANK_GAP;
+  const crossPitch = NODE_W + L_CROSS_GAP;
   const maxRows = Math.max(1, ...byLayer.map((c) => c.length));
-  const rankSpan = (maxLayer + 1) * rankPitch - rankGap;
-  const crossSpan = maxRows * crossPitch - crossGap;
+  const w = maxRows * crossPitch - L_CROSS_GAP;
+  const h = (maxLayer + 1) * rankPitch - L_RANK_GAP;
 
-  const nodes: Record<string, LayoutNode> = {};
+  const pos: Record<string, { x: number; y: number }> = {};
   byLayer.forEach((col, li) => {
-    const rankPos = MARGIN + li * rankPitch + rankSize / 2;
-    const colCross = col.length * crossPitch - crossGap;
-    const crossStart = MARGIN + (crossSpan - colCross) / 2 + crossSize / 2;
+    const colW = col.length * crossPitch - L_CROSS_GAP;
+    const startX = (w - colW) / 2 + NODE_W / 2; // 该层在块内水平居中
     col.forEach((id, i) => {
-      const crossPos = crossStart + i * crossPitch;
-      nodes[id] = {
-        id,
-        layer: li,
-        x: vertical ? crossPos : rankPos,
-        y: vertical ? rankPos : crossPos,
-      };
+      pos[id] = { x: startX + i * crossPitch, y: li * rankPitch + NODE_H / 2 };
     });
   });
 
-  const width = MARGIN * 2 + (vertical ? crossSpan : rankSpan);
-  const height = MARGIN * 2 + (vertical ? rankSpan : crossSpan);
+  return { ids, pos, w, h };
+}
 
-  // 5) 连线：沿 rank 轴 前置 → 后继（TB 竖直控制点 / LR 水平控制点）
-  const edges: LayoutEdge[] = [];
-  for (const id of g.ids()) {
-    const to = nodes[id];
-    for (const pre of g.prerequisites(id)) {
-      const from = nodes[pre];
-      if (!from || !to) continue;
-      let d: string;
-      if (vertical) {
-        const x1 = from.x, y1 = from.y + NODE_H / 2, x2 = to.x, y2 = to.y - NODE_H / 2;
-        const dy = Math.max(20, (y2 - y1) * 0.5);
-        d = `M${x1},${y1} C${x1},${y1 + dy} ${x2},${y2 - dy} ${x2},${y2}`;
-      } else {
-        const x1 = from.x + NODE_W / 2, y1 = from.y, x2 = to.x - NODE_W / 2, y2 = to.y;
-        const dx = Math.max(28, (x2 - x1) * 0.5);
-        d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+export function layeredLayout(g: KnowledgeGraph, direction: Direction = "LR"): Layout {
+  const ids = g.ids();
+
+  // 1) 按阶段(module)分组，保留首次出现顺序（倒推已按阶段拓扑排好）；无 module 的零散点归入一个末尾块
+  const modOrder: string[] = [];
+  const modSeen = new Set<string>();
+  const noMod: string[] = [];
+  for (const id of ids) {
+    const m = g.get(id).module || "";
+    if (!m) {
+      noMod.push(id);
+      continue;
+    }
+    if (!modSeen.has(m)) {
+      modSeen.add(m);
+      modOrder.push(m);
+    }
+  }
+  const groups: string[][] = modOrder.map((m) => ids.filter((id) => (g.get(id).module || "") === m));
+  if (noMod.length) groups.push(noMod);
+  if (!groups.length) groups.push(ids); // 完全无分组兜底
+
+  // 2) 每个阶段局部布局成一个块
+  const blocks: Block[] = groups.map((gids) => layoutModule(g, gids));
+  const K = blocks.length;
+
+  // 3) 选列数：TB=单列纵向；LR=枚举列数取整体长宽比最接近目标的那个（封顶 MAX_COLS）
+  let cols: number;
+  if (direction === "TB" || K <= 1) {
+    cols = 1;
+  } else {
+    let best = 1;
+    let bestCost = Infinity;
+    const maxC = Math.min(MAX_COLS, K);
+    for (let c = 1; c <= maxC; c++) {
+      const rows = Math.ceil(K / c);
+      const colW = new Array(c).fill(0);
+      const rowH = new Array(rows).fill(0);
+      blocks.forEach((b, idx) => {
+        const r = Math.floor(idx / c);
+        const cc = idx % c;
+        colW[cc] = Math.max(colW[cc], b.w);
+        rowH[r] = Math.max(rowH[r], b.h);
+      });
+      const W = colW.reduce((s, x) => s + x, 0) + (c - 1) * BLOCK_GAP_X;
+      const H = rowH.reduce((s, x) => s + x, 0) + (rows - 1) * BLOCK_GAP_Y;
+      const cost = Math.abs(W / H / ASPECT_TARGET - 1);
+      if (cost < bestCost - 1e-9) {
+        bestCost = cost;
+        best = c;
       }
-      edges.push({ from: pre, to: id, d });
+    }
+    cols = best;
+  }
+
+  // 4) 行主序填格：算每列宽、每行高，块在所在列内水平居中、在行内顶对齐（标签行对齐成「书架」节奏）
+  const rows = Math.ceil(K / cols);
+  const colW = new Array(cols).fill(0);
+  const rowH = new Array(rows).fill(0);
+  blocks.forEach((b, idx) => {
+    const r = Math.floor(idx / cols);
+    const c = idx % cols;
+    colW[c] = Math.max(colW[c], b.w);
+    rowH[r] = Math.max(rowH[r], b.h);
+  });
+  const colX: number[] = [];
+  let ax = MARGIN;
+  for (let c = 0; c < cols; c++) {
+    colX[c] = ax;
+    ax += colW[c] + BLOCK_GAP_X;
+  }
+  const rowY: number[] = [];
+  let ay = MARGIN;
+  for (let r = 0; r < rows; r++) {
+    rowY[r] = ay;
+    ay += rowH[r] + BLOCK_GAP_Y;
+  }
+
+  // 5) 块内相对坐标 + 块偏移 → 全局坐标
+  const nodes: Record<string, LayoutNode> = {};
+  blocks.forEach((b, idx) => {
+    const r = Math.floor(idx / cols);
+    const c = idx % cols;
+    const ox = colX[c] + (colW[c] - b.w) / 2; // 列内水平居中
+    const oy = rowY[r]; // 行内顶对齐
+    for (const id of b.ids) {
+      const p = b.pos[id];
+      nodes[id] = { id, layer: idx, x: ox + p.x, y: oy + p.y };
+    }
+  });
+
+  const width = MARGIN + (cols ? colX[cols - 1] + colW[cols - 1] : 0);
+  const height = MARGIN + (rows ? rowY[rows - 1] + rowH[rows - 1] : 0);
+
+  // 6) 连线：from/to 即前置依赖；d 用通用竖向贝塞尔（渲染走 React Flow 连线，d 仅保留兼容）
+  const edges: LayoutEdge[] = [];
+  for (const id of ids) {
+    const to = nodes[id];
+    for (const p of g.prerequisites(id)) {
+      const from = nodes[p];
+      if (!from || !to) continue;
+      const my = (from.y + to.y) / 2;
+      edges.push({ from: p, to: id, d: `M${from.x},${from.y} C${from.x},${my} ${to.x},${my} ${to.x},${to.y}` });
     }
   }
 

@@ -141,7 +141,7 @@ export default function NodePanel({
   return (
     <>
       <div className={styles.scrim} onClick={onClose} />
-      <aside className={styles.drawer} role="dialog" aria-label={`知识点：${node.name}`}>
+      <aside className={styles.drawer} role="dialog" aria-modal="true" aria-label={`知识点：${node.name}`}>
         <div className={styles.drawerHead}>
           <span className={styles.drawerBadge}>{domainLabel(node.domain, t)}</span>
           <button className={styles.drawerClose} onClick={onClose} aria-label="关闭">

@@ -262,6 +262,8 @@ function MapHome({
   const { project, graph, view } = useProject();
   const { t } = useT();
   const [isPhone, setIsPhone] = useState(false);
+  // 阶段概览：点击行 → 往下内联展开该阶段的能力点清单（手风琴），不再直接弹节点详情
+  const [openMod, setOpenMod] = useState<string | null>(null);
   // 视图默认：**电脑优先地图、手机优先路径**。偏好按【设备类】分别记忆（telos:mapview:d / :m），
   // 各自记住各自的选择、互不串味——在桌面切到路径不会让手机也变路径，反之亦然。
   const [phoneView, setPhoneView] = useState<"path" | "map">("map");
@@ -326,7 +328,6 @@ function MapHome({
           <div className="mh-recap">
             {t("home.recap", {
               goal: project.goal,
-              next: next.name,
               count: view.total > 1 ? t("home.recapCount", { total: view.total }) : "",
             })}
           </div>
@@ -380,19 +381,44 @@ function MapHome({
             <div className="mh-mods">
               {view.modules.map((m, i) => {
                 const mp = m.total ? Math.round((m.mastered / m.total) * 100) : 0;
+                const open = openMod === m.id;
+                const nodes = graph.ids().filter((id) => (graph.get(id).module || "") === m.id);
                 return (
-                  <button key={m.id} className="mh-mod" onClick={() => onOpenNode(m.firstId)} title={m.title}>
-                    <span className="mh-mod-i">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="mh-mod-main">
-                      <span className="mh-mod-t">{m.title}</span>
-                      <span className="mh-mod-track">
-                        <i style={{ width: `${mp}%` }} />
+                  <div key={m.id} className={`mh-mod-wrap ${open ? "open" : ""}`}>
+                    <button
+                      className="mh-mod"
+                      onClick={() => setOpenMod(open ? null : m.id)}
+                      aria-expanded={open}
+                      title={m.title}
+                    >
+                      <span className="mh-mod-i">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="mh-mod-main">
+                        <span className="mh-mod-t">{m.title}</span>
+                        <span className="mh-mod-track">
+                          <i style={{ width: `${mp}%` }} />
+                        </span>
                       </span>
-                    </span>
-                    <span className="mh-mod-n">
-                      {m.mastered}/{m.total}
-                    </span>
-                  </button>
+                      <span className="mh-mod-n">
+                        {m.mastered}/{m.total}
+                      </span>
+                      <Icon name="chevron" className={`mh-mod-cv ${open ? "up" : ""}`} style={{ width: 14, height: 14 }} />
+                    </button>
+                    <div className={`mh-mod-panel ${open ? "open" : ""}`}>
+                      <div className="mh-mod-panel-in">
+                        {nodes.map((id) => (
+                          <button
+                            key={id}
+                            className="mh-skrow"
+                            onClick={() => onOpenNode(id)}
+                            title={`${graph.get(id).name} · ${view.sub[id]}`}
+                          >
+                            <span className={`mh-skdot st-${view.visual[id]}`} />
+                            <span className="mh-skname">{graph.get(id).name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
