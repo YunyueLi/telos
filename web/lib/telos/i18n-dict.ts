@@ -172,6 +172,7 @@ export const DICT: Record<string, Record<Lang, string>> = {
 
   // ── 路径(手机) ──
   "path.next": { "zh-CN": "下一步 · {name} →", "zh-TW": "下一步 · {name} →", en: "Next · {name} →", fr: "Suivant · {name} →", ja: "次へ · {name} →", ko: "다음 · {name} →", es: "Siguiente · {name} →", ru: "Дальше · {name} →", de: "Weiter · {name} →" },
+  "path.nextStep": { "zh-CN": "下一步", "zh-TW": "下一步", en: "Next", fr: "Suivant", ja: "次へ", ko: "다음", es: "Siguiente", ru: "Дальше", de: "Weiter" },
   "path.goalReached": { "zh-CN": "目标已达成", "zh-TW": "目標已達成", en: "Goal reached", fr: "Objectif atteint", ja: "目標達成", ko: "목표 달성", es: "Meta alcanzada", ru: "Цель достигнута", de: "Ziel erreicht" },
 
   // ── 节点详情 / 挑战 ──

@@ -670,55 +670,77 @@
 .lhint b { font: 600 11px var(--mono); color: var(--ink); margin-right: 6px; }
 
 /* ===== mobile winding path (≤640) ===== */
-/* 桌面：填满工具条以下；手机：固定 70vh。内容在宽列里居中限宽（见 pathList/pathSticky）。 */
-.pathWrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-@media (max-width: 860px) { .pathWrap { flex: none; height: 70vh; min-height: 440px; } }
+/* 桌面：填满工具条以下；手机：固定高度。内容在宽列里居中限宽。 */
+.pathWrap { display: flex; flex-direction: column; flex: 1; min-height: 0; padding-top: 48px; }
+@media (max-width: 860px) { .pathWrap { flex: none; height: 76vh; min-height: 460px; } }
 @media (min-width: 861px) {
-  .pathList, .pathSticky { width: 100%; max-width: 680px; margin-left: auto; margin-right: auto; }
+  .pathTrail, .pathHead { width: 100%; max-width: 680px; margin-left: auto; margin-right: auto; }
 }
-.pathSticky {
-  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line-soft);
-}
-.pathSticky button {
-  flex: 1; text-align: left; background: var(--ink); color: var(--paper); border: 0;
-  border-radius: 10px; padding: 11px 13px; font: 600 13px var(--sans); cursor: pointer;
-}
-.pathDone { flex: 1; font: 500 15px var(--serif); }
-.pathCount { font: 600 12px var(--mono); color: var(--ink-3); }
-.pathList { position: relative; overflow-y: auto; padding: 16px 14px 48px; }
-.pathList::before { content: ""; position: absolute; left: 21px; top: 16px; bottom: 40px; width: 2px; background: var(--line-soft); }
-.pathNode {
-  position: relative; display: block; width: 100%; text-align: left; background: var(--card);
-  border: 1.5px solid var(--line-soft); border-radius: 14px; padding: 11px 14px 11px 46px;
-  margin-bottom: 12px; cursor: pointer; scroll-margin-top: 72px; min-height: 56px;
-}
-.pathDot {
-  position: absolute; left: 13px; top: 20px; width: 16px; height: 16px; border-radius: 50%;
-  background: var(--card); border: 2px solid var(--ink-3); z-index: 1;
-}
-.pathIndex { font: 600 9.5px var(--mono); color: var(--ink-3); }
-.pathCardName { display: block; font-weight: 600; font-size: 15px; margin-top: 1px; }
-.pathCardSub { display: block; font: 500 10.5px var(--mono); color: var(--ink-3); text-transform: uppercase; margin-top: 3px; }
-.pn_done { background: var(--ink); border-color: var(--ink); }
-.pn_done .pathCardName, .pn_done .pathIndex { color: var(--paper); }
-.pn_done .pathCardSub { color: rgba(240, 238, 233, 0.7); }
-.pn_done .pathDot { background: var(--paper); border-color: var(--paper); }
-.pn_now { border: 2px solid var(--ink); box-shadow: 0 0 0 4px rgba(20, 19, 16, 0.06); }
-.pn_now .pathDot { background: var(--ink); border-color: var(--ink); }
-.pn_learn { background: repeating-linear-gradient(45deg, transparent 0 5px, var(--hatch) 5px 6px), var(--card); border-color: var(--ink-3); }
-.pn_lock { border-style: dashed; }
-.pn_lock .pathCardName { color: var(--ink-3); }
-.pn_lock .pathDot { border-style: dashed; }
 
-/* 路径上的「阶段/模块」小标题：把竖排路径按学科阶段分组，成体系 */
-.pathSection {
-  position: relative; z-index: 1; display: flex; align-items: center; gap: 8px;
-  margin: 20px 0 9px; padding: 2px 0; background: var(--card);
-  font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2);
+/* 顶部「下一步」轻条：纸感 + 细线收边，不再是黑块 */
+.pathHead {
+  position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px; background: var(--paper); border-bottom: 1px solid var(--line-soft);
 }
-.pathSection:first-child { margin-top: 0; }
-.pathSectionN { font: 600 10px var(--mono); color: var(--paper); background: var(--ink); border-radius: 6px; padding: 2px 6px; flex: none; }
+@media (max-width: 860px) { .pathHead { background: var(--card); } }
+.pathHeadNext {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
+  background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--ink);
+}
+.pathHeadEb { flex: none; font: 600 9.5px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.pathHeadNext b { min-width: 0; font: 600 13.5px var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pathHeadCount { flex: none; font: 600 11px var(--mono); color: var(--ink-3); }
+
+/* 旅程：连续脊线串起阶段里程碑与节点（脊线 x = 20 padding + 19 半个标记列 = 39） */
+.pathTrail { position: relative; overflow-y: auto; padding: 14px 20px 60px; }
+.pathTrail::before {
+  content: ""; position: absolute; left: 39px; top: 26px; bottom: 44px; width: 2px;
+  background: var(--line-soft); border-radius: 2px;
+}
+.pathMk { flex: none; width: 38px; display: flex; justify-content: center; position: relative; z-index: 1; }
+
+/* 阶段章节头：脊线上的里程碑序号 + 衬线标题 + 细线 */
+.pathChapter { display: flex; gap: 14px; align-items: center; margin: 38px 0 14px; }
+.pathChapter:first-child { margin-top: 4px; }
+.pathChapterNum {
+  width: 28px; height: 28px; border-radius: 9px; background: var(--ink); color: var(--paper);
+  font: 600 11px var(--mono); display: flex; align-items: center; justify-content: center;
+}
+.pathChapterMain { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.pathChapterTitle { font-family: var(--serif); font-size: 18px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pathChapterRule { flex: 1; height: 1px; background: var(--line-soft); }
+
+/* 节点：左标记盘(承载状态) + 右内容卡(轻量，不再整块黑) */
+.pathStep { display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 11px 0; cursor: pointer; scroll-margin-top: 84px; }
+.pathDisc {
+  margin-top: 13px; width: 20px; height: 20px; border-radius: 50%; box-sizing: border-box; flex: none;
+  background: var(--card); border: 2px solid var(--ink-3); color: var(--ink-3);
+  display: flex; align-items: center; justify-content: center;
+}
+.pathCard {
+  flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--line-soft); border-radius: 14px;
+  padding: 12px 15px; transition: border-color 0.18s ease, transform 0.12s ease;
+}
+.pathStep:hover .pathCard { border-color: var(--ink-3); }
+.pathStep:active .pathCard { transform: scale(0.992); }
+.pathEyebrow { display: block; font: 600 9.5px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); margin-bottom: 4px; }
+.pathName { display: block; font: 600 14.5px var(--sans); color: var(--ink); line-height: 1.36; }
+.pathMeta { display: block; margin-top: 5px; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); }
+
+/* 状态语言（落在盘 + 卡上）：done 实心盘+对勾 / now 墨环+晕+卡墨边 / learn 斜纹盘 / lock 虚线弱化 */
+.pn_done .pathDisc { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pn_done .pathName { color: var(--ink-2); font-weight: 500; }
+.pn_now .pathDisc { border-color: var(--ink); border-width: 2.5px; box-shadow: 0 0 0 4px rgba(20, 19, 16, 0.07); }
+.pn_now .pathDisc::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.pn_now .pathCard { border: 2px solid var(--ink); }
+.pn_learn .pathDisc { background: repeating-linear-gradient(45deg, transparent 0 3px, var(--hatch) 3px 4px), var(--card); border-color: var(--ink-3); }
+.pn_lock .pathDisc { border-width: 1.5px; border-color: var(--line-soft); }
+.pn_lock .pathCard { background: transparent; border-style: dashed; }
+.pn_lock .pathName { color: var(--ink-3); font-weight: 500; }
+.pn_lock .pathMeta { opacity: 0.85; }
+/* 当前/前沿节点：无论是 now 还是 learn 都给醒目墨边 + 盘晕，作为焦点 */
+.pathCur .pathCard { border: 2px solid var(--ink); }
+.pathCur .pathDisc { box-shadow: 0 0 0 4px rgba(20, 19, 16, 0.07); }
 
 /* 节点详情里的「所属阶段」chip */
 .modChip { font: 600 10px var(--mono); letter-spacing: 0.02em; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line-soft); border-radius: 999px; padding: 3px 9px; }
