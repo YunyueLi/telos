@@ -262,22 +262,26 @@ function MapHome({
   const { project, graph, view } = useProject();
   const { t } = useT();
   const [isPhone, setIsPhone] = useState(false);
-  // 手机上默认走「路径」（线性引导，适合竖屏单手），但可切到「地图」看全局画布（缩放/平移）。
-  const [phoneView, setPhoneView] = useState<"path" | "map">("path");
+  // 视图默认：**电脑优先地图、手机优先路径**。偏好按【设备类】分别记忆（telos:mapview:d / :m），
+  // 各自记住各自的选择、互不串味——在桌面切到路径不会让手机也变路径，反之亦然。
+  const [phoneView, setPhoneView] = useState<"path" | "map">("map");
+  const viewKey = (phone: boolean) => (phone ? "telos:mapview:m" : "telos:mapview:d");
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
-    const apply = () => setIsPhone(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    const saved = localStorage.getItem("telos:mapview");
-    if (saved === "map" || saved === "path") setPhoneView(saved);
-    else setPhoneView(mq.matches ? "path" : "map"); // 默认：手机走路径、电脑走地图
-    return () => mq.removeEventListener("change", apply);
+    const resolve = () => {
+      const phone = mq.matches;
+      setIsPhone(phone);
+      const saved = localStorage.getItem(viewKey(phone));
+      setPhoneView(saved === "map" || saved === "path" ? saved : phone ? "path" : "map");
+    };
+    resolve();
+    mq.addEventListener("change", resolve);
+    return () => mq.removeEventListener("change", resolve);
   }, []);
   const pickView = (v: "path" | "map") => {
     setPhoneView(v);
     try {
-      localStorage.setItem("telos:mapview", v);
+      localStorage.setItem(viewKey(window.matchMedia("(max-width: 640px)").matches), v);
     } catch {
       /* ignore */
     }
