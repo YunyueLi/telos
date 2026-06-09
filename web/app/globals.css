@@ -140,8 +140,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .psw-clear:hover{background:rgba(20,19,16,.08);color:var(--ink)}
 .psw-clear .ic{width:13px;height:13px}
 /* 控制行强制单行：分面 chips 一排（必要时内部横向滚动，隐藏滚动条），排序收成图标 + 下拉 */
-.psw-controls{display:flex;align-items:center;gap:8px;padding:10px 14px 8px;flex-wrap:nowrap}
-.psw-chips{display:flex;gap:5px;flex-wrap:nowrap;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.psw-controls{display:flex;align-items:center;gap:12px;padding:10px 14px 8px;flex-wrap:nowrap}
+.psw-chips{display:flex;gap:5px;flex-wrap:nowrap;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding-right:2px}
 .psw-chips::-webkit-scrollbar{display:none}
 .psw-fchip{display:inline-flex;align-items:center;gap:5px;flex:none;white-space:nowrap;font:600 11.5px var(--sans);color:var(--ink-2);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:5px 9px;cursor:pointer;transition:.12s}
 .psw-fchip:hover{border-color:var(--ink-3)}
