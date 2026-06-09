@@ -342,8 +342,8 @@
 
 /* React Flow canvas (P1) */
 .canvasCell { min-width: 0; height: 100%; }
-.rfWrap { height: 100%; width: 100%; background-color: #faf9f6; }
-@media (max-width: 820px) { .rfWrap { height: 68vh; min-height: 420px; } }
+.rfWrap { flex: 1; min-height: 0; width: 100%; background-color: #faf9f6; }
+@media (max-width: 820px) { .rfWrap { flex: none; height: 68vh; min-height: 420px; } }
 .dirToggle {
   font: 600 11px var(--mono);
   padding: 6px 11px;
@@ -670,7 +670,12 @@
 .lhint b { font: 600 11px var(--mono); color: var(--ink); margin-right: 6px; }
 
 /* ===== mobile winding path (≤640) ===== */
-.pathWrap { display: flex; flex-direction: column; height: 70vh; min-height: 440px; }
+/* 桌面：填满工具条以下；手机：固定 70vh。内容在宽列里居中限宽（见 pathList/pathSticky）。 */
+.pathWrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+@media (max-width: 860px) { .pathWrap { flex: none; height: 70vh; min-height: 440px; } }
+@media (min-width: 861px) {
+  .pathList, .pathSticky { width: 100%; max-width: 680px; margin-left: auto; margin-right: auto; }
+}
 .pathSticky {
   position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px;
   padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line-soft);

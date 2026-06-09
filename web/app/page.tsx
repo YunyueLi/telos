@@ -259,7 +259,7 @@ function MapHome({
   onOpenNode: (id: string) => void;
   onDiagnose: () => void;
 }) {
-  const { project, graph, view, xp, streak } = useProject();
+  const { project, graph, view } = useProject();
   const { t } = useT();
   const [isPhone, setIsPhone] = useState(false);
   // 手机上默认走「路径」（线性引导，适合竖屏单手），但可切到「地图」看全局画布（缩放/平移）。
@@ -271,6 +271,7 @@ function MapHome({
     mq.addEventListener("change", apply);
     const saved = localStorage.getItem("telos:mapview");
     if (saved === "map" || saved === "path") setPhoneView(saved);
+    else setPhoneView(mq.matches ? "path" : "map"); // 默认：手机走路径、电脑走地图
     return () => mq.removeEventListener("change", apply);
   }, []);
   const pickView = (v: "path" | "map") => {
@@ -289,7 +290,7 @@ function MapHome({
   return (
     <div className="mh">
       <div className="mh-map">
-        {isPhone && (
+        {(
           <div className="mh-viewtoggle" role="tablist" aria-label={t("home.viewToggle")}>
             <button
               role="tab"
@@ -309,7 +310,7 @@ function MapHome({
             </button>
           </div>
         )}
-        {isPhone && phoneView === "path" ? (
+        {phoneView === "path" ? (
           <PathView graph={graph} view={view} onOpenNode={onOpenNode} />
         ) : (
           <DeriveCanvas graph={graph} view={view} onOpenNode={onOpenNode} title={project.title || project.goal} />
@@ -350,41 +351,19 @@ function MapHome({
           </div>
         )}
 
-        <div className="mh-card mh-card-paper">
-          <h4>
-            {t("home.progress")}
-            <span className="mh-n">{view.pct}%</span>
-          </h4>
-          <div className="mh-prog-row">
-            <div className="big">
-              {view.mastered}
-              <sup> / {view.total}</sup>
-            </div>
-            <div className="sub">
-              {t("home.progUnit")}
-              <br />
-              {t("word.mastered")}
-            </div>
+        <div className="mh-prog2">
+          <div className="mh-prog2-head">
+            <span>
+              <b>{view.mastered}</b>
+              <span className="sl">/{view.total}</span> {t("word.mastered")}
+            </span>
+            <span className="pct">{view.pct}%</span>
           </div>
           <div className="mh-track">
             <i style={{ width: `${view.pct}%` }} />
           </div>
           <div className="mh-eta">
             {view.goalsReached ? t("home.etaReached") : t("home.eta", { days: view.etaDays })}
-          </div>
-          <div className="mh-legend" style={{ marginTop: 12 }}>
-            <span>
-              <i className="d" />
-              {t("legend.mastered")}
-            </span>
-            <span>
-              <i />
-              {t("legend.now")}
-            </span>
-            <span>
-              <i className="k" />
-              {t("legend.locked")}
-            </span>
           </div>
         </div>
 
@@ -416,34 +395,25 @@ function MapHome({
           </div>
         )}
 
-        <button className="btn btn-line mh-dxbtn" onClick={onDiagnose}>
-          <Icon name="spark" /> {fresh ? t("home.diagnoseFirst") : t("home.diagnoseAgain")}
-        </button>
-
-        <div className="mh-card">
-          <h4>
-            {t("home.dueTitle")}
-            <span className="mh-n">{t("home.dueCount", { n: view.due.length })}</span>
-          </h4>
-          {view.due.length === 0 ? (
-            <div className="mh-eta">{t("home.dueEmpty")}</div>
-          ) : (
-            view.due.slice(0, 4).map((d) => (
+        {view.due.length > 0 && (
+          <div className="mh-card">
+            <h4>
+              {t("home.dueTitle")}
+              <span className="mh-n">{t("home.dueCount", { n: view.due.length })}</span>
+            </h4>
+            {view.due.slice(0, 4).map((d) => (
               <button key={d.id} className="mh-due-row" onClick={() => onOpenNode(d.id)}>
                 <Icon name="refresh" />
                 <b>{d.name}</b>
                 <span className="t">{t("home.dueReview")}</span>
               </button>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
-        <div className="appstats" style={{ justifyContent: "center" }}>
-          <span className="appstat">
-            <Icon name="spark" /> {t("stat.streak", { n: streak })}
-          </span>
-          <span className="appstat">{t("stat.xp", { n: xp })}</span>
-        </div>
+        <button className="mh-relink" onClick={onDiagnose}>
+          <Icon name="spark" style={{ width: 13, height: 13 }} /> {fresh ? t("home.diagnoseFirst") : t("home.diagnoseAgain")}
+        </button>
       </aside>
     </div>
   );
