@@ -56,8 +56,20 @@ export function getHealthUrl(url?: string): string {
 // ---- BYOK：用户自带的 LLM 配置（key/base/model + 联网检索）。存 localStorage，登录后随账号同步。----
 // key 只随请求发往倒推端点（你的 Worker 或本地 serve.py），端点不落盘、不记录；绝不进任何前端构建产物。
 const LLM_KEY = "telos:llm";
-// 配置变更事件：setLlmConfig 后广播，让接入状态卡等监听方即时重测（如登录后从账号拉回配置）。
+// 配置变更事件：setLlmConfig / setKeyActive 后广播，让接入状态卡等监听方即时重测。
 export const LLM_EVENT = "telos:llm";
+
+// key 是否「激活」：云端已配置时，仅登录后激活；自托管（未配账号体系）恒激活。
+// 休眠 = 不发送 key（显示未连接），但【不删除本机 key】——避免误删唯一副本。由 Provider 按登录态设置。
+let _keyActive = true;
+export function setKeyActive(active: boolean): void {
+  if (_keyActive === active) return;
+  _keyActive = active;
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(LLM_EVENT));
+}
+export function keyActive(): boolean {
+  return _keyActive;
+}
 export interface LlmConfig {
   key?: string;
   base?: string;
@@ -111,8 +123,9 @@ export function cleanBaseUrl(raw?: string): string | undefined {
 
 // 把用户自带配置拼成请求头（随每次倒推/微课/诊断调用发出）。
 function llmHeaders(): Record<string, string> {
-  const c = getLlmConfig();
   const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (!_keyActive) return h; // 休眠（云端已配置但未登录）→ 不发自带配置 → 服务端无 key → 未连接（本机 key 保留）
+  const c = getLlmConfig();
   if (c.key && c.key.trim()) h["X-Telos-Key"] = c.key.trim();
   const base = cleanBaseUrl(c.base); // 只发合法 base，过滤掉如 "DeepSeek" 这类残留的非法值
   if (base) h["X-Telos-Base"] = base;
