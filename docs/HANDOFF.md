@@ -8,6 +8,7 @@
 ## 0. 一句话现状
 
 倒推多段层级化（30–80 节点）、模型 deepseek-v4-pro。账号+跨设备同步上线（Supabase：邮箱/密码、魔法链接、Google ✅；GitHub 待开）。**线上为 BYOK，且 key 跟账号绑定**：**（`9a001e6` 起）有 key 的用户走「浏览器直连 provider」**（`directMode`→`derive-direct.ts`，绕过被墙的 `*.workers.dev`，key 只发往用户自己的 DeepSeek/Tavily）；**无 key 访客/非受限网络才回退 Worker** `telos-derive.xuanlyy.workers.dev`（编排镜像、随请求经 `X-Telos-Key` 头发出、Worker 不留存）。key 登录后在「接入状态」绑定 → 存 Supabase `user_metadata` + 本机镜像；**登录自动连接、退出登录即休眠 key（停止发送→未连接，但不删除本机副本）**（未登录刷新也是未连接，云端已配置时 AI/搜索弹层只显示「登录后绑定」面板）；站长已**删除 Worker env key** → 纯 BYOK 零成本。多人激励「坚持」Tab、营销落地页、隐私/条款页、设计参考 `docs/DESIGN.md`、首个 Release **v0.1.0** 均已上线。
+> **本程（直连之后）再加并上线**：学习地图可**导出**（PNG/PDF/思维导图 Markdown）；**路径↔地图**视图切换（手机默认路径、电脑默认地图，均可切，选择持久化）；画布**标出阶段区域**（虚线框 + 「01 模块名」，导出同绘）；节点卡不再截断（208×88·4 行）；**出题杜绝「凭语气猜答案」**（选项同质·禁中庸即答案·靠硬知识·真实误区干扰项，三引擎同步）；倒推后加**对抗式专家审查 + 自动修补**（`critiqueAndRepair`：补漏前置/删假前置/对齐难度顺序/含糊改写/补缺失关键节点，非破坏、有上限、14.6s）；**侧栏信息分层重构**（hero 行动 + 精简进度 + 阶段 + 降级的重测链；移除冗余连胜/XP、空复习卡、图例）。详见 §3「本程交付」、§7 验证路线。
 > **BYOK 三处根因已全部修复并上线**（用户反馈"线上填 key 没用 / 配置不随账号走"）：
 > 1. `telos:derive-url=127.0.0.1` 残留覆盖 → 线上去打本机 serve.py。修：非本机页面忽略 localhost 覆盖（`61885dc`）。
 > 2. **接口地址被填成 `"DeepSeek"` 等非 URL** → Worker 拼 `DeepSeek/chat/completions` 抛 `Invalid URL`。修：新增 `cleanBaseUrl()`（缺协议补 https://、剥误粘的 `/chat/completions`、主机不像域名判无效）；`llmHeaders` 只发合法 base（自愈脏值，无需用户操作即可倒推）；保存时校验+提示、加载时显示规整值（`73c5708`）。
@@ -86,8 +87,11 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - `web/lib/telos/auth.tsx` — `AuthProvider`/`useAuth`（session/user + signInPassword/signUpPassword/signInMagicLink/signInOAuth/resetPassword/signOut）。挂在 `app/layout.tsx`（Lang>Auth>Project）。
 - `web/lib/telos/cloud.ts` — SDK 同步：`pullProjects/pushProject/deleteRemoteProject`（表 `projects(user_id,id,data,updated_at)`，per-project 最后写入者胜）。
 - `web/lib/telos/use-project.tsx` — 集成同步：登录后 `syncNow`（pull+合并+回推）、mutate 即 `pushCloud`、删即 `deleteRemoteProject`；暴露 `cloudOn/syncing/lastSync/syncNow`。
-- `web/components/account-menu.tsx`（头像下拉）· `select-menu.tsx`（自定义下拉）· `project-switcher.tsx`（项目切换器）· `endpoint-config.tsx`（接入状态卡 + 高级）· `tier-text.tsx`（达标线分级）。
-- 两个倒推后端仍须同步：`core/telos_core/llm.py`（serve.py）与 `workers/derive.js`（Worker）。`/health` 两端都已加 `search` 透出。
+- `web/components/account-menu.tsx`（头像下拉）· `select-menu.tsx`（自定义下拉）· `project-switcher.tsx`（项目切换器）· `endpoint-config.tsx`（接入状态卡 + 高级）· `tier-text.tsx`（达标线分级，无标签续句并入前段）。
+- **`web/lib/telos/derive-direct.ts`** — 浏览器直连倒推引擎（线上**主路径**）：蓝图→并行展开→汇编→`critiqueAndRepair`(对抗式审查) ；直连 DeepSeek/Tavily(`/chat/completions`、`api.tavily.com`)。`derive.ts` 用 `directMode()=keyActive()&&hasLlmKey()` 路由到它，否则回退 Worker；`engineReady()` 供 UI 门控；`cleanupStaleEndpointOverride()` 清残留 localhost。
+- **`web/lib/telos/map-export.ts`** — 地图导出：canvas 2D 直绘节点/连线/阶段区域 → PNG（`toDataURL`）/PDF（`jspdf`，px+compress）；思维导图 Markdown 在 `canvas.tsx`（按阶段分组）。**不用 html-to-image**（它内联字体+克隆 DOM，大图阻塞主线程 45s+）。
+- `web/components/canvas.tsx` — React Flow 画布：新增 `StageNode`(阶段区域)、导出菜单(top-left Panel)、桌面也渲染路径切换。`app/page.tsx MapHome` 持 `phoneView` 状态 + 侧栏重构。
+- ⚠️ **三处倒推引擎须同步**（改 prompt / 编排 / 审查务必三处一起改，否则漂移）：`core/telos_core/llm.py`(本地 serve.py) · `workers/derive.js`(Worker，**被墙**·改完须用户 `npx wrangler deploy`) · **`web/lib/telos/derive-direct.ts`(线上直连·主路径)**。出题提示(PROBES/LESSON_REQS)、`critiqueAndRepair`、`langDirective`、`/health` 的 search 透出都在这三处。
 
 ## 6. 坑（必读）
 
@@ -130,7 +134,24 @@ B) **倒推/key（已闭环，留作回归）**：
 4. 确认线上是最新构建：`curl …/settings/` 取 chunk 名 → grep 该 chunk 含 `X-Telos-Base` / 新文案「完整网址，如」。GitHub Pages CDN 有缓存，hard-refresh。
 5. **同步不生效**：确认已登录；登录时按 `telos:llm.updatedAt` 双向对账（账号新→拉回、本机新→推上）。Supabase → Authentication → 该用户 → `user_metadata.telos_llm` 应含 `key`。「先填 key 后登录」旧 bug 已修。
 
-### 本程交付（this session，均已 push + 部署）
+### 本程交付（this session：直连 BYOK + 导出 + 路径/地图 + 出题质量 + 审查 + 侧栏重构，均已 push+部署）
+> 11 个提交见 §8。核心：
+> - **直连 BYOK 根治「连不上」**（`9a001e6`）：真因＝`*.workers.dev` 被 GFW 屏蔽（实测对照组 `example.workers.dev` 同样不通），与 key/账号/CORS 无关——前 1 天多查 localStorage/key 全是红鲱鱼。改 `derive-direct.ts` 浏览器直连用户自己的 DeepSeek/Tavily；用户真实浏览器端到端验证（41 节点真实倒推 + 三卡全绿）。
+> - **地图导出**（`5ce5191`→`fec940c`）：PNG/PDF/思维导图(MD)。html-to-image 大图卡死 45s+ → 改 `map-export.ts` canvas 2D 直绘；jspdf compress 把 PDF 51MB→62KB；42 节点 ~600ms。
+> - **出题质量**（`8437dcd`）：诊断/微课 MCQ 之前能凭语气/长短/中庸挑答案 → 加【选项铁律】(同质·禁中庸·靠硬知识·真实误区干扰项·自检)，三引擎同步。线上用用户 key 实测有效。
+> - **对抗式专家审查 + 自动修补**（`c095c11`→`b462ae5`→`b97be67`）：倒推后让"最挑剔同行专家"按真实领域实践挑硬伤并可执行修订（补漏/删假前置、对齐难度顺序、含糊改写、补缺失节点）。非破坏(失败/改崩→回退)、有上限、断环、~14.6s。三引擎同步。**＝§7 验证路线的 Tier 3；T4 未做。**
+> - **路径/地图视图切换(手机+电脑)+阶段标识+节点不截断+微课分级换行+切换器间距+侧栏信息分层重构**（`5ce5191`/`8437dcd`/`e19e2bf`/`e329e40`）。
+
+### 🧭 图谱准确性验证路线（续作核心战略 · 用户最在意）
+> **关键认知**：BKT/FSRS/KST 是真教育学，但都跑在 LLM 倒推出的图谱之上——图错则高效教错。**护城河＝图谱正确性，不是引擎**。诚实层级（外部 > 自审；经验=金标准）：
+> - **T0 结构**（已有）：无环/前置存在。必要不充分。
+> - **T1 外部对照**（未做）：Tavily 比对真实课程大纲/能力框架，标每节点「几处佐证/无佐证/疑似遗漏」=可见可信度。
+> - **T2 自一致性**（未做）：多次/多模型推，复现的可信、一次性的存疑。
+> - **T3 对抗式专家审查**（✅ 本程＝`critiqueAndRepair`）：便宜的一道闸，但**同族模型有相关盲区、非终极**。
+> - **T4 经验闭环**（未做 = **真正的护城河**）：用诊断/掌握数据反验前置边（掌握 B 的人对 A 首答高→边成立、≈瞎猜→边错；多学习者跑同一目标可学出真实前置结构）。**续作若做验证，先从这做：加埋点记录"掌握前置后做新节点的首答正确率"，让数据从现在开始攒。**
+> 另一可选：画布加**阶段分带布局**做确定性「难度左→右递增」（审查是启发式、非硬保证）。
+
+### 上程交付（账号系统 + IA 重构 + 多邻国激励 + BYOK 绑账号，历史）
 多邻国式激励「坚持」Tab（每日目标/月历打卡/断签保护/等级段位/成就/段位天梯，①②③④⑤本地）· 登录区按钮等宽 · `docs/DESIGN.md` 设计参考 · 营销版落地页重写（对齐 App）· 隐私/服务条款页 · 魔法链接+Google 登录开通 · **P0 Worker 部署接线** · **BYOK**（用户自带 key+随账号同步+接入状态弹层重做+去"免费"措辞）· README/DERIVE 准确性审计 · 首个 Release **v0.1.0** + CHANGELOG · **BYOK 三处线上根因修复**（localhost 覆盖 `61885dc`、非法 base `cleanBaseUrl` + 配置双向同步 `73c5708`、推送前规整 base `fc0592b`；清掉 7 个含"免费"死键、新增 `conn.baseInvalid` 9 语）。
 
 **后半程（key 绑账号 + 连不上）改动链**（全在 `web/lib/telos/derive.ts`·`use-project.tsx`·`components/endpoint-config.tsx`·`i18n-dict.ts`）：
@@ -191,9 +212,9 @@ B) **倒推/key（已闭环，留作回归）**：
 - **老项目「重新倒推」入口**：本程之前的旧图稀疏、无 module；在 `/settings` 项目卡加「用新框架重推」。
 - 删测试账号（§4）；账号删除/数据导出入口（可选）。
 
-## 8. 本程提交（git，已 push main · 多邻国式激励系统）
-`feat(gamify)` 每日目标+打卡日历+断签保护 ①②③（`765c7c9`）· `feat(streak)` 玩法独立成「坚持」Tab+全屏响应式（`d050b30`）· `feat(streak)` 打卡日历改月历翻页+真实日期（`456890f`）· `feat(streak)` 等级+段位+成就徽章+个人纪录 ④（`d2b1392`）· `feat(streak)` 段位天梯 ⑤本地+多人周联赛后端方案（`d456bc0`）。
-> 上一程（账号+IA 重构）止于 `b118659`，详见 git log。
+## 8. 本程提交（git，已 push main · 直连BYOK+导出+路径/地图+出题+审查+侧栏）
+`feat(byok)` 浏览器直连绕过被墙 workers.dev（`9a001e6`）· `feat(map)` 导出(图/PDF/MD)+手机地图+修分级与截断（`5ce5191`）· `fix(export)` 跳字体内联（`7b6eea6`）→ 改 canvas 2D 直绘根治卡死+瘦身（`fec940c`）· `feat` 出题杜绝凭语气猜+画布标阶段+切换器间距（`8437dcd`）· `fix(mobile)` 切换器上下间距对称（`e19e2bf`）· `feat(derive)` 对抗式专家审查+自动修补（`c095c11`）→ 提速只挑最严重(45s+→14.6s)（`b462ae5`）→ 审查对齐难度顺序（`b97be67`）· `feat(map)` 侧栏信息分层重构+桌面支持路径（`e329e40`）。docs: `7bf0118`(修正连不上真因)。
+> 上几程：账号+IA 重构止于 `b118659`；多邻国激励「坚持」Tab `765c7c9`/`d050b30`/`456890f`/`d2b1392`/`d456bc0`；BYOK 绑账号 `47ae529`/`fba9184`/`c4139d6` 等。详见 git log。
 
 ## 9. 约定 / 安全（每次遵守）
 - 回复**中文**、不写「总结」段；commit 用 conventional，结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`；代码改动默认**直接 commit+push+部署**，不用问。
