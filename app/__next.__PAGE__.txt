@@ -1,10 +1,10 @@
 1:"$Sreact.fragment"
-2:I[47257,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/0mevsuyamgtux.js","/telos/app/_next/static/chunks/14i9499wuvapv.js"],"ClientPageRoot"]
-3:I[31713,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/0mevsuyamgtux.js","/telos/app/_next/static/chunks/14i9499wuvapv.js","/telos/app/_next/static/chunks/0zs5mhcvob624.js","/telos/app/_next/static/chunks/0fryf8dt3fin6.js"],"default"]
-6:I[97367,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/0mevsuyamgtux.js","/telos/app/_next/static/chunks/14i9499wuvapv.js"],"OutletBoundary"]
+2:I[47257,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/2odgp0d-ksab6.js","/telos/app/_next/static/chunks/14i9499wuvapv.js"],"ClientPageRoot"]
+3:I[31713,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/2odgp0d-ksab6.js","/telos/app/_next/static/chunks/14i9499wuvapv.js","/telos/app/_next/static/chunks/1qs84xeplqm7x.js","/telos/app/_next/static/chunks/1y_7om5g1pqn7.js"],"default"]
+6:I[97367,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/2odgp0d-ksab6.js","/telos/app/_next/static/chunks/14i9499wuvapv.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-:HL["/telos/app/_next/static/chunks/1-hl1p0y1jt8c.css","style"]
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/telos/app/_next/static/chunks/1-hl1p0y1jt8c.css","precedence":"next"}],["$","script","script-0",{"src":"/telos/app/_next/static/chunks/0zs5mhcvob624.js","async":true}],["$","script","script-1",{"src":"/telos/app/_next/static/chunks/0fryf8dt3fin6.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"CntJ3d5VgzVZm6HRHBWTY"}
+:HL["/telos/app/_next/static/chunks/1l8gsjc5je__w.css","style"]
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/telos/app/_next/static/chunks/1l8gsjc5je__w.css","precedence":"next"}],["$","script","script-0",{"src":"/telos/app/_next/static/chunks/1qs84xeplqm7x.js","async":true}],["$","script","script-1",{"src":"/telos/app/_next/static/chunks/1y_7om5g1pqn7.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"PUO1RCz2D-FB7UyUZScSn"}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
