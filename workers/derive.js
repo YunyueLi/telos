@@ -435,7 +435,8 @@ const CRITIQUE_USER = (goal, list) =>
   "3) 领域公认必备却缺失的关键能力 → add_nodes（最多 5 个，挂到合适的现有模块、用现有 id 作前置）。\n" +
   "4) 重复/重叠/与目标无关的节点 → drop_nodes（绝不删目标节点）。\n" +
   "5) 达标线不可量化或为空 → benchmarks 补一个量化或行为达标线。\n" +
-  "为保证速度：只挑【最严重的少数】问题（renames≤6、benchmarks≤6、prereq 增删合计≤8、add_nodes≤5、drop_nodes≤3），其余即便不完美也别动。\n" +
+  "6) 【难度/顺序】两阶段独立生成、未对齐难度——重点修：若某能力明显更高阶（尤其创造/综合/实战类）却前置太少而会过早解锁/排在前面，用 add_prereqs 补齐它真正依赖的【跨阶段】前置（只用现有 id），让难度大体随阶段递增、基础在前、综合在后。\n" +
+  "为保证速度：只挑【最严重的少数】问题（renames≤6、benchmarks≤6、prereq 增删合计≤10、add_nodes≤5、drop_nodes≤3），其余即便不完美也别动。\n" +
   "只改真问题，让图更贴近真实领域的能力结构。只输出 JSON。";
 
 function breakCyclesRaw(points) {
