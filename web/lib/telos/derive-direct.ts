@@ -647,6 +647,7 @@ const CRITIQUE_USER = (goal: string, list: string): string =>
   "3) 领域公认必备却缺失的关键能力 → add_nodes（最多 5 个，挂到合适的现有模块、用现有 id 作前置）。\n" +
   "4) 重复/重叠/与目标无关的节点 → drop_nodes（绝不删目标节点）。\n" +
   "5) 达标线不可量化或为空 → benchmarks 补一个量化或行为达标线。\n" +
+  "为保证速度：只挑【最严重的少数】问题（renames≤6、benchmarks≤6、prereq 增删合计≤8、add_nodes≤5、drop_nodes≤3），其余即便不完美也别动。\n" +
   "只改真问题，让图更贴近真实领域的能力结构。只输出 JSON。";
 
 // 在 RawPoint[] 上去环（DFS 删回边），保证修补后仍是 DAG（否则 toGraph 会抛）。
