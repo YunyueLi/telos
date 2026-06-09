@@ -109,6 +109,36 @@ export function buildMapCanvas(nodes: Node[], edges: Edge[], title: string): HTM
     ctx.fillText(title, PAD, PAD + 24);
   }
 
+  // 阶段/模块区域（最底层）：浅虚线框 + 左上序号标签
+  for (const n of nodes) {
+    if (n.type !== "stage") continue;
+    const w = Number(n.style?.width) || 0;
+    const h = Number(n.style?.height) || 0;
+    const x = n.position.x + ox;
+    const y = n.position.y + oy;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    roundRectPath(ctx, x, y, w, h, 18);
+    ctx.fillStyle = "rgba(20,19,16,0.02)";
+    ctx.fill();
+    ctx.strokeStyle = C.lockBorder;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const label = (n.data as { label?: string })?.label || "";
+    if (label) {
+      ctx.font = '600 12px ui-monospace, "SF Mono", monospace';
+      const tw = ctx.measureText(label).width;
+      const lx = x + 14;
+      const ly = y + 6;
+      ctx.fillStyle = C.bg; // 底色盖住虚线，像页面里的标签
+      ctx.fillRect(lx - 5, ly - 1, tw + 12, 18);
+      ctx.fillStyle = C.badge;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(label, lx, ly);
+    }
+  }
+
   // 连线（节点中心到中心；锁定态虚线浅色）
   ctx.lineWidth = 1.4;
   for (const e of edges) {
@@ -127,6 +157,7 @@ export function buildMapCanvas(nodes: Node[], edges: Edge[], title: string): HTM
 
   // 节点卡片
   for (const n of nodes) {
+    if (n.type === "stage") continue;
     const c = box[n.id];
     const d = n.data as unknown as NData;
     const st = d.status;

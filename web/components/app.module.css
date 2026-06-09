@@ -438,6 +438,34 @@
   font-size: 12px;
 }
 
+/* 阶段/模块区域（画布上把"阶段"标出来）：浅虚线框 + 左上序号标签，沉在节点背后 */
+.rfStage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--line-soft);
+  border-radius: 18px;
+  background: rgba(20, 19, 16, 0.02);
+  pointer-events: none;
+}
+.rfStageLabel {
+  position: absolute;
+  top: 5px;
+  left: 14px;
+  font: 600 11px var(--mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  background: #faf9f6;
+  padding: 2px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line-soft);
+  white-space: nowrap;
+  max-width: calc(100% - 28px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===== node detail drawer + micro-lesson ===== */
 .scrim { position: fixed; inset: 0; background: rgba(20, 19, 16, 0.32); z-index: 40; animation: fade 0.15s ease; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
