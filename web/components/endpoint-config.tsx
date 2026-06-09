@@ -99,7 +99,13 @@ export function EndpointConfig({ onSaved }: { onSaved?: (url: string) => void })
       setDeriveUrl(endpoint.trim());
       onSaved?.(endpoint.trim());
     }
-    if (user) supabase()?.auth.updateUser({ data: { telos_llm: next } }).catch(() => {});
+    if (user) {
+      // 绑定到账号（user_metadata）。打日志便于确认推送是否成功——这是跨设备能拉到 key 的前提。
+      supabase()
+        ?.auth.updateUser({ data: { telos_llm: next } })
+        .then((r) => console.info("[telos] BYOK push", r?.error ? { ok: false, error: r.error.message } : { ok: true }))
+        .catch((e) => console.info("[telos] BYOK push", { ok: false, error: String(e) }));
+    }
   }
 
   function saveAi() {
