@@ -421,6 +421,113 @@ async function deriveSingleSpec(goal, ctx, env, lang) {
   return await chatJSON(SYSTEM, USER(goal) + ctx + langDirective(lang), env, 0.2);
 }
 
+// ===== 对抗式专家审查 + 自动修补（镜像 derive-direct.ts）=====
+const CRITIQUE_SYSTEM =
+  "你是该领域最挑剔的资深从业者 + 课程同行评审。给你一张『从目标倒推出的可训练能力图谱』，" +
+  "你要像审稿一样挑出它的硬伤并给出【可执行的修订】——判断依据是真实领域实践，不是表面通顺；只改真问题，不为改而改。只输出 JSON。";
+const CRITIQUE_USER = (goal, list) =>
+  `目标：${goal}\n当前能力图谱（id ｜ 能力名 ｜ 类型 ｜ 前置 ｜ 达标线）：\n${list}\n\n` +
+  "按真实领域实践审查，输出严格 JSON（只列需要改的，没问题就给空数组）：\n" +
+  '{"renames":[{"id":"","name":"改写成可观测的动宾短语"}],"benchmarks":[{"id":"","benchmark":"可量化或可观测的达标线"}],"remove_prereqs":[{"from":"子id","to":"前置id"}],"add_prereqs":[{"from":"子id","to":"前置id"}],"add_nodes":[{"id":"新英文slug","name":"动宾短语","domain":"A-F","module":"所属现有模块id","prereqs":["现有id"],"benchmark":"量化达标线"}],"drop_nodes":["id"],"notes":"一句话总评"}\n' +
+  "审查重点：\n" +
+  "1) 含糊/不可观测的节点（『了解/熟悉/掌握基础/综合能力/心理素质』）→ renames 改成具体可练可测的能力。\n" +
+  "2) 假前置/反向/牵强的依赖 → remove_prereqs；真实必需却漏掉的依赖 → add_prereqs（只用现有 id）。\n" +
+  "3) 领域公认必备却缺失的关键能力 → add_nodes（最多 5 个，挂到合适的现有模块、用现有 id 作前置）。\n" +
+  "4) 重复/重叠/与目标无关的节点 → drop_nodes（绝不删目标节点）。\n" +
+  "5) 达标线不可量化或为空 → benchmarks 补一个量化或行为达标线。\n" +
+  "只改真问题，让图更贴近真实领域的能力结构。只输出 JSON。";
+
+function breakCyclesRaw(points) {
+  const byId = new Map(points.map((p) => [p.id, p]));
+  const findBack = () => {
+    const color = {};
+    for (const p of points) color[p.id] = 0;
+    let res = null;
+    const visit = (u) => {
+      color[u] = 1;
+      const node = byId.get(u);
+      for (const v of node.prereqs.slice()) {
+        if (!byId.has(v)) continue;
+        if (color[v] === 1) { res = [u, v]; return true; }
+        if (color[v] === 0 && visit(v)) return true;
+      }
+      color[u] = 2;
+      return false;
+    };
+    for (const p of points) if (color[p.id] === 0 && visit(p.id)) return res;
+    return null;
+  };
+  for (let i = 0; i < 5000; i++) {
+    const be = findBack();
+    if (!be) break;
+    const p = byId.get(be[0]);
+    const idx = p.prereqs.indexOf(be[1]);
+    if (idx >= 0) p.prereqs.splice(idx, 1);
+  }
+}
+
+async function critiqueAndRepair(goal, points, env, lang) {
+  if (points.length < 5) return points;
+  const list = points
+    .map((p) => `- ${p.id} ｜ ${p.name} ｜ ${p.domain} ｜ 前置[${p.prereqs.join(" ") || "无"}]${p.benchmark ? ` ｜ 达标:${String(p.benchmark).slice(0, 36)}` : ""}`)
+    .join("\n");
+  let spec;
+  try {
+    spec = await chatJSON(CRITIQUE_SYSTEM, CRITIQUE_USER(goal, list) + langDirective(lang), env, 0.2);
+  } catch {
+    return points;
+  }
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  const byId = new Map(points.map((p) => [p.id, p]));
+  const moduleTitleOf = (mid) => (points.find((p) => p.module === mid) || {}).moduleTitle || "";
+  const VALID = new Set(["A", "B", "C", "D", "E", "F"]);
+  for (const r of arr(spec.renames)) {
+    const p = byId.get(String(r.id));
+    const name = String(r.name || "").trim();
+    if (p && name && name.length <= 42) p.name = name;
+  }
+  for (const b of arr(spec.benchmarks)) {
+    const p = byId.get(String(b.id));
+    const bm = String(b.benchmark || "").trim();
+    if (p && bm) p.benchmark = bm;
+  }
+  for (const e of arr(spec.remove_prereqs)) {
+    const p = byId.get(String(e.from));
+    if (p) { const i = p.prereqs.indexOf(String(e.to)); if (i >= 0) p.prereqs.splice(i, 1); }
+  }
+  for (const e of arr(spec.add_prereqs)) {
+    const f = String(e.from), tt = String(e.to);
+    const p = byId.get(f);
+    if (p && tt !== f && byId.has(tt) && !p.prereqs.includes(tt)) p.prereqs.push(tt);
+  }
+  const dropCap = Math.max(2, Math.floor(points.length * 0.15));
+  const toDrop = new Set();
+  for (const d of arr(spec.drop_nodes)) {
+    const p = byId.get(String(d));
+    if (p && !p.is_goal && toDrop.size < dropCap) toDrop.add(p.id);
+  }
+  const added = [];
+  for (const n of arr(spec.add_nodes).slice(0, 5)) {
+    const id = String(n.id || "").trim(), name = String(n.name || "").trim();
+    if (!id || !name || byId.has(id) || added.some((a) => a.id === id) || toDrop.has(id)) continue;
+    const dom = String(n.domain || "B").trim().toUpperCase();
+    const mid = String(n.module || "").trim();
+    added.push({
+      id, name, prereqs: arr(n.prereqs).map(String).filter((x) => byId.has(x)),
+      is_goal: false, minutes: 30, domain: VALID.has(dom) ? dom : "B",
+      desc: String(n.desc || "").trim(), drill: String(n.drill || "").trim(), benchmark: String(n.benchmark || "").trim(),
+      module: mid, moduleTitle: moduleTitleOf(mid),
+    });
+  }
+  const result = points.filter((p) => !toDrop.has(p.id)).concat(added);
+  const live = new Set(result.map((p) => p.id));
+  for (const p of result) p.prereqs = p.prereqs.filter((x) => live.has(x) && x !== p.id);
+  breakCyclesRaw(result);
+  if (!result.some((p) => p.is_goal) && points.some((p) => p.is_goal)) return points;
+  if (result.length < Math.min(6, points.length)) return points;
+  return result;
+}
+
 async function derive(goal, env, lang) {
   const key = env.TELOS_LLM_API_KEY;
   if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
@@ -438,7 +545,13 @@ async function derive(goal, env, lang) {
     spec = null;
   }
   if (!spec) spec = await deriveSingleSpec(goal, ctx, env, lang);
-  return toGraph(spec, goal);
+  const graph = toGraph(spec, goal);
+  try {
+    graph.points = await critiqueAndRepair(goal, graph.points, env, lang);
+  } catch {
+    /* 非破坏：审查异常则保留原图 */
+  }
+  return graph;
 }
 
 // 概括标题（给旧项目补标题，轻量纯文本）。失败/未配 → ''（前端回退到原目标）。

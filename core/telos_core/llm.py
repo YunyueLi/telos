@@ -573,6 +573,158 @@ def _derive_single_spec(goal: str, ctx: str, lang: str, timeout: float) -> dict:
     return {"title": str(spec.get("title", "")).strip(), "points": out}
 
 
+# ===== 对抗式专家审查 + 自动修补（镜像 derive-direct.ts / workers/derive.js）=====
+_CRITIQUE_SYSTEM = (
+    "你是该领域最挑剔的资深从业者 + 课程同行评审。给你一张『从目标倒推出的可训练能力图谱』，"
+    "你要像审稿一样挑出它的硬伤并给出【可执行的修订】——判断依据是真实领域实践，不是表面通顺；只改真问题，不为改而改。只输出 JSON。"
+)
+_CRITIQUE_USER = (
+    "目标：{goal}\n当前能力图谱（id ｜ 能力名 ｜ 类型 ｜ 前置 ｜ 达标线）：\n{rows}\n\n"
+    "按真实领域实践审查，输出严格 JSON（只列需要改的，没问题就给空数组）：\n"
+    '{{"renames":[{{"id":"","name":"改写成可观测的动宾短语"}}],"benchmarks":[{{"id":"","benchmark":"可量化或可观测的达标线"}}],"remove_prereqs":[{{"from":"子id","to":"前置id"}}],"add_prereqs":[{{"from":"子id","to":"前置id"}}],"add_nodes":[{{"id":"新英文slug","name":"动宾短语","domain":"A-F","module":"所属现有模块id","prereqs":["现有id"],"benchmark":"量化达标线"}}],"drop_nodes":["id"],"notes":"一句话总评"}}\n'
+    "审查重点：\n"
+    "1) 含糊/不可观测的节点（『了解/熟悉/掌握基础/综合能力/心理素质』）→ renames 改成具体可练可测的能力。\n"
+    "2) 假前置/反向/牵强的依赖 → remove_prereqs；真实必需却漏掉的依赖 → add_prereqs（只用现有 id）。\n"
+    "3) 领域公认必备却缺失的关键能力 → add_nodes（最多 5 个，挂到合适的现有模块、用现有 id 作前置）。\n"
+    "4) 重复/重叠/与目标无关的节点 → drop_nodes（绝不删目标节点）。\n"
+    "5) 达标线不可量化或为空 → benchmarks 补一个量化或行为达标线。\n"
+    "只改真问题，让图更贴近真实领域的能力结构。只输出 JSON。"
+)
+
+
+def _norm_points(spec: dict) -> list:
+    out = []
+    for p in spec.get("points", []) or []:
+        pre = p.get("prereqs")
+        if pre is None:
+            pre = p.get("prerequisites") or []
+        out.append({
+            "id": str(p["id"]), "name": str(p.get("name", p["id"])),
+            "prereqs": [str(x) for x in pre], "is_goal": bool(p.get("is_goal", False)),
+            "minutes": p.get("minutes", 25), "domain": str(p.get("domain", "B")),
+            "desc": str(p.get("desc", "")), "drill": str(p.get("drill", "")),
+            "benchmark": str(p.get("benchmark", "")), "module": str(p.get("module", "")),
+            "module_title": str(p.get("module_title", p.get("moduleTitle", ""))),
+        })
+    return out
+
+
+def _break_cycles_raw(points: list) -> None:
+    by_id = {p["id"]: p for p in points}
+
+    def find_back():
+        color = {p["id"]: 0 for p in points}
+        found = [None]
+
+        def visit(u):
+            color[u] = 1
+            for v in list(by_id[u].get("prereqs", [])):
+                if v not in by_id:
+                    continue
+                if color[v] == 1:
+                    found[0] = (u, v)
+                    return True
+                if color[v] == 0 and visit(v):
+                    return True
+            color[u] = 2
+            return False
+
+        for p in points:
+            if color[p["id"]] == 0 and visit(p["id"]):
+                return found[0]
+        return None
+
+    for _ in range(5000):
+        be = find_back()
+        if not be:
+            break
+        pre = by_id[be[0]].get("prereqs", [])
+        if be[1] in pre:
+            pre.remove(be[1])
+
+
+def _critique_and_repair(goal: str, spec: dict, lang: str, timeout: float) -> dict:
+    points = _norm_points(spec)
+    if len(points) < 5:
+        spec["points"] = points
+        return spec
+    rows = []
+    for p in points:
+        pre = " ".join(p["prereqs"]) or "无"
+        bm = ("｜ 达标:" + p["benchmark"][:36]) if p["benchmark"] else ""
+        rows.append(f"- {p['id']} ｜ {p['name']} ｜ {p['domain']} ｜ 前置[{pre}]{bm}")
+    try:
+        rep = _chat_json(_CRITIQUE_SYSTEM, _CRITIQUE_USER.format(goal=goal, rows="\n".join(rows)), lang, timeout=timeout, temperature=0.2)
+    except Exception:  # noqa: BLE001 — 审查失败则原图不动
+        spec["points"] = points
+        return spec
+
+    def arr(v):
+        return v if isinstance(v, list) else []
+
+    by_id = {p["id"]: p for p in points}
+
+    def mod_title(mid):
+        for p in points:
+            if p["module"] == mid:
+                return p["module_title"]
+        return ""
+
+    valid = {"A", "B", "C", "D", "E", "F"}
+    for r in arr(rep.get("renames")):
+        p = by_id.get(str(r.get("id")))
+        name = str(r.get("name", "")).strip()
+        if p and name and len(name) <= 42:
+            p["name"] = name
+    for b in arr(rep.get("benchmarks")):
+        p = by_id.get(str(b.get("id")))
+        bm = str(b.get("benchmark", "")).strip()
+        if p and bm:
+            p["benchmark"] = bm
+    for e in arr(rep.get("remove_prereqs")):
+        p = by_id.get(str(e.get("from")))
+        if p and str(e.get("to")) in p["prereqs"]:
+            p["prereqs"].remove(str(e.get("to")))
+    for e in arr(rep.get("add_prereqs")):
+        f, tt = str(e.get("from")), str(e.get("to"))
+        p = by_id.get(f)
+        if p and tt != f and tt in by_id and tt not in p["prereqs"]:
+            p["prereqs"].append(tt)
+    drop_cap = max(2, len(points) // 7)
+    to_drop = set()
+    for d in arr(rep.get("drop_nodes")):
+        p = by_id.get(str(d))
+        if p and not p["is_goal"] and len(to_drop) < drop_cap:
+            to_drop.add(p["id"])
+    added = []
+    for n in arr(rep.get("add_nodes"))[:5]:
+        nid, name = str(n.get("id", "")).strip(), str(n.get("name", "")).strip()
+        if not nid or not name or nid in by_id or any(a["id"] == nid for a in added) or nid in to_drop:
+            continue
+        dom = str(n.get("domain", "B")).strip().upper()
+        mid = str(n.get("module", "")).strip()
+        added.append({
+            "id": nid, "name": name,
+            "prereqs": [str(x) for x in arr(n.get("prereqs")) if str(x) in by_id],
+            "is_goal": False, "minutes": 30, "domain": dom if dom in valid else "B",
+            "desc": str(n.get("desc", "")).strip(), "drill": str(n.get("drill", "")).strip(),
+            "benchmark": str(n.get("benchmark", "")).strip(), "module": mid, "module_title": mod_title(mid),
+        })
+    result = [p for p in points if p["id"] not in to_drop] + added
+    live = {p["id"] for p in result}
+    for p in result:
+        p["prereqs"] = [x for x in p["prereqs"] if x in live and x != p["id"]]
+    _break_cycles_raw(result)
+    if not any(p["is_goal"] for p in result) and any(p["is_goal"] for p in points):
+        spec["points"] = points
+        return spec
+    if len(result) < min(6, len(points)):
+        spec["points"] = points
+        return spec
+    spec["points"] = result
+    return spec
+
+
 def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeGraph:
     """层级化倒推：蓝图 → 并行模块展开 → 合并/断环。失败优雅回退到单发倒推。"""
     key, _, _ = _config()
@@ -591,6 +743,10 @@ def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeG
         spec = None
     if spec is None:
         spec = _derive_single_spec(goal, ctx, lang, timeout)
+    try:
+        spec = _critique_and_repair(goal, spec, lang, timeout)
+    except Exception:  # noqa: BLE001 — 非破坏：审查异常则保留原图
+        pass
     g = _to_graph(spec)
     title = str(spec.get("title", "")).strip()
     if title:
