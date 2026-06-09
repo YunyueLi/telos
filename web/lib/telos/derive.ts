@@ -33,17 +33,24 @@ export function envDeriveUrl(): string {
 }
 
 export function getDeriveUrl(): string {
+  const env = envDeriveUrl();
   if (typeof window !== "undefined") {
     const override = (window.localStorage.getItem(LS_KEY) || "").trim();
-    // 忽略「在非本机页面上指向 localhost 的过时覆盖」——否则线上会去打本地 serve.py，必然失败
-    //（常见于先本地开发、后用同一浏览器开线上版，残留了 telos:derive-url=127.0.0.1）。
+    if (isLocalHost()) {
+      // 本机开发 / 自托管：覆盖优先（指向 serve.py 或自定义），其次构建端点，最后默认本地端点。
+      if (override) return override;
+      if (env) return env;
+      return LOCAL_ENDPOINT;
+    }
+    // 生产页（如 GitHub Pages）：构建期端点是权威。【忽略本机残留的覆盖】——dev 调试遗留的
+    // localhost / 旧地址会让线上去打一个打不通的端点（cantConnect）。自愈：硬刷新即恢复，无需清缓存。
+    if (env) return env;
+    // 仅当没有构建端点（裸静态部署）时，才允许运行时粘贴的【非 localhost】覆盖生效。
     const isLocalUrl = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|\/|$)/i.test(override);
-    if (override && !(isLocalUrl && !isLocalHost())) return override;
+    if (override && !isLocalUrl) return override;
+    return "";
   }
-  const env = envDeriveUrl();
-  if (env) return env;
-  if (isLocalHost()) return LOCAL_ENDPOINT; // 本地零配置
-  return "";
+  return env; // SSR / 无 window
 }
 
 // 健康检查端点（与 derive 同源）：把 /derive|/lesson|/probe 换成 /health。
