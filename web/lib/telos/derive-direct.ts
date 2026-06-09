@@ -631,6 +631,137 @@ async function deriveContext(goal: string, cfg: DirectCfg): Promise<string> {
 
 // ===== 对外：倒推 / 微课 / 诊断 / 标题（直连版）=====
 
+// ===== 对抗式专家审查 + 自动修补 =====
+// 倒推后让"该领域最挑剔的同行专家"挑硬伤并给可执行修订，提升图谱准确度。
+// 非破坏：审查失败/把图改崩(丢了目标或节点过少) → 回退原图。仍是同族模型，有相关盲区——这是便宜的一道闸，不是终极验证。
+const CRITIQUE_SYSTEM =
+  "你是该领域最挑剔的资深从业者 + 课程同行评审。给你一张『从目标倒推出的可训练能力图谱』，" +
+  "你要像审稿一样挑出它的硬伤并给出【可执行的修订】——判断依据是真实领域实践，不是表面通顺；只改真问题，不为改而改。只输出 JSON。";
+const CRITIQUE_USER = (goal: string, list: string): string =>
+  `目标：${goal}\n当前能力图谱（id ｜ 能力名 ｜ 类型 ｜ 前置 ｜ 达标线）：\n${list}\n\n` +
+  "按真实领域实践审查，输出严格 JSON（只列需要改的，没问题就给空数组）：\n" +
+  '{"renames":[{"id":"","name":"改写成可观测的动宾短语"}],"benchmarks":[{"id":"","benchmark":"可量化或可观测的达标线"}],"remove_prereqs":[{"from":"子id","to":"前置id"}],"add_prereqs":[{"from":"子id","to":"前置id"}],"add_nodes":[{"id":"新英文slug","name":"动宾短语","domain":"A-F","module":"所属现有模块id","prereqs":["现有id"],"benchmark":"量化达标线"}],"drop_nodes":["id"],"notes":"一句话总评"}\n' +
+  "审查重点：\n" +
+  "1) 含糊/不可观测的节点（『了解/熟悉/掌握基础/综合能力/心理素质』）→ renames 改成具体可练可测的能力。\n" +
+  "2) 假前置/反向/牵强的依赖 → remove_prereqs；真实必需却漏掉的依赖 → add_prereqs（只用现有 id）。\n" +
+  "3) 领域公认必备却缺失的关键能力 → add_nodes（最多 5 个，挂到合适的现有模块、用现有 id 作前置）。\n" +
+  "4) 重复/重叠/与目标无关的节点 → drop_nodes（绝不删目标节点）。\n" +
+  "5) 达标线不可量化或为空 → benchmarks 补一个量化或行为达标线。\n" +
+  "只改真问题，让图更贴近真实领域的能力结构。只输出 JSON。";
+
+// 在 RawPoint[] 上去环（DFS 删回边），保证修补后仍是 DAG（否则 toGraph 会抛）。
+function breakCyclesRaw(points: RawPoint[]): void {
+  const byId = new Map(points.map((p) => [p.id, p]));
+  const findBack = (): [string, string] | null => {
+    const color: Record<string, number> = {};
+    for (const p of points) color[p.id] = 0;
+    let res: [string, string] | null = null;
+    const visit = (u: string): boolean => {
+      color[u] = 1;
+      for (const v of byId.get(u)!.prereqs.slice()) {
+        if (!byId.has(v)) continue;
+        if (color[v] === 1) {
+          res = [u, v];
+          return true;
+        }
+        if (color[v] === 0 && visit(v)) return true;
+      }
+      color[u] = 2;
+      return false;
+    };
+    for (const p of points) if (color[p.id] === 0 && visit(p.id)) return res;
+    return null;
+  };
+  for (let i = 0; i < 5000; i++) {
+    const be = findBack();
+    if (!be) break;
+    const p = byId.get(be[0])!;
+    const idx = p.prereqs.indexOf(be[1]);
+    if (idx >= 0) p.prereqs.splice(idx, 1);
+  }
+}
+
+async function critiqueAndRepair(goal: string, points: RawPoint[], cfg: DirectCfg, lang: string, signal?: AbortSignal): Promise<RawPoint[]> {
+  if (points.length < 5) return points;
+  const list = points
+    .map((p) => `- ${p.id} ｜ ${p.name} ｜ ${p.domain} ｜ 前置[${p.prereqs.join(" ") || "无"}]${p.benchmark ? ` ｜ 达标:${p.benchmark.slice(0, 36)}` : ""}`)
+    .join("\n");
+  let spec: Json;
+  try {
+    spec = await chatJSON(CRITIQUE_SYSTEM, CRITIQUE_USER(goal, list) + langDirective(lang), cfg, 0.2, signal);
+  } catch {
+    return points; // 审查失败 → 原图不动
+  }
+  const byId = new Map(points.map((p) => [p.id, p]));
+  const moduleTitleOf = (mid: string) => points.find((p) => p.module === mid)?.moduleTitle || "";
+  const VALID = new Set(["A", "B", "C", "D", "E", "F"]);
+
+  for (const r of arr(spec.renames)) {
+    const o = r as Json;
+    const p = byId.get(str(o.id));
+    const name = str(o.name).trim();
+    if (p && name && name.length <= 42) p.name = name;
+  }
+  for (const b of arr(spec.benchmarks)) {
+    const o = b as Json;
+    const p = byId.get(str(o.id));
+    const bm = str(o.benchmark).trim();
+    if (p && bm) p.benchmark = bm;
+  }
+  for (const e of arr(spec.remove_prereqs)) {
+    const o = e as Json;
+    const p = byId.get(str(o.from));
+    if (p) {
+      const i = p.prereqs.indexOf(str(o.to));
+      if (i >= 0) p.prereqs.splice(i, 1);
+    }
+  }
+  for (const e of arr(spec.add_prereqs)) {
+    const o = e as Json;
+    const f = str(o.from);
+    const tt = str(o.to);
+    const p = byId.get(f);
+    if (p && tt !== f && byId.has(tt) && !p.prereqs.includes(tt)) p.prereqs.push(tt);
+  }
+  const dropCap = Math.max(2, Math.floor(points.length * 0.15));
+  const toDrop = new Set<string>();
+  for (const d of arr(spec.drop_nodes)) {
+    const p = byId.get(str(d));
+    if (p && !p.is_goal && toDrop.size < dropCap) toDrop.add(p.id);
+  }
+  const added: RawPoint[] = [];
+  for (const n of arr(spec.add_nodes).slice(0, 5)) {
+    const o = n as Json;
+    const id = str(o.id).trim();
+    const name = str(o.name).trim();
+    if (!id || !name || byId.has(id) || added.some((a) => a.id === id) || toDrop.has(id)) continue;
+    const dom = str(o.domain || "B").trim().toUpperCase();
+    const mid = str(o.module).trim();
+    added.push({
+      id,
+      name,
+      prereqs: arr(o.prereqs).map(str).filter((x) => byId.has(x)),
+      is_goal: false,
+      minutes: 30,
+      domain: VALID.has(dom) ? dom : "B",
+      desc: str(o.desc).trim(),
+      drill: str(o.drill).trim(),
+      benchmark: str(o.benchmark).trim(),
+      module: mid,
+      moduleTitle: moduleTitleOf(mid),
+    });
+  }
+
+  const result = points.filter((p) => !toDrop.has(p.id)).concat(added);
+  const live = new Set(result.map((p) => p.id));
+  for (const p of result) p.prereqs = p.prereqs.filter((x) => live.has(x) && x !== p.id);
+  breakCyclesRaw(result);
+  // 保险：改崩了（丢了目标 / 节点过少）→ 回退原图
+  if (!result.some((p) => p.is_goal) && points.some((p) => p.is_goal)) return points;
+  if (result.length < Math.min(6, points.length)) return points;
+  return result;
+}
+
 export async function deriveDirect(
   goal: string,
   lang: string,
@@ -639,24 +770,34 @@ export async function deriveDirect(
 ): Promise<{ goal: string; title: string; points: RawPoint[] }> {
   if (!(cfg.key || "").trim()) throw new Error("NO_KEY");
   const ctx = await deriveContext(goal, cfg);
-  let spec: { title: string; points: RawPoint[] } | null = null;
+  let title = "";
+  let points: RawPoint[] | null = null;
   try {
     const bp = await blueprint(goal, ctx, cfg, lang, signal);
     const expansions = await parallelExpand(goal, bp, cfg, lang, signal);
     const total = Object.values(expansions).reduce((s, a) => s + a.length, 0);
     if (total >= 6) {
       const cand = assemble(goal, bp, expansions);
-      if (cand.points.length >= 6) spec = cand;
+      if (cand.points.length >= 6) {
+        points = cand.points;
+        title = cand.title;
+      }
     }
   } catch {
-    spec = null;
+    points = null;
   }
-  if (!spec) {
-    const single = await deriveSingleSpec(goal, ctx, cfg, lang, signal);
-    return toGraph(single, goal);
+  if (!points) {
+    const g = toGraph(await deriveSingleSpec(goal, ctx, cfg, lang, signal), goal);
+    points = g.points;
+    title = g.title;
   }
-  // 层级化结果已是规整 points + 校验过环（assemble 内 breakCycles）；统一再过一遍 toGraph 校验形状。
-  return toGraph({ title: spec.title, points: spec.points } as unknown as Json, goal);
+  // 对抗式专家审查 + 自动修补（非破坏：失败/改崩则回退）
+  try {
+    points = await critiqueAndRepair(goal, points, cfg, lang, signal);
+  } catch {
+    /* keep */
+  }
+  return toGraph({ title, points } as unknown as Json, goal);
 }
 
 export async function titleDirect(goal: string, lang: string, cfg: DirectCfg): Promise<string> {
