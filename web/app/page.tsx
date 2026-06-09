@@ -262,13 +262,25 @@ function MapHome({
   const { project, graph, view, xp, streak } = useProject();
   const { t } = useT();
   const [isPhone, setIsPhone] = useState(false);
+  // 手机上默认走「路径」（线性引导，适合竖屏单手），但可切到「地图」看全局画布（缩放/平移）。
+  const [phoneView, setPhoneView] = useState<"path" | "map">("path");
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
     const apply = () => setIsPhone(mq.matches);
     apply();
     mq.addEventListener("change", apply);
+    const saved = localStorage.getItem("telos:mapview");
+    if (saved === "map" || saved === "path") setPhoneView(saved);
     return () => mq.removeEventListener("change", apply);
   }, []);
+  const pickView = (v: "path" | "map") => {
+    setPhoneView(v);
+    try {
+      localStorage.setItem("telos:mapview", v);
+    } catch {
+      /* ignore */
+    }
+  };
 
   if (!project || !graph || !view) return null;
   const fresh = view.mastered === 0;
@@ -277,10 +289,30 @@ function MapHome({
   return (
     <div className="mh">
       <div className="mh-map">
-        {isPhone ? (
+        {isPhone && (
+          <div className="mh-viewtoggle" role="tablist" aria-label={t("home.viewToggle")}>
+            <button
+              role="tab"
+              aria-selected={phoneView === "path"}
+              className={phoneView === "path" ? "on" : ""}
+              onClick={() => pickView("path")}
+            >
+              <Icon name="compass" style={{ width: 14, height: 14 }} /> {t("home.viewPath")}
+            </button>
+            <button
+              role="tab"
+              aria-selected={phoneView === "map"}
+              className={phoneView === "map" ? "on" : ""}
+              onClick={() => pickView("map")}
+            >
+              <Icon name="map" style={{ width: 14, height: 14 }} /> {t("home.viewMap")}
+            </button>
+          </div>
+        )}
+        {isPhone && phoneView === "path" ? (
           <PathView graph={graph} view={view} onOpenNode={onOpenNode} />
         ) : (
-          <DeriveCanvas graph={graph} view={view} onOpenNode={onOpenNode} />
+          <DeriveCanvas graph={graph} view={view} onOpenNode={onOpenNode} title={project.title || project.goal} />
         )}
       </div>
 
