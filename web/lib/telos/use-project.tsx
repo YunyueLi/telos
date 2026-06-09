@@ -218,23 +218,39 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
     if (syncedRef.current === user.id) return;
     syncedRef.current = user.id;
-    // BYOK：登录时在本机 ↔ 账号之间双向对账（后写入者胜，按 updatedAt）。
-    // 修复「先在本机填 key、后登录」既不上传、又因本机已有 key 跳过拉取 → 配置永不随账号走。
-    const remoteLlm = (user.user_metadata as { telos_llm?: LlmConfig } | undefined)?.telos_llm;
-    const localLlm = getLlmConfig();
-    const rKey = (remoteLlm?.key || "").trim();
-    const lKey = (localLlm.key || "").trim();
-    const rT = remoteLlm?.updatedAt || 0;
-    const lT = localLlm.updatedAt || 0;
-    if (rKey && (!lKey || rT > lT)) {
-      // 账号端更新（或本机没配）→ 拉回本机（setLlmConfig 会广播事件，接入状态卡即时重测）。
-      setLlmConfig({ ...localLlm, ...remoteLlm });
-    } else if (lKey && (!rKey || lT > rT)) {
-      // 本机更新（或账号端还没有）→ 推到账号，让其它设备登录后拿得到（base 规整后再推，不存脏值）。
-      supabase()
-        ?.auth.updateUser({ data: { telos_llm: { ...localLlm, base: cleanBaseUrl(localLlm.base), updatedAt: lT || Date.now() } } })
-        .catch(() => {});
-    }
+    // BYOK：登录时本机 ↔ 账号双向对账（后写入者胜，按 updatedAt）。
+    // 关键：用 getUser() 拉【服务端最新】user_metadata——session 里的 JWT 可能是本设备早先登录时的旧缓存，
+    // 缺后来在另一台设备绑定的 key，只读 JWT 会导致「新设备登录仍未连接」。getUser 失败时回退 JWT 值。
+    void (async () => {
+      const sb = supabase();
+      let remoteLlm = (user.user_metadata as { telos_llm?: LlmConfig } | undefined)?.telos_llm;
+      try {
+        const res = await sb?.auth.getUser();
+        const fresh = (res?.data?.user?.user_metadata as { telos_llm?: LlmConfig } | undefined)?.telos_llm;
+        if (fresh && typeof fresh === "object") remoteLlm = fresh;
+      } catch {
+        /* 网络异常 → 用 JWT 里的兜底 */
+      }
+      const localLlm = getLlmConfig();
+      const rKey = (remoteLlm?.key || "").trim();
+      const lKey = (localLlm.key || "").trim();
+      const rT = remoteLlm?.updatedAt || 0;
+      const lT = localLlm.updatedAt || 0;
+      let action = "noop";
+      if (rKey && (!lKey || rT > lT)) {
+        // 账号端有 key（且更新 / 本机没配）→ 拉回本机（setLlmConfig 广播事件，接入状态卡即时重测）。
+        setLlmConfig({ ...localLlm, ...remoteLlm });
+        action = "pulled";
+      } else if (lKey && (!rKey || lT > rT)) {
+        // 本机更新（或账号端还没有）→ 推到账号，让其它设备登录后拿得到（base 规整后再推，不存脏值）。
+        sb?.auth
+          .updateUser({ data: { telos_llm: { ...localLlm, base: cleanBaseUrl(localLlm.base), updatedAt: lT || Date.now() } } })
+          .catch(() => {});
+        action = "pushed";
+      }
+      // 一行诊断：新设备拉不到 key 时，看这行能判断是「账号端就没 key」还是别的。
+      console.info("[telos] BYOK sync", { hasRemoteKey: !!rKey, hasLocalKey: !!lKey, action });
+    })();
     void syncNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authReady]);
