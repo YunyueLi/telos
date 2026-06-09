@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
-2:I[47257,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/10_y-b_-5gcaq.js","/telos/app/_next/static/chunks/0plf1sz59-ruz.js"],"ClientPageRoot"]
-3:I[35105,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/10_y-b_-5gcaq.js","/telos/app/_next/static/chunks/0plf1sz59-ruz.js","/telos/app/_next/static/chunks/2tvqrcfm7a7ev.js"],"default"]
-6:I[97367,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/10_y-b_-5gcaq.js","/telos/app/_next/static/chunks/0plf1sz59-ruz.js"],"OutletBoundary"]
+2:I[47257,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/03oulo4xa22vi.js","/telos/app/_next/static/chunks/0plf1sz59-ruz.js"],"ClientPageRoot"]
+3:I[35105,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/03oulo4xa22vi.js","/telos/app/_next/static/chunks/0plf1sz59-ruz.js","/telos/app/_next/static/chunks/2tvqrcfm7a7ev.js"],"default"]
+6:I[97367,["/telos/app/_next/static/chunks/05-c3ty_6dwfk.js","/telos/app/_next/static/chunks/14mrh2-p_w84d.js","/telos/app/_next/static/chunks/03oulo4xa22vi.js","/telos/app/_next/static/chunks/0plf1sz59-ruz.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/telos/app/_next/static/chunks/2tvqrcfm7a7ev.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"8a2IOmLh8GKizJaYII2HM"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/telos/app/_next/static/chunks/2tvqrcfm7a7ev.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"WK6g-dIWCmilUz33i_J1w"}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
