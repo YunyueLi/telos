@@ -451,7 +451,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .mh{flex:1;min-height:0;max-height:calc(100dvh - 59px);overflow:hidden;display:grid;grid-template-columns:1fr 350px;grid-template-rows:minmax(0,1fr)}
 .mh-map{position:relative;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}
 /* 手机端「路径 / 地图」视图切换（仅手机渲染） */
-.mh-viewtoggle{display:inline-flex;align-self:center;gap:3px;margin:4px auto 8px;padding:3px;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;z-index:5}
+/* 浮动在画布/路径顶部中央，与「导出」「纵向/横向」同一排控件——不再是一条带底色的横条 */
+.mh-viewtoggle{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;display:inline-flex;gap:3px;padding:3px;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;box-shadow:0 1px 3px rgba(20,19,16,.05)}
 .mh-viewtoggle button{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--ink-3);padding:6px 15px;border-radius:999px;transition:background .14s ease,color .14s ease}
 .mh-viewtoggle button.on{background:var(--ink);color:var(--paper)}
 /* 右栏独立滚动（min-height:0 让 grid 子项可收缩并内部滚动）——滚侧栏时整页不滚、地图锁止，两个层级各管各的 */
