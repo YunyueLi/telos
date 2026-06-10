@@ -709,7 +709,11 @@
 /* ===== mobile winding path (≤640) ===== */
 /* 桌面：填满工具条以下；手机：固定高度。内容在宽列里居中限宽。 */
 .pathWrap { display: flex; flex-direction: column; flex: 1; min-height: 0; padding-top: 48px; }
-@media (max-width: 860px) { .pathWrap { flex: none; height: 76vh; min-height: 460px; } }
+@media (max-width: 860px) {
+  /* 移动端：路径整页自然铺开（不再 76vh「窗中窗」嵌套滚动），全页一条滚动流。
+     pathHead 隐藏 / pathTrail 展开见文件末尾媒体查询（须排在各自基础规则之后，否则被等特异性的基础规则覆盖）。 */
+  .pathWrap { flex: none; height: auto; padding-top: 52px; }
+}
 @media (min-width: 861px) {
   .pathTrail, .pathHead { width: 100%; max-width: 680px; margin-left: auto; margin-right: auto; }
 }
@@ -781,3 +785,10 @@
 
 /* 节点详情里的「所属阶段」chip */
 .modChip { font: 600 10px var(--mono); letter-spacing: 0.02em; color: var(--ink-2); background: var(--paper); border: 1px solid var(--line-soft); border-radius: 999px; padding: 3px 9px; }
+
+/* 移动端路径覆盖（置于 .pathHead / .pathTrail 基础规则之后，确保生效）：
+   隐藏顶部进度条（进度已并入 CTA，去重 + 去突兀白条）；路径整页铺开、不内部滚动。 */
+@media (max-width: 860px) {
+  .pathHead { display: none; }
+  .pathTrail { overflow: visible; padding: 6px 20px 16px; }
+}
