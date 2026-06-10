@@ -343,9 +343,17 @@ function MapHome({
             <button className="btn btn-light gobtn" onClick={() => onOpenNode(next.id)}>
               <Icon name="play" /> {t("home.startLearn")}
             </button>
-            <div className="meta">
-              <span>{domainLabel(graph.get(next.id).domain, t)}</span>
-              <span>{t("home.toLearn", { n: view.total - view.mastered })}</span>
+            {/* 进度并入 CTA（唯一进度展示）：细条 + 已掌握 N/总 + 预计天数，替代原先独立的白色进度卡，去重 + 去「突兀白条」 */}
+            <div className="mh-cta-prog">
+              <div className="mh-cta-track">
+                <i style={{ width: `${view.pct}%` }} />
+              </div>
+              <div className="mh-cta-pmeta">
+                <span>
+                  <b>{view.mastered}</b>/{view.total} {t("word.mastered")}
+                </span>
+                <span>{view.goalsReached ? t("home.etaReached") : t("home.eta", { days: view.etaDays })}</span>
+              </div>
             </div>
           </div>
         ) : (
@@ -355,22 +363,6 @@ function MapHome({
             <div className="d">{t("home.goalReachedD")}</div>
           </div>
         )}
-
-        <div className="mh-prog2">
-          <div className="mh-prog2-head">
-            <span>
-              <b>{view.mastered}</b>
-              <span className="sl">/{view.total}</span> {t("word.mastered")}
-            </span>
-            <span className="pct">{view.pct}%</span>
-          </div>
-          <div className="mh-track">
-            <i style={{ width: `${view.pct}%` }} />
-          </div>
-          <div className="mh-eta">
-            {view.goalsReached ? t("home.etaReached") : t("home.eta", { days: view.etaDays })}
-          </div>
-        </div>
 
         {view.modules.length > 1 && (
           <div className="mh-card mh-card-paper">

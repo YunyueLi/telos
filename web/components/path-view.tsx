@@ -39,6 +39,8 @@ export default function PathView({
 
   const currentRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
+    // 桌面：路径列内部滚动到当前节点居中。移动端整页滚动 → 跳过，避免首屏越过 CTA 直接跳到路径中部。
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 860px)").matches) return;
     currentRef.current?.scrollIntoView({ block: "center" });
   }, [firstNow]);
 

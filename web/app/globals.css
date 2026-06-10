@@ -485,17 +485,18 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .mh-cta{order:1}
   .mh-map{order:2;border-right:0;height:auto;min-height:300px;overflow:visible}
   .mh-rail .mh-card{order:3;background:var(--card)}
-  .mh-rail .mh-prog2{order:3;background:var(--card)}
   .mh-relink{order:3}
-  .mh-recap,.mh-cta,.mh-rail .mh-card,.mh-rail .mh-prog2,.mh-relink{margin-left:16px;margin-right:16px}
+  .mh-recap,.mh-cta,.mh-rail .mh-card,.mh-relink{margin-left:16px;margin-right:16px}
+  /* 移动端收紧 CTA，避免占满首屏 */
+  .mh-cta{padding:16px 17px}
+  .mh-cta .t{font-size:20.5px}
 }
-/* 进度（精简）：去掉巨号数字与图例，只留 已掌握 N/总 · 进度条 · 预计天数 */
-.mh-prog2{border:1px solid var(--line-soft);border-radius:14px;background:var(--paper);padding:14px 16px}
-.mh-prog2-head{display:flex;align-items:baseline;justify-content:space-between;font-size:13px;color:var(--ink-2)}
-.mh-prog2-head b{font-family:var(--serif);font-size:21px;font-weight:500;color:var(--ink);margin-right:1px}
-.mh-prog2-head .sl{color:var(--ink-3)}
-.mh-prog2-head .pct{font:600 12px var(--mono);color:var(--ink-3)}
-.mh-prog2 .mh-track{margin:11px 0 7px}
+/* 进度并入「现在学」CTA 底部（唯一进度展示）：黑底上的纤细进度条 + 已掌握 N/总 + 预计天数 */
+.mh-cta-prog{margin-top:16px;padding-top:14px;border-top:1px solid rgba(240,238,233,.16)}
+.mh-cta-track{height:5px;border-radius:999px;background:rgba(240,238,233,.18);overflow:hidden}
+.mh-cta-track i{display:block;height:100%;background:var(--paper);border-radius:999px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+.mh-cta-pmeta{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:9px;font:500 11px var(--mono);color:rgba(240,238,233,.6);text-transform:uppercase;letter-spacing:.04em}
+.mh-cta-pmeta b{font-size:13px;color:var(--paper)}
 /* 重新测起点：从大按钮降级为低调文字链，置于侧栏底部 */
 .mh-relink{display:inline-flex;align-items:center;gap:6px;align-self:center;background:none;border:0;cursor:pointer;font:600 12px var(--sans);color:var(--ink-3);padding:6px 12px;border-radius:8px;transition:color .14s}
 .mh-relink:hover{color:var(--ink)}
