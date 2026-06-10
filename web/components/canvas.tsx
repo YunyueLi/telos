@@ -44,7 +44,7 @@ function detectDir(): Direction {
 
 function TelosNode({ data }: NodeProps) {
   const d = data as TelosData;
-  // 块内恒为 TB（向下）流向 → 连线锚点统一用 上(入)/下(出)，跨阶段块的连线也据此走
+  const vertical = d.dir === "TB";
   return (
     <div
       className={`${styles.rfNode} ${styles[d.status]}`}
@@ -55,7 +55,12 @@ function TelosNode({ data }: NodeProps) {
         if (e.key === "Enter" || e.key === " ") d.onOpen();
       }}
     >
-      <Handle type="target" position={Position.Top} className={styles.handle} isConnectable={false} />
+      <Handle
+        type="target"
+        position={vertical ? Position.Top : Position.Left}
+        className={styles.handle}
+        isConnectable={false}
+      />
       <span className={styles.rfBadge} title={d.typeTitle}>
         {d.domainLabel}
       </span>
@@ -68,7 +73,12 @@ function TelosNode({ data }: NodeProps) {
         {d.name}
       </div>
       <s>{d.sub}</s>
-      <Handle type="source" position={Position.Bottom} className={styles.handle} isConnectable={false} />
+      <Handle
+        type="source"
+        position={vertical ? Position.Bottom : Position.Right}
+        className={styles.handle}
+        isConnectable={false}
+      />
     </div>
   );
 }
@@ -139,6 +149,7 @@ export default function DeriveCanvas({
 
   const { nodes, edges, focus } = useMemo(() => {
     const layout = layeredLayout(graph, dir);
+    const vertical = dir === "TB";
     const ns: Node[] = Object.values(layout.nodes).map((n) => ({
       id: n.id,
       type: "telos",
@@ -154,8 +165,8 @@ export default function DeriveCanvas({
         onOpen: () => onOpenNode?.(n.id),
       } satisfies TelosData,
       style: { width: layout.nodeW, height: layout.nodeH },
-      sourcePosition: Position.Bottom,
-      targetPosition: Position.Top,
+      sourcePosition: vertical ? Position.Bottom : Position.Right,
+      targetPosition: vertical ? Position.Top : Position.Left,
       connectable: false,
       zIndex: 1, // 真实节点压在阶段区域之上
     }));
@@ -309,9 +320,9 @@ export default function DeriveCanvas({
         panOnDrag
         zoomOnScroll={false}
         onInit={(inst) => {
-          // 簇打包后整图较紧凑：节点不多时 fitView 铺满整片「岛屿群」；很大时把活动区域放中央、保可读比例尺(可拖)
-          if (graph.ids().length > 18 && focus) inst.setCenter(focus.x, focus.y, { zoom: 1.05, duration: 0 });
-          else inst.fitView({ padding: 0.18, maxZoom: 1.15 });
+          // 短图 fitView 铺满；长图把"活动区域"放到画面中央、用更大的可读比例尺(看不全可拖)
+          if (focus && graph.ids().length > 6) inst.setCenter(focus.x, focus.y, { zoom: 1.2, duration: 0 });
+          else inst.fitView({ padding: 0.16, maxZoom: 1.25 });
         }}
       >
         <Background gap={24} size={1} color="#e2dfd7" />
