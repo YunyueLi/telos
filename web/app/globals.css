@@ -24,8 +24,9 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth;overscroll-behavior:none}
+/* 关闭到顶/到底再拖的橡皮筋回弹 + 下拉刷新（这是 App，不需要） */
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 /* 自定义滚动条（纸感 · 细窄 · hover 加深）：仅精确指针(桌面/触控板)启用，触屏保持系统原生覆盖式滚动条。
    坑：新版 Chrome 里标准属性 scrollbar-color/width 会覆盖 ::-webkit-scrollbar 伪元素 → 用 @supports 隔离，
    WebKit/Chromium 走伪元素(可圆角+hover 变色)，Firefox(不支持伪元素)才用标准属性(细+暖灰)。
@@ -473,7 +474,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .mh-viewtoggle button.on{background:var(--ink);color:var(--paper)}
 .mh-viewtoggle button:hover:not(.on){color:var(--ink)}
 /* 右栏独立滚动（min-height:0 让 grid 子项可收缩并内部滚动）——滚侧栏时整页不滚、地图锁止，两个层级各管各的 */
-.mh-rail{overflow-y:auto;min-height:0;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--card)}
+.mh-rail{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--card)}
 /* 右栏是定高滚动容器：禁止 flex 子项被压缩（否则深色 CTA 等卡片会被挤扁/截断），保持原高、超出则滚 */
 .mh-rail > *{flex:0 0 auto}
 @media(max-width:860px){
@@ -813,7 +814,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .legal-back .ic{width:14px;height:14px}
 
 /* —— 诊断 v2（全屏接管）—— */
-.dx{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto}
+.dx{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:none}
 .dx-top{position:sticky;top:0;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:14px;padding:13px 22px;z-index:2}
 .dx-top .close{background:none;border:0;font-size:18px;color:var(--ink-3);cursor:pointer;line-height:1;flex:none}
 .dx-top .close:hover{color:var(--ink)}
