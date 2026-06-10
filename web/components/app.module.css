@@ -359,7 +359,7 @@
 .exportWrap { position: relative; }
 .exportBackdrop { position: fixed; inset: 0; z-index: 6; }
 .exportMenu {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 7;
+  position: absolute; top: calc(100% + 6px); right: 0; left: auto; z-index: 7;
   display: flex; flex-direction: column; min-width: 152px;
   background: var(--card); border: 1px solid var(--line); border-radius: 10px;
   padding: 5px; box-shadow: 0 10px 30px rgba(20, 19, 16, 0.14);
@@ -387,6 +387,11 @@
 .mapToolDiv { width: 1px; height: 18px; background: var(--line-soft); flex: none; margin: 0 1px; }
 .mapToolCv { opacity: 0.55; transition: transform 0.18s ease; }
 .mapToolCvUp { opacity: 0.55; transform: rotate(180deg); transition: transform 0.18s ease; }
+/* 移动端：让出中间的「路径/地图」切换——隐藏方向切换(手机不该切成横向长条)、分隔线与导出文字，导出收成纯图标，避免与切换重叠 */
+@media (max-width: 640px) {
+  .mapToolDir, .mapToolDiv, .mapToolLbl { display: none; }
+  .mapToolBtn { padding: 0 11px; gap: 4px; }
+}
 .rfNode {
   position: relative;
   cursor: pointer;

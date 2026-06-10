@@ -340,7 +340,7 @@ export default function DeriveCanvas({
                 title={t("export.btn")}
               >
                 <Icon name="up" style={{ width: 13, height: 13 }} />
-                {exporting ? t("export.exporting") : t("export.btn")}
+                <span className={styles.mapToolLbl}>{exporting ? t("export.exporting") : t("export.btn")}</span>
                 <Icon
                   name="chevron"
                   style={{ width: 11, height: 11 }}
@@ -365,7 +365,7 @@ export default function DeriveCanvas({
               )}
             </div>
             <span className={styles.mapToolDiv} />
-            <button className={styles.mapToolBtn} onClick={toggle} title={t("canvas.toggleTitle")}>
+            <button className={`${styles.mapToolBtn} ${styles.mapToolDir}`} onClick={toggle} title={t("canvas.toggleTitle")}>
               {dir === "TB" ? t("canvas.toHorizontal") : t("canvas.toVertical")}
             </button>
           </div>
