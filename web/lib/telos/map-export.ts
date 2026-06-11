@@ -87,8 +87,12 @@ export function buildMapCanvas(nodes: Node[], edges: Edge[], title: string): HTM
   const titleH = title ? 54 : 12;
   const W = maxX - minX + PAD * 2;
   const H = maxY - minY + PAD * 2 + titleH;
-  // 超采样到 2x 求清晰；但把长边封顶 ~6000px，避免超宽/超大图产出巨型文件或爆内存。
-  const S = Math.min(2, 6000 / Math.max(W, H));
+  // 超采样求清晰：目标 3x，受「单边尺寸」+「总面积」双上限约束（防爆内存、兼容浏览器画布上限；触屏更保守）。
+  // 旧版封顶 2x + 6000px 单边 → 宽地图(LR 长条 5000+px)实际只有 ~1x，放大就糊。这里把清晰度大幅提上来。
+  const coarse = typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
+  const MAX_DIM = coarse ? 8000 : 14000; // 单边上限（桌面 <16384 画布限制）
+  const MAX_AREA = coarse ? 14_000_000 : 42_000_000; // 总像素上限（控内存 / iOS 画布面积兼容）
+  const S = Math.max(1, Math.min(3, MAX_DIM / Math.max(W, H), Math.sqrt(MAX_AREA / (W * H))));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(W * S);
   canvas.height = Math.round(H * S);
