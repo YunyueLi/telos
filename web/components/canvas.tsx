@@ -21,6 +21,7 @@ import styles from "./app.module.css";
 import { KnowledgeGraph, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
 import { layeredLayout, type Direction } from "@/lib/telos/layout";
+import { isPro } from "@/lib/telos/billing";
 import { useT } from "@/lib/telos/i18n";
 
 type NodeStatus = "done" | "now" | "learn" | "lock";
@@ -257,7 +258,8 @@ export default function DeriveCanvas({
       setExporting(true);
       try {
         const { buildMapCanvas } = await import("@/lib/telos/map-export");
-        const canvas = buildMapCanvas(nodes, edges, title || "");
+        // 免费版带 Telos 水印 + 品牌条；付费(isPro)后去水印。brandText 用本地化标语。
+        const canvas = buildMapCanvas(nodes, edges, title || "", { watermark: !isPro(), brandText: t("ob.tagline") });
         const dataUrl = canvas.toDataURL("image/png");
         if (kind === "png") {
           downloadHref(dataUrl, `${safeName}.png`);
@@ -276,7 +278,7 @@ export default function DeriveCanvas({
         setMenuOpen(false);
       }
     },
-    [nodes, edges, title, safeName],
+    [nodes, edges, title, safeName, t],
   );
 
   // 导出为思维导图（Markdown 大纲，按阶段分组）：任何思维导图/笔记工具都能直接吃。
@@ -297,6 +299,7 @@ export default function DeriveCanvas({
       const done = view.visual[id] === "done";
       lines.push(`- [${done ? "x" : " "}] ${kp.isGoal ? "★ " : ""}${kp.name} — ${domainLabel(kp.domain, t)}`);
     }
+    if (!isPro()) lines.push("", "---", `_由 Telos 生成 · ${t("ob.tagline")}_`);
     const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" }));
     downloadHref(url, `${safeName}.md`);
     setTimeout(() => URL.revokeObjectURL(url), 1500);
