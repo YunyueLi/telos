@@ -51,6 +51,8 @@ import {
 } from "./xp";
 import { useAuth } from "./auth";
 import { cloudConfigured, supabase } from "./supabase";
+import { clearEntitlement, isPro, refreshEntitlement } from "./billing";
+import { BILLING } from "./billing-config";
 import { deleteRemoteProject, pullProjects, pushProject } from "./cloud";
 
 interface ProjectContextValue {
@@ -229,10 +231,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setKeyActive(!!user);
     if (!user) {
       syncedRef.current = null;
+      clearEntitlement(); // 登出：清本机 Pro 权益缓存，避免下一个登录者串号
       return;
     }
     if (syncedRef.current === user.id) return;
     syncedRef.current = user.id;
+    void refreshEntitlement(); // 登录：拉取账号 Pro 权益（webhook 写入的 app_metadata）
     // BYOK：登录时本机 ↔ 账号双向对账（后写入者胜，按 updatedAt）。
     // 关键：用 getUser() 拉【服务端最新】user_metadata——session 里的 JWT 可能是本设备早先登录时的旧缓存，
     // 缺后来在另一台设备绑定的 key，只读 JWT 会导致「新设备登录仍未连接」。getUser 失败时回退 JWT 值。
@@ -274,6 +278,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     async (goal: string): Promise<boolean> => {
       const g = goal.trim();
       if (!g) return false;
+      // 免费版项目数上限（Pro 无限）：倒推=新建项目，超限时引导升级或先删旧项目
+      if (!isPro() && listProjects().length >= BILLING.freeProjectLimit) {
+        setDeriveError(`${t("pro.limitT", { n: BILLING.freeProjectLimit })} — ${t("pro.limitD")}`);
+        return false;
+      }
       setDeriving(true);
       setDeriveError(null);
       try {

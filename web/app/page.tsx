@@ -14,6 +14,8 @@ import PathView from "@/components/path-view";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
 import { engineReady, LLM_EVENT } from "@/lib/telos/derive";
+import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
+import { BILLING } from "@/lib/telos/billing-config";
 import { useT, tStatic } from "@/lib/telos/i18n";
 
 // 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
@@ -46,6 +48,7 @@ export default function HubPage() {
     deriveError,
     record,
     composing,
+    projects,
   } = useProject();
   const router = useRouter();
   const { t } = useT();
@@ -64,7 +67,7 @@ export default function HubPage() {
   if (!project || !graph || !view || composing) {
     return (
       <AppShell active="map">
-        <Onboarding derive={derive} deriving={deriving} deriveError={deriveError} />
+        <Onboarding derive={derive} deriving={deriving} deriveError={deriveError} projectCount={projects.length} />
       </AppShell>
     );
   }
@@ -96,24 +99,35 @@ function Onboarding({
   derive,
   deriving,
   deriveError,
+  projectCount,
 }: {
   derive: (g: string) => Promise<boolean>;
   deriving: boolean;
   deriveError: string | null;
+  projectCount: number;
 }) {
   const { t } = useT();
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
+  const [pro, setPro] = useState(false);
   const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+  // 免费版项目数上限：超限时在输入框下方给事前提示（derive 内还有硬校验兜底）
+  const limitReached = mounted && !pro && projectCount >= BILLING.freeProjectLimit;
 
   useEffect(() => {
     setMounted(true);
     const sync = () => setCfgUrl(engineReady() ? "ready" : "");
     sync();
+    const syncPro = () => setPro(isPro());
+    syncPro();
     window.addEventListener(LLM_EVENT, sync); // 配好 key/端点后即时收起「需配置」提示
-    return () => window.removeEventListener(LLM_EVENT, sync);
+    window.addEventListener(BILLING_EVENT, syncPro);
+    return () => {
+      window.removeEventListener(LLM_EVENT, sync);
+      window.removeEventListener(BILLING_EVENT, syncPro);
+    };
   }, []);
 
   // 倒推进行中：每 200ms 刷新；结束清零。
@@ -183,12 +197,24 @@ function Onboarding({
                 className="btn btn-ink"
                 style={{ marginLeft: "auto" }}
                 onClick={() => run(goal)}
-                disabled={deriving || !goal.trim()}
+                disabled={deriving || !goal.trim() || limitReached}
               >
                 {deriving ? t("ob.deriving") : t("ob.derive")} {!deriving && <Icon name="arrow" />}
               </button>
             </div>
           </div>
+
+          {limitReached && (
+            <div className="ob-limit" role="note">
+              <Icon name="spark" style={{ width: 16, height: 16 }} />
+              <span className="lt">
+                <b>{t("pro.limitT", { n: BILLING.freeProjectLimit })}</b>
+                <span>
+                  {t("pro.limitD")} <Link href="/pro">{t("pro.limitGo")} →</Link>
+                </span>
+              </span>
+            </div>
+          )}
 
           {deriving && (
             <div className="ob-prog" role="status" aria-live="polite">
