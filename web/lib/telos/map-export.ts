@@ -61,7 +61,14 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): s
 }
 
 // 用当前 React Flow 的节点/连线数据，画出一张高清地图 canvas（与当前缩放/平移无关，导出整图）。
-export function buildMapCanvas(nodes: Node[], edges: Edge[], title: string): HTMLCanvasElement {
+// opts.watermark：免费版带「Telos 水印 + 品牌条」（默认 true）；后续付费解锁后传 false → 干净无水印导出。
+export function buildMapCanvas(
+  nodes: Node[],
+  edges: Edge[],
+  title: string,
+  opts: { watermark?: boolean; brandText?: string } = {},
+): HTMLCanvasElement {
+  const watermark = opts.watermark !== false;
   const box: Record<string, { cx: number; cy: number; w: number; h: number }> = {};
   let minX = Infinity;
   let minY = Infinity;
@@ -85,8 +92,9 @@ export function buildMapCanvas(nodes: Node[], edges: Edge[], title: string): HTM
 
   const PAD = 56;
   const titleH = title ? 54 : 12;
+  const footerH = watermark ? 48 : 0; // 底部品牌条
   const W = maxX - minX + PAD * 2;
-  const H = maxY - minY + PAD * 2 + titleH;
+  const H = maxY - minY + PAD * 2 + titleH + footerH;
   // 超采样求清晰：目标 3x，受「单边尺寸」+「总面积」双上限约束（防爆内存、兼容浏览器画布上限；触屏更保守）。
   // 旧版封顶 2x + 6000px 单边 → 宽地图(LR 长条 5000+px)实际只有 ~1x，放大就糊。这里把清晰度大幅提上来。
   const coarse = typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
@@ -200,6 +208,65 @@ export function buildMapCanvas(nodes: Node[], edges: Edge[], title: string): HTM
       ctx.textAlign = "right";
       ctx.textBaseline = "alphabetic";
       ctx.fillText(d.domainLabel, x + c.w - 9, y + 13);
+    }
+  }
+
+  // ── 品牌水印 + logo（免费版）；付费解锁后 watermark=false 时整体不绘制 → 干净导出 ──
+  if (watermark) {
+    // 1) 斜向平铺的极淡 "Telos" 水印：覆盖全图（含节点之上），难以裁剪去除
+    ctx.save();
+    ctx.fillStyle = "rgba(20,19,16,0.055)";
+    ctx.font = '700 30px Fraunces, Georgia, "Songti SC", serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(-0.42); // ≈ -24°
+    const reach = Math.hypot(W, H) / 2 + 120;
+    let row = 0;
+    for (let yy = -reach; yy <= reach; yy += 130) {
+      const off = row % 2 ? 155 : 0; // 砖错排
+      for (let xx = -reach; xx <= reach; xx += 310) ctx.fillText("Telos", xx + off, yy);
+      row += 1;
+    }
+    ctx.restore();
+
+    // 2) 底部品牌条：分隔线 + 罗盘 mark + Telos 字标 + 标语
+    const fy = H - footerH / 2;
+    ctx.strokeStyle = C.lockBorder;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, H - footerH);
+    ctx.lineTo(W - PAD, H - footerH);
+    ctx.stroke();
+    // 罗盘 mark（圆 + 指针菱形）
+    const mx = PAD + 9;
+    ctx.strokeStyle = C.ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(mx, fy, 9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = C.ink;
+    ctx.beginPath();
+    ctx.moveTo(mx, fy - 6);
+    ctx.lineTo(mx + 3.2, fy);
+    ctx.lineTo(mx, fy + 6);
+    ctx.lineTo(mx - 3.2, fy);
+    ctx.closePath();
+    ctx.fill();
+    // Telos 字标（衬线）
+    ctx.fillStyle = C.ink;
+    ctx.font = '600 19px Fraunces, Georgia, "Songti SC", serif';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Telos", mx + 16, fy + 1);
+    // 标语（右，mono 灰）
+    if (opts.brandText) {
+      ctx.fillStyle = C.badge;
+      ctx.font = '500 12px ui-monospace, "SF Mono", monospace';
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(opts.brandText, W - PAD, fy + 1);
     }
   }
 
