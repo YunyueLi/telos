@@ -566,6 +566,58 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .mh-locate{position:absolute;right:14px;bottom:14px;z-index:5;display:inline-flex;align-items:center;gap:7px;font:600 11.5px var(--sans);background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:9px 15px;cursor:pointer;box-shadow:0 6px 18px rgba(20,19,16,.22)}
 .mh-locate .ic{width:13px;height:13px}
 
+/* —— Telos Pro 定价页 —— */
+.pro-mark{width:52px;height:52px;flex:none;display:grid;place-items:center;border:1.6px solid var(--ink);border-radius:16px;background:var(--card);color:var(--ink)}
+.pro-banner{display:flex;align-items:center;gap:10px;border:1px solid var(--line-soft);border-radius:14px;background:var(--card);padding:13px 16px;font-size:13.5px;color:var(--ink-2);margin-top:18px}
+.pro-banner-pro{display:flex;align-items:center;gap:10px;border-radius:16px;padding:15px 18px;margin-top:18px;font-size:14px}
+.pro-banner-pro b{font-family:var(--serif);font-weight:500;font-size:17px}
+.pro-banner-pro .u{font:500 11.5px var(--mono);color:rgba(240,238,233,.65)}
+.pro-banner-pro .sp{flex:1}
+.pro-banner-pro .pro-mng{padding:8px 14px;font-size:12.5px}
+.pro-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+@media(max-width:680px){.pro-plans{grid-template-columns:1fr}}
+.pro-plan{position:relative;display:flex;flex-direction:column;gap:6px;border:1px solid var(--line-soft);border-radius:18px;background:var(--card);padding:20px 18px 18px}
+.pro-plan.hot{border:1.6px solid var(--ink);box-shadow:0 10px 30px -14px rgba(20,19,16,.25)}
+.pro-flag{position:absolute;top:-11px;left:16px;font:600 10px var(--mono);letter-spacing:.04em;background:var(--ink);color:var(--paper);border-radius:999px;padding:4px 11px}
+.pro-plan-n{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.pro-price{display:flex;align-items:baseline;gap:5px;margin:2px 0 10px}
+.pro-price b{font-family:var(--serif);font-weight:500;font-size:34px;letter-spacing:-.01em;color:var(--ink)}
+.pro-price span{font:500 12px var(--mono);color:var(--ink-3)}
+.pro-buy{justify-content:center;width:100%}
+.pro-buy:disabled{opacity:.45;cursor:default}
+.pro-soon{margin:14px 0 0;font-size:13px}
+.pro-login-note{margin-top:14px;font-size:13px}
+.pro-login-link{font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-soft)}
+.pro-login-link:hover{border-color:var(--ink)}
+.pro-perks{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:680px){.pro-perks{grid-template-columns:1fr}}
+.pro-perk{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line-soft);border-radius:14px;background:var(--card);padding:13px 15px}
+.pro-perk .pk-ic{flex:none;width:26px;height:26px;display:grid;place-items:center;border:1.4px solid var(--ink);border-radius:9px;background:var(--paper);color:var(--ink);margin-top:1px}
+.pro-perk .pk-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pro-perk .pk-t b{font:600 14px var(--sans);color:var(--ink)}
+.pro-perk .pk-t span{font-size:12.5px;line-height:1.5;color:var(--ink-3)}
+.pro-faq{display:flex;flex-direction:column;gap:14px}
+.pro-qa b{display:block;font:600 14px var(--sans);color:var(--ink);margin-bottom:4px}
+.pro-qa p{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
+.pro-restore{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:26px}
+.pro-restore-msg{font:500 12px var(--mono);color:var(--ink-2);text-align:center}
+/* 设置页 Pro 卡 */
+.set-pro{display:flex;align-items:center;gap:13px;border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:15px 17px;text-decoration:none;color:inherit;transition:border-color .15s}
+.set-pro:hover{border-color:var(--ink)}
+.set-pro .sp-ic{flex:none;width:38px;height:38px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:12px;background:var(--paper);color:var(--ink)}
+.set-pro .sp-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.set-pro .sp-t b{font:600 14.5px var(--sans);color:var(--ink);display:flex;align-items:center;gap:8px}
+.set-pro .sp-t span{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+.set-pro .sp-on{font:600 9.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;background:var(--ink);color:var(--paper);border-radius:6px;padding:2px 8px}
+.set-pro .sp-go{flex:none;color:var(--ink-3)}
+/* 项目数上限提示卡（onboarding） */
+.ob-limit{display:flex;align-items:flex-start;gap:12px;border:1.5px solid var(--ink);border-radius:16px;background:var(--card);padding:15px 17px;margin-top:16px;max-width:560px}
+.ob-limit .ic{flex:none;color:var(--ink);margin-top:2px}
+.ob-limit .lt{display:flex;flex-direction:column;gap:3px}
+.ob-limit .lt b{font:600 14px var(--sans);color:var(--ink)}
+.ob-limit .lt span{font-size:12.5px;line-height:1.55;color:var(--ink-2)}
+.ob-limit a{font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+
 /* —— 复习 v2（全屏）—— */
 .rv{flex:1;display:flex;flex-direction:column;align-items:center;padding:30px 22px 60px}
 .rv-in{width:100%;max-width:620px}

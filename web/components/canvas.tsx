@@ -2,6 +2,7 @@
 
 // 画布 P1+：React Flow 渲染倒推图谱 —— 缩放/平移/fitView/小地图，
 // 并支持横向(LR，宽屏) / 纵向(TB，竖屏/手机) 两种方向，窄屏自动切纵向。
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Background,
@@ -363,6 +364,11 @@ export default function DeriveCanvas({
                     <button role="menuitem" onClick={exportMarkdown}>
                       {t("export.mindmap")}
                     </button>
+                    {!isPro() && (
+                      <Link role="menuitem" className={styles.exportPro} href="/pro" onClick={() => setMenuOpen(false)}>
+                        <Icon name="spark" style={{ width: 12, height: 12 }} /> {t("pro.exportMark")}
+                      </Link>
+                    )}
                   </div>
                 </>
               )}

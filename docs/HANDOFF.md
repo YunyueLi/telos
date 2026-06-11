@@ -92,6 +92,12 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **`web/lib/telos/map-export.ts`** — 地图导出：canvas 2D 直绘节点/连线/阶段区域 → PNG（`toDataURL`）/PDF（`jspdf`，px+compress）；思维导图 Markdown 在 `canvas.tsx`（按阶段分组）。**不用 html-to-image**（它内联字体+克隆 DOM，大图阻塞主线程 45s+）。
 - `web/components/canvas.tsx` — React Flow 画布：新增 `StageNode`(阶段区域)、导出菜单(top-left Panel)、桌面也渲染路径切换。`app/page.tsx MapHome` 持 `phoneView` 状态 + 侧栏重构。
 - ⚠️ **三处倒推引擎须同步**（改 prompt / 编排 / 审查务必三处一起改，否则漂移）：`core/telos_core/llm.py`(本地 serve.py) · `workers/derive.js`(Worker，**被墙**·改完须用户 `npx wrangler deploy`) · **`web/lib/telos/derive-direct.ts`(线上直连·主路径)**。出题提示(PROBES/LESSON_REQS)、`critiqueAndRepair`、`langDirective`、`/health` 的 search 透出都在这三处。
+- **付费系统（Telos Pro）**：
+  - 架构：服务商(MoR)托管收银台 → **webhook → `workers/derive.js` 的 `/billing/webhook`**（HMAC 验签）→ 用 service_role 写 **Supabase `app_metadata.telos_pro/telos_plan/telos_pro_until`**（用户不可自改，区别于 user_metadata）→ 前端 `lib/telos/billing.ts` 的 `refreshEntitlement()`(getUser 拉最新) 缓存 `telos:billing` + 广播 `BILLING_EVENT`；`isPro()` 同步读。webhook 由服务商服务器直连 Worker，**不受 GFW 影响**（被墙只影响浏览器访问 workers.dev）。
+  - 配置单点：`web/lib/telos/billing-config.ts`（provider/价格/checkout URL/manageUrl/freeProjectLimit=3）；Worker 端 `wrangler.toml [vars]` BILLING_PROVIDER + SUPABASE_URL，secret：`BILLING_WEBHOOK_SECRET`、`SUPABASE_SERVICE_ROLE_KEY`。
+  - 免费 vs Pro：免费=3 项目 + 带水印导出；Pro=无限项目 + 无水印导出（`map-export.ts` 按 `watermark:!isPro()`）+ 未来 Pro 功能。
+  - UI：`/pro` 定价页（登录→checkout 带 `user_id+plan`→回跳 `?success=1` 轮询确认；恢复购买=refreshEntitlement）；设置页 Pro 卡；导出菜单「去水印·Pro」；onboarding 超限提示卡 + `use-project.derive()` 硬校验。
+  - 调试：本机 `localStorage.telos:pro=1` 强制 Pro（仅本机展示）；正式权益以 app_metadata 为准。
 
 ## 6. 坑（必读）
 
@@ -118,6 +124,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 | 5 | 跨设备连胜/激励同步（`user_meta` 或 user_metadata） | P2 | 我（可仿 BYOK 同步做） | 可选；连胜目前仅本地 |
 | 6 | 文档继续扫（STRATEGY/ROADMAP 过时项） | P2 | **我（可独立）** | README/DERIVE 本程已扫 |
 | 7 | Supabase 邮件模板本地化 · README 截图GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 |
+| 8 | **开通付费（Telos Pro）** | P1 | **用户外部动作** | 代码全就绪（webhook/权益/定价页/水印/项目上限）。剩：① 注册支付服务商(MoR)并建 3 个产品（月/年/买断）；② 把 3 个 checkout 链接 + customer portal 链接填进 `web/lib/telos/billing-config.ts`；③ 服务商后台 webhook 指到 `https://<worker>.workers.dev/billing/webhook`；④ `cd workers && npx wrangler secret put BILLING_WEBHOOK_SECRET && npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY && npx wrangler deploy`；⑤ 沙盒买一单验证 `/pro` 自动解锁 |
 
 > 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#2 GitHub、#3 建表。
 

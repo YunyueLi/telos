@@ -878,6 +878,137 @@ async function probes(body, env) {
   return { probes: out };
 }
 
+// ════════════════ Telos Pro 计费 webhook ════════════════
+// 支付服务商(MoR) → 本端点（验 HMAC 签名）→ 用 service_role 把权益写进 Supabase app_metadata。
+// app_metadata 用户不可自改（区别于 user_metadata），前端 billing.ts 读它解锁 Pro。
+// 所需 secret（wrangler secret put）：BILLING_WEBHOOK_SECRET / SUPABASE_SERVICE_ROLE_KEY；
+// vars：BILLING_PROVIDER=creem|lemonsqueezy、SUPABASE_URL。webhook 由服务商服务器直连，不受 GFW 影响。
+
+async function hmacHex(secret, raw) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function timingSafeEq(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+const ms = (v) => {
+  if (v == null || v === "") return null;
+  const t = typeof v === "number" ? v : Date.parse(String(v));
+  return Number.isFinite(t) ? t : null;
+};
+
+// 事件 → 权益变更。返回 { uid, patch } 或 null（与本系统无关的事件直接 ACK）。
+function billingMapEvent(provider, evt) {
+  const okPlan = (p) => (["monthly", "yearly", "lifetime"].includes(p) ? p : null);
+  if (provider === "lemonsqueezy") {
+    const name = evt?.meta?.event_name || "";
+    const custom = evt?.meta?.custom_data || {};
+    const uid = String(custom.user_id || "").trim();
+    const plan = okPlan(String(custom.plan || ""));
+    const a = evt?.data?.attributes || {};
+    if (!uid) return { uid: "", patch: null, name };
+    if (name === "order_created") {
+      if (plan === "lifetime") return { uid, name, patch: { pro: true, plan, until: null } };
+      return null; // 订阅的 order 由 subscription_* 事件负责
+    }
+    if (name === "order_refunded") return { uid, name, patch: { pro: false, plan: null, until: null } };
+    if (name === "subscription_created" || name === "subscription_updated") {
+      const st = String(a.status || "");
+      if (["active", "on_trial", "past_due"].includes(st))
+        return { uid, name, patch: { pro: true, plan, until: ms(a.renews_at) } };
+      if (st === "cancelled") return { uid, name, patch: { pro: true, plan, until: ms(a.ends_at) } }; // 已付周期内保留
+      if (["expired", "unpaid"].includes(st)) return { uid, name, patch: { pro: false, plan: null, until: null } };
+      return null;
+    }
+    if (name === "subscription_expired") return { uid, name, patch: { pro: false, plan: null, until: null } };
+    return null;
+  }
+  // Creem：事件名形如 checkout.completed / subscription.active|paid|canceled|expired / refund.created
+  const name = evt?.eventType || evt?.type || "";
+  const obj = evt?.object || {};
+  const meta = obj.metadata || obj.subscription?.metadata || obj.order?.metadata || {};
+  const uid = String(meta.user_id || "").trim();
+  const plan = okPlan(String(meta.plan || ""));
+  if (!uid) return { uid: "", patch: null, name };
+  const periodEnd = ms(obj.current_period_end_date || obj.subscription?.current_period_end_date);
+  if (name === "checkout.completed") {
+    if (plan === "lifetime") return { uid, name, patch: { pro: true, plan, until: null } };
+    return { uid, name, patch: { pro: true, plan, until: periodEnd } }; // 订阅后续由 subscription.* 修正
+  }
+  if (name === "subscription.active" || name === "subscription.paid" || name === "subscription.update")
+    return { uid, name, patch: { pro: true, plan, until: periodEnd } };
+  if (name === "subscription.canceled") return { uid, name, patch: { pro: true, plan, until: periodEnd } }; // 已付周期内保留
+  if (name === "subscription.expired") return { uid, name, patch: { pro: false, plan: null, until: null } };
+  if (name === "refund.created") return { uid, name, patch: { pro: false, plan: null, until: null } };
+  return null;
+}
+
+// 写 Supabase（GoTrue Admin API；app_metadata 顶层键合并）。
+async function billingPatchUser(env, uid, p) {
+  const res = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(uid)}`, {
+    method: "PUT",
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      app_metadata: {
+        telos_pro: p.pro,
+        telos_plan: p.plan,
+        telos_pro_until: p.until,
+        telos_billing_provider: env.BILLING_PROVIDER || "creem",
+        telos_billing_at: Date.now(),
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`supabase admin ${res.status}: ${(await res.text()).slice(0, 200)}`);
+}
+
+async function billingWebhook(request, env) {
+  if (!env.BILLING_WEBHOOK_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY)
+    return json({ error: "billing 未配置（缺 secret/SUPABASE_URL/SERVICE_ROLE）" }, 503, env);
+  const raw = await request.text();
+  const provider = env.BILLING_PROVIDER || "creem";
+  const sigHeader = provider === "lemonsqueezy" ? "X-Signature" : "creem-signature";
+  const given = (request.headers.get(sigHeader) || "").trim().toLowerCase();
+  const want = await hmacHex(env.BILLING_WEBHOOK_SECRET, raw);
+  if (!given || !timingSafeEq(given, want)) return json({ error: "bad signature" }, 401, env);
+  let evt;
+  try {
+    evt = JSON.parse(raw);
+  } catch {
+    return json({ error: "bad json" }, 400, env);
+  }
+  const r = billingMapEvent(provider, evt);
+  if (!r) return json({ ok: true, skip: true }, 200, env); // 无关事件：直接 ACK
+  if (!r.uid || !r.patch) {
+    // 缺 user_id（如买家没经过我们带参的链接）：ACK 但记录，避免服务商无限重试
+    console.warn("[billing] event without user_id:", r.name);
+    return json({ ok: true, skip: "no user_id" }, 200, env);
+  }
+  try {
+    await billingPatchUser(env, r.uid, r.patch);
+    console.info("[billing]", r.name, "→", r.uid.slice(0, 8), r.patch.pro ? `pro(${r.patch.plan})` : "off");
+    return json({ ok: true }, 200, env);
+  } catch (e) {
+    console.error("[billing] patch failed:", String(e.message || e));
+    return json({ error: "patch failed" }, 500, env); // 5xx → 服务商会重试
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -899,6 +1030,9 @@ export default {
         200,
         env,
       );
+    }
+    if (request.method === "POST" && path === "/billing/webhook") {
+      return billingWebhook(request, env); // 支付服务商回调（验签在内部）
     }
     if (request.method === "POST" && path === "/derive") {
       let goal = "";

@@ -369,6 +369,14 @@
   font-weight: 600; font-size: 12.5px; color: var(--ink); padding: 9px 11px; border-radius: 7px;
 }
 .exportMenu button:hover { background: var(--paper); }
+/* 菜单底部「去水印 · Pro」入口 */
+.exportPro {
+  display: flex; align-items: center; gap: 6px; text-decoration: none;
+  font-weight: 600; font-size: 12px; color: var(--ink-2); padding: 8px 11px; border-radius: 7px;
+  border-top: 1px dashed var(--line-soft); margin-top: 3px;
+}
+.exportPro:hover { background: var(--paper); color: var(--ink); }
+.exportPro .ic { color: var(--ink); }
 /* 浮动地图工具栏：导出 + 方向 合一胶囊，与中段「路径/地图」切换(.mh-viewtoggle)同高 36px、同款纸感 */
 .mapTools {
   display: inline-flex; align-items: center; height: 36px; padding: 0 3px;

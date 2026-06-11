@@ -11,3 +11,10 @@ TELOS_LLM_MODEL = "deepseek-v4-pro"
 TELOS_SEARCH_PROVIDER = "tavily"
 # 跨域来源收紧到线上站点，降低被盗刷（本地开发走 serve.py，不经此 Worker）。
 ALLOW_ORIGIN = "https://yunyueli.github.io"
+# ── Telos Pro 计费（/billing/webhook 用）──
+# 服务商：creem | lemonsqueezy（须与 web/lib/telos/billing-config.ts 的 provider 一致）
+BILLING_PROVIDER = "creem"
+# Supabase 项目 URL（非敏感；service_role 绝不放这里）。两个 secret 用命令设置：
+#   npx wrangler secret put BILLING_WEBHOOK_SECRET     ← 服务商 webhook 签名密钥
+#   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY  ← Supabase service_role（写 app_metadata 用）
+SUPABASE_URL = "https://gbvetfyudlbdiydapipr.supabase.co"

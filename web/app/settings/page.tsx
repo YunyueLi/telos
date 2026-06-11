@@ -1,7 +1,8 @@
 "use client";
 
 // 独立设置页（从欢迎页 / 「我」抽离）：单列、区隔清晰。
-// 倒推端点 → 我的学习（项目管理 + 紧随其下的备份/同步）→ 界面语言。顶栏齿轮进入。
+// 倒推端点 → Telos Pro → 我的学习（项目管理 + 紧随其下的备份/同步）→ 界面语言。顶栏齿轮进入。
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
@@ -10,6 +11,7 @@ import { AppShell } from "@/components/app-shell";
 import { EndpointConfig } from "@/components/endpoint-config";
 import { useProject } from "@/lib/telos/use-project";
 import { LANGS, useT, type Lang } from "@/lib/telos/i18n";
+import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
 import { genId, loadActive, projectTitle, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
 
 function progressOf(p: Project): { mastered: number; total: number } {
@@ -26,10 +28,15 @@ export default function SettingsPage() {
   const [backup, setBackup] = useState("");
   const [msg, setMsg] = useState("");
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const [pro, setPro] = useState(false);
   const PROJECT_CAP = 6; // 默认最多 2 行（桌面 3 列）；多的折叠
 
   useEffect(() => {
     setMounted(true);
+    const syncPro = () => setPro(isPro());
+    syncPro();
+    window.addEventListener(BILLING_EVENT, syncPro);
+    return () => window.removeEventListener(BILLING_EVENT, syncPro);
   }, []);
 
   const newLearning = () => {
@@ -99,7 +106,27 @@ export default function SettingsPage() {
           {mounted && <EndpointConfig />}
         </div>
 
-        {/* 2 · 我的学习（项目管理） */}
+        {/* 2 · Telos Pro */}
+        <div className="me-sect">
+          <div className="me-sh">
+            <h3>Telos Pro</h3>
+          </div>
+          <Link href="/pro" className="set-pro">
+            <span className="sp-ic">
+              <Icon name="spark" style={{ width: 19, height: 19 }} />
+            </span>
+            <span className="sp-t">
+              <b>
+                Telos Pro
+                {mounted && pro && <i className="sp-on">{t("set.proOn")}</i>}
+              </b>
+              <span>{mounted && pro ? t("pro.statusPro") : t("set.proFree")}</span>
+            </span>
+            <Icon name="chevron" className="sp-go" style={{ width: 16, height: 16, transform: "rotate(-90deg)" }} />
+          </Link>
+        </div>
+
+        {/* 3 · 我的学习（项目管理） */}
         <div className="me-sect">
           <div className="me-sh">
             <h3>
@@ -198,7 +225,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 3 · 界面语言 */}
+        {/* 4 · 界面语言 */}
         <div className="me-sect">
           <div className="me-sh">
             <h3>{t("set.lang")}</h3>
