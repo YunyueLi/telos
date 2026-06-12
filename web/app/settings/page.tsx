@@ -1,9 +1,8 @@
 "use client";
 
-// 独立设置页（从欢迎页 / 「我」抽离）：单列、区隔清晰。
-// 倒推端点 → Telos Pro → 我的学习（项目管理 + 紧随其下的备份/同步）→ 界面语言。顶栏齿轮进入。
+// 独立设置页 = 纯配置（与「我」分工：内容/身份归 /me，应用配置归这里）。
+// 接入状态 → Telos Pro → 数据（本地备份） → 界面语言。顶栏齿轮进入。
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
@@ -12,24 +11,15 @@ import { EndpointConfig } from "@/components/endpoint-config";
 import { useProject } from "@/lib/telos/use-project";
 import { LANGS, useT, type Lang } from "@/lib/telos/i18n";
 import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
-import { genId, loadActive, projectTitle, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
-
-function progressOf(p: Project): { mastered: number; total: number } {
-  const total = p.points.length;
-  const mastered = p.points.filter((k) => (p.state.mastery[k.id] ?? 0) >= 0.8).length;
-  return { mastered, total };
-}
+import { genId, loadActive, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
 
 export default function SettingsPage() {
-  const router = useRouter();
   const { t, lang, setLang } = useT();
-  const { ready, project, projects, switchProject, removeProject, startNew } = useProject();
+  const { ready, project } = useProject();
   const [mounted, setMounted] = useState(false);
   const [backup, setBackup] = useState("");
   const [msg, setMsg] = useState("");
-  const [showAllProjects, setShowAllProjects] = useState(false);
   const [pro, setPro] = useState(false);
-  const PROJECT_CAP = 6; // 默认最多 2 行（桌面 3 列）；多的折叠
 
   useEffect(() => {
     setMounted(true);
@@ -39,13 +29,6 @@ export default function SettingsPage() {
     return () => window.removeEventListener(BILLING_EVENT, syncPro);
   }, []);
 
-  const newLearning = () => {
-    startNew();
-    router.push("/");
-  };
-  const remove = (id: string, goal: string) => {
-    if (window.confirm(t("me.confirmDelete", { goal }))) removeProject(id);
-  };
   const doExport = () => {
     const p = loadActive();
     if (!p) {
@@ -126,72 +109,12 @@ export default function SettingsPage() {
           </Link>
         </div>
 
-        {/* 3 · 我的学习（项目管理） */}
+        {/* 3 · 数据（本地备份）——项目管理/重新测起点已归位到「我」（/me）：内容归我，配置归设置 */}
         <div className="me-sect">
           <div className="me-sh">
-            <h3>
-              {t("me.myLearning")} · {projects.length}
-            </h3>
-            <button className="appnew" style={{ marginLeft: "auto" }} onClick={newLearning}>
-              <Icon name="plus" /> {t("shell.new")}
-            </button>
+            <h3>{t("me.backupTitle")}</h3>
           </div>
-          <div className="me-set">
-            <button className="me-row" onClick={() => router.push("/diagnose")} disabled={!project}>
-              <Icon name="spark" className="ic" />
-              <span className="l">{t("me.resetStart")}</span>
-              <span className="v">{t("me.cbmDiag")}</span>
-            </button>
-          </div>
-          {projects.length === 0 ? (
-            <p className="me-note">{t("me.noProjects")}</p>
-          ) : (
-            <>
-              <div className="me-projects" style={{ marginTop: 12 }}>
-                {(showAllProjects ? projects : projects.slice(0, PROJECT_CAP)).map((p) => {
-                  const pr = progressOf(p);
-                  const active = project?.id === p.id;
-                  return (
-                    <div key={p.id} className={`me-proj ${active ? "on" : ""}`}>
-                      <button
-                        className="me-proj-main"
-                        title={p.goal}
-                        onClick={() => {
-                          switchProject(p.id);
-                          router.push("/");
-                        }}
-                      >
-                        <span className="me-proj-goal">{projectTitle(p)}</span>
-                        <span className="me-proj-meta">
-                          {active && <i className="me-proj-dot" />}
-                          {t("me.projMastered", { m: pr.mastered, t: pr.total })}
-                          {active ? ` · ${t("me.current")}` : ""}
-                        </span>
-                      </button>
-                      <button
-                        className="me-proj-del"
-                        onClick={() => remove(p.id, p.goal)}
-                        title={t("me.delProject")}
-                        aria-label={t("me.delProject")}
-                      >
-                        <Icon name="trash" style={{ width: 15, height: 15 }} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-              {projects.length > PROJECT_CAP && (
-                <button className="me-more" onClick={() => setShowAllProjects((v) => !v)}>
-                  {showAllProjects ? t("me.collapse") : t("me.showAll", { n: projects.length })}
-                  <Icon name="chevron" className={showAllProjects ? "me-more-up" : ""} />
-                </button>
-              )}
-            </>
-          )}
-
-          {/* 备份与同步 —— 紧随项目，属同一「数据」范畴 */}
-          <div className="set-backup">
-            <div className="me-subh">{t("me.backupTitle")}</div>
+          <div className="set-backup" style={{ marginTop: 0, paddingTop: 0, borderTop: 0 }}>
             <p className="me-note" style={{ marginTop: 0 }}>
               {t("me.backupNote")}
             </p>

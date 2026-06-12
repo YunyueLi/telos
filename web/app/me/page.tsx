@@ -1,8 +1,10 @@
 "use client";
 
-// 我：学习资料 + 真实 XP/连胜/掌握分组进度。
-// 项目管理 / 倒推端点 / 备份与云同步已移到独立「设置」页（顶栏齿轮 → /settings）。
+// 我 = 身份 + 内容 + 成就：账户(登录/云同步) → 我的学习项目(管理/切换/重新测) → 掌握进度。
+// 应用配置（接入/Pro/本地备份/语言）在独立「设置」页（顶栏齿轮 → /settings）。
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
@@ -10,6 +12,13 @@ import { useAuth } from "@/lib/telos/auth";
 import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
 import { domainLabel } from "@/lib/telos/engine";
+import { projectTitle, type Project } from "@/lib/telos/project";
+
+function progressOf(p: Project): { mastered: number; total: number } {
+  const total = p.points.length;
+  const mastered = p.points.filter((k) => (p.state.mastery[k.id] ?? 0) >= 0.8).length;
+  return { mastered, total };
+}
 
 const GROUPS = [
   { key: "done", titleKey: "group.done" },
@@ -20,8 +29,20 @@ const GROUPS = [
 
 export default function MePage() {
   const { t, lang } = useT();
-  const { ready, project, graph, view, xp, streak, syncing, lastSync, syncNow } = useProject();
+  const router = useRouter();
+  const { ready, project, projects, graph, view, xp, streak, syncing, lastSync, syncNow, switchProject, removeProject, startNew } =
+    useProject();
   const { configured, user, signOut } = useAuth();
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const PROJECT_CAP = 6; // 默认最多 2 行（桌面 3 列）；多的折叠
+
+  const newLearning = () => {
+    startNew();
+    router.push("/");
+  };
+  const remove = (id: string, goal: string) => {
+    if (window.confirm(t("me.confirmDelete", { goal }))) removeProject(id);
+  };
 
   if (!ready) {
     return (
@@ -49,17 +70,7 @@ export default function MePage() {
             ) : (
               <p className="me-goal">{t("me.noGoal")}</p>
             )}
-            <div className="me-tags">
-              <span className="me-tag">
-                <Icon name="flame" /> {t("me.streakDays", { n: streak })}
-              </span>
-              {view && (
-                <span className="me-tag">
-                  <Icon name="target" /> {t("me.progress", { m: view.mastered, t: view.total })}
-                </span>
-              )}
-              <span className="me-tag">{xp} XP</span>
-            </div>
+            {/* 标签行已删：连胜/进度/XP 与下方四格统计完全重复 */}
           </div>
         </div>
 
@@ -135,6 +146,70 @@ export default function MePage() {
                 {t("auth.signIn")} <Icon name="arrow" />
               </Link>
             </div>
+          )}
+        </div>
+
+        {/* 我的学习项目（管理/切换/删除 + 重新测起点）——内容归「我」，从设置页归位 */}
+        <div className="me-sect">
+          <div className="me-sh">
+            <h3>
+              {t("me.myLearning")} · {projects.length}
+            </h3>
+            <button className="appnew" style={{ marginLeft: "auto" }} onClick={newLearning}>
+              <Icon name="plus" /> {t("shell.new")}
+            </button>
+          </div>
+          <div className="me-set">
+            <button className="me-row" onClick={() => router.push("/diagnose")} disabled={!project}>
+              <Icon name="spark" className="ic" />
+              <span className="l">{t("me.resetStart")}</span>
+              <span className="v">{t("me.cbmDiag")}</span>
+            </button>
+          </div>
+          {projects.length === 0 ? (
+            <p className="me-note">{t("me.noProjects")}</p>
+          ) : (
+            <>
+              <div className="me-projects" style={{ marginTop: 12 }}>
+                {(showAllProjects ? projects : projects.slice(0, PROJECT_CAP)).map((p) => {
+                  const pr = progressOf(p);
+                  const active = project?.id === p.id;
+                  return (
+                    <div key={p.id} className={`me-proj ${active ? "on" : ""}`}>
+                      <button
+                        className="me-proj-main"
+                        title={p.goal}
+                        onClick={() => {
+                          switchProject(p.id);
+                          router.push("/");
+                        }}
+                      >
+                        <span className="me-proj-goal">{projectTitle(p)}</span>
+                        <span className="me-proj-meta">
+                          {active && <i className="me-proj-dot" />}
+                          {t("me.projMastered", { m: pr.mastered, t: pr.total })}
+                          {active ? ` · ${t("me.current")}` : ""}
+                        </span>
+                      </button>
+                      <button
+                        className="me-proj-del"
+                        onClick={() => remove(p.id, p.goal)}
+                        title={t("me.delProject")}
+                        aria-label={t("me.delProject")}
+                      >
+                        <Icon name="trash" style={{ width: 15, height: 15 }} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {projects.length > PROJECT_CAP && (
+                <button className="me-more" onClick={() => setShowAllProjects((v) => !v)}>
+                  {showAllProjects ? t("me.collapse") : t("me.showAll", { n: projects.length })}
+                  <Icon name="chevron" className={showAllProjects ? "me-more-up" : ""} />
+                </button>
+              )}
+            </>
           )}
         </div>
 
