@@ -221,20 +221,25 @@ export default function DeriveCanvas({
         focusable: false,
       };
     });
+    // 线条分级（XMind 式）：主干=圆角折线（阶段内树边，结构线）；引用线=细浅虚曲线（跨阶段/额外前置）。
+    // 与「下一步」相连的边始终加粗实墨；指向未解锁节点的边一律减淡。
     const es: Edge[] = layout.edges.map((e) => {
       const locked = view.visual[e.to] === "lock";
       const strong = e.to === view.next?.id || e.from === view.next?.id;
+      const style = strong
+        ? { stroke: "#141310", strokeWidth: 2.2 }
+        : e.main
+          ? { stroke: locked ? "#cfcabd" : "#8f8a7e", strokeWidth: 1.6, strokeDasharray: locked ? "4 6" : undefined }
+          : { stroke: locked ? "#ddd9cf" : "#bdb8ac", strokeWidth: 1.15, strokeDasharray: "5 7" };
       return {
         id: `${e.from}->${e.to}`,
         source: e.from,
         target: e.to,
-        type: "default",
-        style: {
-          stroke: locked ? "#cfcabd" : strong ? "#141310" : "#928e84",
-          strokeWidth: strong ? 2.2 : 1.6,
-          strokeDasharray: locked ? "4 6" : undefined,
-        },
-      };
+        type: e.main || strong ? "smoothstep" : "default",
+        pathOptions: e.main || strong ? { borderRadius: 14 } : undefined,
+        data: { kind: e.main ? "tree" : "link", locked }, // 导出(map-export)按此镜像折线/引用线
+        style,
+      } as Edge;
     });
     // 居中锚点：把"你所在的活动区域"(已掌握 + 现在学，非未解锁)的几何中心放到画面中央，
     // 读得清、又是当前该学的地方；未解锁的深层节点自然向外延伸(可拖动查看)。
