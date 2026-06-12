@@ -17,6 +17,10 @@ dist/
 .dev.vars
 **/.dev.vars
 
+# 付费模板内容母版（owner 私有；灌进 KV 下发，绝不进公开仓库）
+workers/templates-private.json
+templates-private.json
+
 # logs
 *.log
 npm-debug.log*

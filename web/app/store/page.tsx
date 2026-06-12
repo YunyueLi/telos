@@ -1,9 +1,9 @@
 "use client";
 
 // 官方模板店：人工精修图谱一键导入（知识付费）。
-// 获取规则：免费模板直接导入；付费模板 = 已购（app_metadata.telos_templates，webhook 发货）
-// 或 Pro 每月免费领 1 个；可单独购买（checkout 链接接入后自动出现「购买」）。
-// 导入受免费版 3 项目上限约束（Pro 无限）。
+// 获取规则：免费模板内容前端内嵌、直接导入；付费模板的完整内容【不在前端】——
+// 已购（app_metadata.telos_templates，webhook 发货）或 Pro 时，由 Worker /template 鉴权后下发再导入。
+// 可单独购买（checkout 链接接入后出现「购买」）。导入受免费版 3 项目上限约束（Pro 无限）。
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
@@ -13,7 +13,8 @@ import { useT } from "@/lib/telos/i18n";
 import { BASE } from "@/lib/base";
 import { BILLING_EVENT, entitlement, isPro, refreshEntitlement } from "@/lib/telos/billing";
 import { BILLING, checkoutUrlRaw } from "@/lib/telos/billing-config";
-import { TEMPLATES, claimedThisMonth, markClaimed, type Template } from "@/lib/telos/templates";
+import { TEMPLATES, type Template } from "@/lib/telos/templates";
+import { fetchTemplatePoints } from "@/lib/telos/derive";
 import { genId, listProjects, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
 import { emptyState } from "@/lib/telos/engine";
 
@@ -23,14 +24,13 @@ export default function StorePage() {
   const [mounted, setMounted] = useState(false);
   const [pro, setPro] = useState(false);
   const [owned, setOwned] = useState<string[]>([]);
-  const [claimed, setClaimed] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null); // 展开大纲的模板
+  const [importing, setImporting] = useState<string | null>(null); // 正在下发内容的模板
   const [msg, setMsg] = useState<string>("");
 
   const sync = () => {
     setPro(isPro());
     setOwned(entitlement().templates);
-    setClaimed(claimedThisMonth());
   };
   useEffect(() => {
     setMounted(true);
@@ -40,20 +40,35 @@ export default function StorePage() {
     return () => window.removeEventListener(BILLING_EVENT, sync);
   }, []);
 
-  const canImport = (tp: Template) => tp.free || owned.includes(tp.id) || claimed === tp.id;
+  const canImport = (tp: Template) => tp.free || pro || owned.includes(tp.id);
   const limitReached = () => !isPro() && listProjects().length >= BILLING.freeProjectLimit;
 
-  const doImport = (tp: Template) => {
+  const doImport = async (tp: Template) => {
+    if (importing) return;
     if (limitReached()) {
       setMsg(`${t("pro.limitT", { n: BILLING.freeProjectLimit })} — ${t("pro.limitD")}`);
       return;
+    }
+    setMsg("");
+    // 免费模板内容前端内嵌；付费模板从 Worker 鉴权下发（内容不在前端）。
+    let points = tp.points;
+    if (!points) {
+      setImporting(tp.id);
+      try {
+        points = await fetchTemplatePoints(tp.id);
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : String(e));
+        setImporting(null);
+        return;
+      }
+      setImporting(null);
     }
     const now = Date.now();
     const proj: Project = {
       id: genId(),
       goal: tp.goal,
       title: tp.title,
-      points: tp.points,
+      points,
       state: emptyState(),
       createdAt: now,
       updatedAt: now,
@@ -66,12 +81,6 @@ export default function StorePage() {
       /* ignore */
     }
     window.location.assign(`${BASE}/`); // 全量刷新让 Provider 重读项目库
-  };
-
-  const claim = (tp: Template) => {
-    markClaimed(tp.id);
-    setClaimed(tp.id);
-    doImport(tp);
   };
 
   const buy = (tp: Template) => {
@@ -110,15 +119,10 @@ export default function StorePage() {
 
         <div className="store-grid">
           {TEMPLATES.map((tp) => {
-            const mods: { title: string; n: number }[] = [];
-            for (const p of tp.points) {
-              const last = mods[mods.length - 1];
-              if (last && last.title === (p.moduleTitle || "")) last.n += 1;
-              else mods.push({ title: p.moduleTitle || "", n: 1 });
-            }
-            const hours = Math.round(tp.points.reduce((s, p) => s + (p.minutes ?? 30), 0) / 60);
+            const hours = Math.max(1, Math.round(tp.minutes / 60));
             const own = mounted && canImport(tp);
             const opened = open === tp.id;
+            const busy = importing === tp.id;
             return (
               <div key={tp.id} className="store-card">
                 <div className="store-card-top">
@@ -129,8 +133,8 @@ export default function StorePage() {
                 </div>
                 <p className="store-desc">{tp.desc}</p>
                 <div className="store-meta">
-                  <span>{t("store.nodes", { n: tp.points.length })}</span>
-                  <span>{t("store.stages", { n: mods.length })}</span>
+                  <span>{t("store.nodes", { n: tp.nodes })}</span>
+                  <span>{t("store.stages", { n: tp.outline.length })}</span>
                   <span>{t("store.hours", { n: hours })}</span>
                 </div>
                 <button className="store-preview" onClick={() => setOpen(opened ? null : tp.id)}>
@@ -139,7 +143,7 @@ export default function StorePage() {
                 </button>
                 {opened && (
                   <div className="store-outline">
-                    {mods.map((m, i) => (
+                    {tp.outline.map((m, i) => (
                       <div key={i} className="store-mod">
                         <span className="store-mod-i">{String(i + 1).padStart(2, "0")}</span>
                         <span className="store-mod-t">{m.title}</span>
@@ -150,34 +154,21 @@ export default function StorePage() {
                 )}
                 <div className="store-actions">
                   {own ? (
-                    <button className="btn btn-ink store-btn" onClick={() => doImport(tp)}>
-                      <Icon name="play" /> {t("store.get")}
+                    <button className="btn btn-ink store-btn" onClick={() => doImport(tp)} disabled={busy}>
+                      {busy ? <span className="spinner" /> : <Icon name="play" />}{" "}
+                      {busy ? t("store.importing") : t("store.get")}
+                    </button>
+                  ) : tp.url ? (
+                    <button className="btn btn-line store-btn" onClick={() => buy(tp)}>
+                      {t("store.buy")} · {tp.price}
                     </button>
                   ) : (
-                    <>
-                      {mounted && pro && !claimed && (
-                        <button className="btn btn-ink store-btn" onClick={() => claim(tp)}>
-                          <Icon name="spark" /> {t("store.claim")}
-                        </button>
-                      )}
-                      {tp.url ? (
-                        <button className="btn btn-line store-btn" onClick={() => buy(tp)}>
-                          {t("store.buy")} · {tp.price}
-                        </button>
-                      ) : (
-                        !pro && (
-                          <span className="store-soon">
-                            {t("store.soon")} ·{" "}
-                            <Link href="/pro" className="store-soon-link">
-                              {t("store.claimHint")}
-                            </Link>
-                          </span>
-                        )
-                      )}
-                      {mounted && pro && claimed && claimed !== tp.id && (
-                        <span className="store-soon">{t("store.claimedNote")}</span>
-                      )}
-                    </>
+                    <span className="store-soon">
+                      {t("store.soon")} ·{" "}
+                      <Link href="/pro" className="store-soon-link">
+                        {t("store.proUnlock")}
+                      </Link>
+                    </span>
                   )}
                 </div>
               </div>

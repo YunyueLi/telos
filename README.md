@@ -69,7 +69,7 @@ That's it. `make` copies `core/.env` from the template (and tells you where to g
 - **Spaced review (FSRS-4.5).** What you learn flows into a review queue; due cards reschedule on each grade.
 - **Six domain classes** (declarative · procedural · creative · motor · adversarial · habit) drive different diagnosis & review strategies — so it works for math *and* a sport *and* a habit.
 - **Keep-going system** (the *Streak* tab) — daily goal with a progress ring, a month-view check-in calendar, streak freeze, levels & tiers, and achievements. All bound to *real learning signals* (mastery & review), never time-on-app, with anti-dark-pattern guards.
-- **Official template store** (`/store`) — hand-curated, pre-calibrated maps you import in one tap (launch set: postgraduate-exam English, Python backend interviews, and a free driving-test map). Pro claims one paid template free every month.
+- **Official template store** (`/store`) — hand-curated, pre-calibrated maps you import in one tap (launch set: postgraduate-exam English, Python backend interviews, and a free driving-test map). Paid template content is delivered from the server after purchase — never shipped to the public bundle — and Pro unlocks every official template.
 - **Own your results.** PNG map export (watermark-free on Pro), **Anki deck export** (official text format — FSRS keeps scheduling inside Anki), and a serial-numbered **completion certificate** when a project hits 100% (Pro).
 - **Accounts & cross-device sync** (optional, Supabase) — email/password, magic link, or Google; your projects and progress follow you across devices. Without it, everything stays local-first in your browser.
 - **Nine languages** with a self-built i18n layer (zh-CN/TW · en · fr · ja · ko · es · ru · de); dates & relative times localized via `Intl`.
@@ -96,7 +96,7 @@ Telos is open-source and **BYOK-first: bring your own key and the whole learning
 | **Hosted AI** — no key, sign in & use | Trial: 3 derivations · 60 micro-lessons | 30 derivations · 600 micro-lessons / month, + top-up packs |
 | Learning projects | 3 | Unlimited |
 | Map export | With watermark | Watermark-free + **Anki deck export** |
-| Template store | Free templates | + claim 1 paid template free each month |
+| Template store | Free templates | All official templates unlocked |
 | Completion certificate | — | Serial-numbered PNG |
 
 Notes: the one-time *lifetime* plan includes everything **except** the hosted-AI quota (recurring LLM cost can't be bought once). Hosted AI and checkout are rolling out on the public instance — in-app pricing lives at `/pro`, the store at `/store`. Self-hosted instances ship with all billing **off** by default; enabling it is optional ([deploy notes](#deploy-your-own)).
