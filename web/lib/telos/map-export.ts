@@ -151,19 +151,54 @@ export function buildMapCanvas(
     }
   }
 
-  // 连线（节点中心到中心；锁定态虚线浅色）
-  ctx.lineWidth = 1.4;
+  // 连线（镜像画布的线条分级）：主干=圆角折线（边缘出入），引用线=细浅虚曲线（中心到中心）
   for (const e of edges) {
     const a = box[e.source];
     const b = box[e.target];
     if (!a || !b) continue;
-    const locked = typeof e.style?.stroke === "string" && e.style.stroke === C.edgeLock;
-    ctx.strokeStyle = locked ? C.edgeLock : C.edge;
-    ctx.setLineDash(locked ? [4, 6] : []);
-    ctx.beginPath();
-    ctx.moveTo(a.cx + ox, a.cy + oy);
-    ctx.lineTo(b.cx + ox, b.cy + oy);
-    ctx.stroke();
+    const meta = (e.data ?? {}) as { kind?: string; locked?: boolean };
+    const locked = meta.locked === true;
+    const link = meta.kind === "link";
+    if (link) {
+      ctx.strokeStyle = locked ? "#ddd9cf" : "#bdb8ac";
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([5, 7]);
+      const x1 = a.cx + ox, y1 = a.cy + oy, x2 = b.cx + ox, y2 = b.cy + oy;
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      // 轻微弓起的引用曲线（垂直于连线方向偏移），与主干折线区分
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const bow = Math.min(36, len * 0.12);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo(mx - (dy / len) * bow, my + (dx / len) * bow, x2, y2);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = locked ? C.edgeLock : C.edge;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash(locked ? [4, 6] : []);
+      const horizontal = Math.abs(b.cx - a.cx) >= Math.abs(b.cy - a.cy);
+      const r = 12; // 圆角
+      ctx.beginPath();
+      if (horizontal) {
+        const x1 = a.cx + a.w / 2 + ox, y1 = a.cy + oy;
+        const x2 = b.cx - b.w / 2 + ox, y2 = b.cy + oy;
+        const xm = (x1 + x2) / 2;
+        ctx.moveTo(x1, y1);
+        ctx.arcTo(xm, y1, xm, y2, Math.min(r, Math.abs(y2 - y1) / 2, Math.abs(xm - x1)));
+        ctx.arcTo(xm, y2, x2, y2, Math.min(r, Math.abs(y2 - y1) / 2, Math.abs(x2 - xm)));
+        ctx.lineTo(x2, y2);
+      } else {
+        const x1 = a.cx + ox, y1 = a.cy + a.h / 2 + oy;
+        const x2 = b.cx + ox, y2 = b.cy - b.h / 2 + oy;
+        const ym = (y1 + y2) / 2;
+        ctx.moveTo(x1, y1);
+        ctx.arcTo(x1, ym, x2, ym, Math.min(r, Math.abs(x2 - x1) / 2, Math.abs(ym - y1)));
+        ctx.arcTo(x2, ym, x2, y2, Math.min(r, Math.abs(x2 - x1) / 2, Math.abs(y2 - ym)));
+        ctx.lineTo(x2, y2);
+      }
+      ctx.stroke();
+    }
   }
   ctx.setLineDash([]);
 
