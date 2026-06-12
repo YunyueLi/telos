@@ -902,7 +902,8 @@ async function verifyUser(env, token) {
     const until = m.telos_pro_until;
     const t = until == null || until === "" ? null : typeof until === "number" ? until : Date.parse(String(until));
     const pro = m.telos_pro === true && (t == null || t > Date.now());
-    return { id: u.id, pro };
+    const templates = Array.isArray(m.telos_templates) ? m.telos_templates.map(String) : [];
+    return { id: u.id, pro, templates };
   } catch {
     return null;
   }
@@ -996,6 +997,35 @@ async function hostedUsage(request, env) {
     200,
     env,
   );
+}
+
+// ════════════════ 付费模板内容下发（/template）════════════════
+// 付费图谱的完整内容（desc/drill/benchmark）不进公开前端/仓库——前端只有 meta + 大纲预览。
+// 完整 points 存 KV（键 tpl:<id>，owner 用 workers/seed-templates.sh 灌入）。
+// 鉴权：已购该模板（app_metadata.telos_templates）或 Pro → 下发；否则 403。免费模板内容仍在前端，不走这里。
+async function templateContent(request, env) {
+  if (!env.TELOS_USAGE || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return json({ error: "NO_HOSTED" }, 503, env);
+  let id = "";
+  try {
+    const b = await request.json();
+    id = String(b.id || "").trim();
+  } catch {
+    return json({ error: "bad json" }, 400, env);
+  }
+  if (!/^[a-z0-9-]{1,40}$/.test(id)) return json({ error: "bad id" }, 400, env);
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const user = await verifyUser(env, token);
+  if (!user) return json({ error: "NEED_LOGIN" }, 401, env);
+  if (!user.pro && !user.templates.includes(id)) return json({ error: "NOT_OWNED" }, 403, env);
+  let points = null;
+  try {
+    points = await env.TELOS_USAGE.get(`tpl:${id}`, "json");
+  } catch {
+    points = null;
+  }
+  if (!Array.isArray(points) || !points.length) return json({ error: "NO_TEMPLATE" }, 404, env);
+  return json({ id, points }, 200, env);
 }
 
 // ════════════════ Telos Pro 计费 webhook ════════════════
@@ -1204,6 +1234,9 @@ export default {
     }
     if (request.method === "GET" && path === "/billing/usage") {
       return hostedUsage(request, env);
+    }
+    if (request.method === "POST" && path === "/template") {
+      return templateContent(request, env); // 付费模板内容：鉴权后从 KV 下发（内容不在前端）
     }
     // 托管门禁：BYOK 请求（带 X-Telos-Key）原样放行不计量；否则验账号 + 扣配额。
     // gate.commit() 在推理成功后调用——失败的请求不扣次数。

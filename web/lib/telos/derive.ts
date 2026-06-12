@@ -3,7 +3,7 @@
 //（这样用户不用重新构建，直接在页面里粘贴本地地址就能体验）。
 "use client";
 
-import type { DomainClass } from "./engine";
+import type { DomainClass, KnowledgePoint } from "./engine";
 import { currentLang, llmName, tStatic } from "./i18n";
 import { deriveDirect, lessonDirect, probesDirect, testDirect, titleDirect, type DirectCfg } from "./derive-direct";
 
@@ -182,6 +182,30 @@ export async function fetchHostedUsage(): Promise<HostedUsage | null> {
   }
 }
 
+// 付费模板内容下发：完整图谱（desc/drill/benchmark）不在前端（防白嫖）——购买/Pro 后凭身份从 Worker /template 拉取。
+// 失败抛本地化错误（未配端点 / 需登录 / 未拥有）。免费模板内容前端已内嵌，不走这里。
+export async function fetchTemplatePoints(id: string): Promise<KnowledgePoint[]> {
+  const url = getDeriveUrl();
+  if (!url) throw new Error(tStatic("err.noTemplate"));
+  if (!_hostedToken) throw new Error(tStatic("err.needLogin"));
+  const base = url.replace(/\/(derive|lesson|probe|title)\/?$/, "");
+  let res: Response;
+  try {
+    res = await fetch(`${base}/template`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${_hostedToken}` },
+      body: JSON.stringify({ id }),
+    });
+  } catch {
+    throw new Error(tStatic("err.cantReachDerive"));
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) throw new Error(hostedErrorMessage(data.error) || tStatic("err.noTemplate"));
+  const points = data.points;
+  if (!Array.isArray(points) || !points.length) throw new Error(tStatic("err.noTemplate"));
+  return normalize(points) as KnowledgePoint[];
+}
+
 // 托管错误码 → 本地化文案（Worker 返回 {error:"<code>"}）。未识别返回 null 由调用方走通用错误。
 function hostedErrorMessage(code: unknown): string | null {
   switch (String(code || "")) {
@@ -193,6 +217,10 @@ function hostedErrorMessage(code: unknown): string | null {
       return tStatic("err.hostedQuota");
     case "NO_HOSTED":
       return tStatic("err.noHosted");
+    case "NOT_OWNED":
+      return tStatic("err.notOwned");
+    case "NO_TEMPLATE":
+      return tStatic("err.noTemplate");
     default:
       return null;
   }
