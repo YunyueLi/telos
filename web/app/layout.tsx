@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SketchDefs } from "@/components/sketch-defs";
+import { ChunkGuard } from "@/components/chunk-guard";
 import { ProjectProvider } from "@/lib/telos/use-project";
 import { AuthProvider } from "@/lib/telos/auth";
 import { LangProvider } from "@/lib/telos/i18n";
@@ -39,6 +40,7 @@ export default function RootLayout({
     >
       <body>
         <SketchDefs />
+        <ChunkGuard />
         <LangProvider>
           <AuthProvider>
             <ProjectProvider>{children}</ProjectProvider>

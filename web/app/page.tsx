@@ -3,7 +3,6 @@
 // 入口 = 真实产品。默认打开 = 「新学习」目标引导（ChatGPT 式，composing 初始 true）；
 // 点「地图」Tab / 切换项目 / 倒推完成 → 地图主页。节点 → 详情 sheet → 开始学习（分步微课全屏接管）。
 // 所有数据来自 useProject 单一真相源。
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -12,12 +11,15 @@ import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import NodePanel from "@/components/node-panel";
 import PathView from "@/components/path-view";
+// 画布静态导入（核心界面）：之前用 dynamic 懒加载，部署更替后旧 HTML 缓存(GitHub Pages ≤10min)
+// 引用的旧 chunk 已 404 → 地图永远停在「加载地图…」，需再刷新才好。静态导入后页面 JS 能起，地图必能起。
+import DeriveCanvas from "@/components/canvas";
 import { useProject } from "@/lib/telos/use-project";
 import { domainLabel } from "@/lib/telos/engine";
 import { engineReady, LLM_EVENT } from "@/lib/telos/derive";
 import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
 import { BILLING } from "@/lib/telos/billing-config";
-import { useT, tStatic } from "@/lib/telos/i18n";
+import { useT } from "@/lib/telos/i18n";
 
 // 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
 const CATS: { domain: string; egKey: string }[] = [
@@ -29,14 +31,6 @@ const CATS: { domain: string; egKey: string }[] = [
   { domain: "F", egKey: "ob.catHabit" },
 ];
 
-const DeriveCanvas = dynamic(() => import("@/components/canvas"), {
-  ssr: false,
-  loading: () => (
-    <div className="loadrow" style={{ justifyContent: "center", height: "100%" }}>
-      <span className="spinner" /> {tStatic("common.loadingMap")}
-    </div>
-  ),
-});
 
 export default function HubPage() {
   const {
