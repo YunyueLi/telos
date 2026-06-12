@@ -14,11 +14,12 @@ export interface Entitlement {
   pro: boolean;
   plan: "monthly" | "yearly" | "lifetime" | null;
   until: number | null; // ms；null = 不过期（买断）或非 Pro
+  templates: string[]; // 已购模板 id（webhook 写 app_metadata.telos_templates）
   uid: string | null; // 权益所属账号；登出/换号后缓存不串号
   at: number; // 上次确认时间
 }
 
-const EMPTY: Entitlement = { pro: false, plan: null, until: null, uid: null, at: 0 };
+const EMPTY: Entitlement = { pro: false, plan: null, until: null, templates: [], uid: null, at: 0 };
 
 let _ent: Entitlement | null = null;
 
@@ -87,6 +88,7 @@ export async function refreshEntitlement(): Promise<Entitlement> {
       telos_pro?: boolean;
       telos_plan?: Entitlement["plan"];
       telos_pro_until?: number | string | null;
+      telos_templates?: string[];
     };
     const untilRaw = meta.telos_pro_until;
     const until =
@@ -99,6 +101,7 @@ export async function refreshEntitlement(): Promise<Entitlement> {
       pro: meta.telos_pro === true,
       plan: meta.telos_plan ?? null,
       until,
+      templates: Array.isArray(meta.telos_templates) ? meta.telos_templates.map(String) : [],
       uid: user.id,
       at: Date.now(),
     };

@@ -265,6 +265,18 @@ function Onboarding({
         </div>
       </div>
 
+      {/* 官方模板店入口：现成的精修图谱，一键导入（知识付费） */}
+      <Link href="/store" className="ob-store">
+        <span className="os-ic">
+          <Icon name="map" style={{ width: 17, height: 17 }} />
+        </span>
+        <span className="os-t">
+          <b>{t("ob.storeTitle")}</b>
+          <span>{t("ob.storeDesc")}</span>
+        </span>
+        <Icon name="chevron" className="os-go" style={{ width: 15, height: 15, transform: "rotate(-90deg)" }} />
+      </Link>
+
       {mounted && !cfgUrl && (
         <div className="ob-cfgrow">
           {cloudConfigured() && !user && (

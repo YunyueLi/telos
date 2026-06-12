@@ -40,6 +40,22 @@ export function billingConfigured(): boolean {
   return Boolean(BILLING.plans.monthly.url || BILLING.plans.yearly.url || BILLING.plans.lifetime.url);
 }
 
+// 任意 SKU 的收银台链接（模板店 tpl_* 等）：base 由调用方提供。
+export function checkoutUrlRaw(base: string, sku: string, uid: string, email?: string): string {
+  if (!base) return "";
+  const u = new URL(base);
+  if (BILLING.provider === "lemonsqueezy") {
+    u.searchParams.set("checkout[custom][user_id]", uid);
+    u.searchParams.set("checkout[custom][plan]", sku);
+    if (email) u.searchParams.set("checkout[email]", email);
+  } else {
+    u.searchParams.set("metadata[user_id]", uid);
+    u.searchParams.set("metadata[plan]", sku);
+    if (email) u.searchParams.set("customer_email", email);
+  }
+  return u.toString();
+}
+
 // 收银台链接：带上 user_id + plan/SKU（webhook 回传后据此定位账号与方案；pack_* 走加油包充值）与预填邮箱。
 export function checkoutUrl(plan: Plan | string, uid: string, email?: string): string {
   const base =
