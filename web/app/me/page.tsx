@@ -13,6 +13,8 @@ import { useProject } from "@/lib/telos/use-project";
 import { useT } from "@/lib/telos/i18n";
 import { domainLabel } from "@/lib/telos/engine";
 import { projectTitle, type Project } from "@/lib/telos/project";
+import { isPro } from "@/lib/telos/billing";
+import { buildCertificate } from "@/lib/telos/certificate";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -42,6 +44,29 @@ export default function MePage() {
   };
   const remove = (id: string, goal: string) => {
     if (window.confirm(t("me.confirmDelete", { goal }))) removeProject(id);
+  };
+  // 完课证书（Pro）：项目全部能力点完成后领取——canvas 直绘下载 PNG
+  const getCert = (p: Project) => {
+    if (!isPro()) {
+      router.push("/pro");
+      return;
+    }
+    const name = (window.prompt(t("cert.namePh")) || "").trim() || t("cert.anon");
+    const canvas = buildCertificate({
+      name,
+      goal: projectTitle(p),
+      nodes: p.points.length,
+      dateText: new Intl.DateTimeFormat(lang).format(new Date()),
+      completedText: t("cert.completed", { n: p.points.length }),
+      serialLabel: t("cert.serial"),
+      brandText: t("ob.tagline"),
+    });
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `telos-cert-${p.id.slice(0, 8)}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   if (!ready) {
@@ -191,6 +216,16 @@ export default function MePage() {
                           {active ? ` · ${t("me.current")}` : ""}
                         </span>
                       </button>
+                      {pr.total > 0 && pr.mastered === pr.total && (
+                        <button
+                          className="me-proj-cert"
+                          onClick={() => getCert(p)}
+                          title={isPro() ? t("cert.get") : t("cert.onlyDone")}
+                          aria-label={t("cert.get")}
+                        >
+                          <Icon name="medal" style={{ width: 15, height: 15 }} />
+                        </button>
+                      )}
                       <button
                         className="me-proj-del"
                         onClick={() => remove(p.id, p.goal)}

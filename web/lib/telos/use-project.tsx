@@ -98,7 +98,20 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActive] = useState<string | null>(null);
   // 默认 true：打开首页先看到「新学习」目标输入（ChatGPT 式）；点「地图」Tab / 切换项目 / 倒推完成则进入地图。
-  const [composing, setComposing] = useState(true);
+  // 一次性标记 telos:open-map（模板店导入等场景设置）：本次加载直达地图。
+  const [composing, setComposing] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        if (window.sessionStorage.getItem("telos:open-map") === "1") {
+          window.sessionStorage.removeItem("telos:open-map");
+          return false;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    return true;
+  });
   const [dailyVersion, setDailyVersion] = useState(0); // 每次学习/改目标自增 → 重算每日信息
   const [goalNonce, setGoalNonce] = useState(0); // 刚达成今日目标 → 触发庆祝
   const [deriving, setDeriving] = useState(false);

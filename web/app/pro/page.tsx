@@ -243,6 +243,7 @@ export default function ProPage() {
                 ["pro.perkHosted", "pro.perkHostedD", { d: BILLING.hosted.proDerives, l: BILLING.hosted.proLessons }],
                 ["pro.perkProjects", "pro.perkProjectsD", { n: BILLING.freeProjectLimit }],
                 ["pro.perkExport", "pro.perkExportD", undefined],
+                ["pro.perkTpl", "pro.perkTplD", undefined],
                 ["pro.perkFuture", "pro.perkFutureD", undefined],
                 ["pro.perkSupport", "pro.perkSupportD", undefined],
               ] as [string, string, Record<string, number> | undefined][]

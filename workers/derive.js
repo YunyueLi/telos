@@ -1037,6 +1037,8 @@ function billingMapEvent(provider, evt) {
     const m = /^pack_([dl])(\d{1,5})$/.exec(p || "");
     return m ? { unit: m[1], n: parseInt(m[2], 10) } : null;
   };
+  // 模板店 SKU：tpl_<id>（如 tpl_kaoyan_en）→ 发货 = 把模板 id 并进 app_metadata.telos_templates
+  const okTpl = (p) => (/^tpl_[a-z0-9_]{1,40}$/.test(p || "") ? p.slice(4).replace(/_/g, "-") : null);
   if (provider === "lemonsqueezy") {
     const name = evt?.meta?.event_name || "";
     const custom = evt?.meta?.custom_data || {};
@@ -1047,6 +1049,8 @@ function billingMapEvent(provider, evt) {
     if (!uid) return { uid: "", patch: null, name };
     if (name === "order_created") {
       if (pack) return { uid, name, pack };
+      const tpl = okTpl(String(custom.plan || ""));
+      if (tpl) return { uid, name, tpl };
       if (plan === "lifetime") return { uid, name, patch: { pro: true, plan, until: null } };
       return null; // 订阅的 order 由 subscription_* 事件负责
     }
@@ -1073,6 +1077,8 @@ function billingMapEvent(provider, evt) {
   const periodEnd = ms(obj.current_period_end_date || obj.subscription?.current_period_end_date);
   if (name === "checkout.completed") {
     if (pack) return { uid, name, pack };
+    const tpl = okTpl(String(meta.plan || ""));
+    if (tpl) return { uid, name, tpl };
     if (plan === "lifetime") return { uid, name, patch: { pro: true, plan, until: null } };
     return { uid, name, patch: { pro: true, plan, until: periodEnd } }; // 订阅后续由 subscription.* 修正
   }
@@ -1123,12 +1129,34 @@ async function billingWebhook(request, env) {
   }
   const r = billingMapEvent(provider, evt);
   if (!r) return json({ ok: true, skip: true }, 200, env); // 无关事件：直接 ACK
-  if (!r.uid || (!r.patch && !r.pack)) {
+  if (!r.uid || (!r.patch && !r.pack && !r.tpl)) {
     // 缺 user_id（如买家没经过我们带参的链接）：ACK 但记录，避免服务商无限重试
     console.warn("[billing] event without user_id:", r.name);
     return json({ ok: true, skip: "no user_id" }, 200, env);
   }
   try {
+    if (r.tpl) {
+      // 模板发货：读现有 telos_templates → 合并 → 写回（app_metadata 顶层键整体替换，须先读）
+      const ures = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(r.uid)}`, {
+        headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
+      });
+      if (!ures.ok) throw new Error(`admin get ${ures.status}`);
+      const u = await ures.json();
+      const cur = Array.isArray(u?.app_metadata?.telos_templates) ? u.app_metadata.telos_templates : [];
+      const next = cur.includes(r.tpl) ? cur : [...cur, r.tpl];
+      const pres = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(r.uid)}`, {
+        method: "PUT",
+        headers: {
+          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ app_metadata: { telos_templates: next } }),
+      });
+      if (!pres.ok) throw new Error(`admin put ${pres.status}`);
+      console.info("[billing]", r.name, "→", r.uid.slice(0, 8), `tpl ${r.tpl}`);
+      return json({ ok: true }, 200, env);
+    }
     if (r.pack) {
       // 加油包：充进 KV bonus（托管配额余额）。无 KV 绑定时记录并 ACK（不可重试修复，须人工补）。
       if (!env.TELOS_USAGE) {

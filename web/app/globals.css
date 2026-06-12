@@ -633,6 +633,37 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-limit .lt span{font-size:12.5px;line-height:1.55;color:var(--ink-2)}
 .ob-limit a{font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:2px}
 
+/* —— 官方模板店 —— */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:24px}
+.store-card{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line-soft);border-radius:18px;background:var(--card);padding:18px 18px 16px}
+.store-card-top{display:flex;align-items:baseline;gap:10px}
+.store-name{font:600 16.5px var(--sans);color:var(--ink);flex:1;min-width:0}
+.store-price{flex:none;font:600 13px var(--mono);color:var(--ink)}
+.store-price.free{background:var(--ink);color:var(--paper);border-radius:999px;padding:2px 10px;font-size:10.5px}
+.store-desc{font-size:13px;line-height:1.6;color:var(--ink-2)}
+.store-meta{display:flex;gap:12px;font:500 10.5px var(--mono);color:var(--ink-3);text-transform:uppercase;letter-spacing:.03em}
+.store-preview{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;background:none;border:0;cursor:pointer;font:600 12px var(--sans);color:var(--ink-2);padding:2px 0}
+.store-preview:hover{color:var(--ink)}
+.store-preview .ic{transition:transform .2s}
+.store-preview .ic.up{transform:rotate(180deg)}
+.store-outline{display:flex;flex-direction:column;gap:6px;border:1px dashed var(--line-soft);border-radius:12px;padding:11px 13px;background:var(--paper)}
+.store-mod{display:flex;align-items:center;gap:9px}
+.store-mod-i{font:600 9.5px var(--mono);color:var(--ink-3);flex:none}
+.store-mod-t{flex:1;min-width:0;font-size:12.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.store-mod-n{flex:none;font:500 10px var(--mono);color:var(--ink-3)}
+.store-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.store-btn{padding:10px 16px;font-size:13px}
+.store-soon{font:500 11.5px var(--mono);color:var(--ink-3)}
+.store-soon-link{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+/* 引导页模板店入口 */
+.ob-store{display:flex;align-items:center;gap:11px;border:1px solid var(--line-soft);border-radius:14px;background:var(--card);padding:12px 15px;text-decoration:none;color:inherit;transition:border-color .15s;margin-top:14px}
+.ob-store:hover{border-color:var(--ink)}
+.ob-store .os-ic{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1.4px solid var(--ink);border-radius:10px;background:var(--paper);color:var(--ink)}
+.ob-store .os-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ob-store .os-t b{font:600 13.5px var(--sans);color:var(--ink)}
+.ob-store .os-t span{font-size:12px;color:var(--ink-3)}
+.ob-store .os-go{flex:none;color:var(--ink-3)}
+
 /* —— 复习 v2（全屏）—— */
 .rv{flex:1;display:flex;flex-direction:column;align-items:center;padding:30px 22px 60px}
 .rv-in{width:100%;max-width:620px}
@@ -704,6 +735,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .me-proj-dot{width:7px;height:7px;border-radius:50%;background:var(--ink);display:inline-block;flex:none}
 .me-proj-del{flex:none;align-self:stretch;background:none;border:0;border-left:1px solid var(--line-soft);color:var(--ink-3);font-size:13px;cursor:pointer;padding:0 13px}
 .me-proj-del:hover{color:#b4453a;background:rgba(180,69,58,.06)}
+/* 完课证书按钮（项目 100% 完成时出现） */
+.me-proj-cert{flex:none;align-self:stretch;background:none;border:0;border-left:1px solid var(--line-soft);color:var(--ink);cursor:pointer;padding:0 12px}
+.me-proj-cert:hover{background:rgba(20,19,16,.05)}
 .me-2col{display:grid;grid-template-columns:1fr 320px;gap:34px;margin-top:32px}
 @media(max-width:760px){.me-2col{grid-template-columns:1fr;gap:26px}}
 .me-set{border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
