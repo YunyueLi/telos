@@ -17,6 +17,7 @@ import {
   refreshEntitlement,
   type Entitlement,
 } from "@/lib/telos/billing";
+import { fetchHostedUsage, type HostedUsage } from "@/lib/telos/derive";
 import { BILLING, billingConfigured, checkoutUrl, type Plan } from "@/lib/telos/billing-config";
 
 const PLANS: { key: Plan; nameKey: string; perKey: string }[] = [
@@ -35,6 +36,7 @@ export default function ProPage() {
   const [restoring, setRestoring] = useState(false);
   const [restoreMsg, setRestoreMsg] = useState<"" | "ok" | "no">("");
   const [confirming, setConfirming] = useState(false); // 支付回跳后的轮询确认
+  const [usage, setUsage] = useState<HostedUsage | null>(null); // 托管用量（登录 + 托管开通时显示）
   const pollRef = useRef<number>(0);
 
   const sync = () => {
@@ -49,6 +51,21 @@ export default function ProPage() {
     window.addEventListener(BILLING_EVENT, sync);
     return () => window.removeEventListener(BILLING_EVENT, sync);
   }, []);
+
+  // 托管用量（登录后查询；未开通/未登录返回 null 自动隐藏）
+  useEffect(() => {
+    if (!user) {
+      setUsage(null);
+      return;
+    }
+    let alive = true;
+    void fetchHostedUsage().then((u) => {
+      if (alive) setUsage(u);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user, pro]);
 
   // 支付成功回跳（?success=1）：轮询确认（webhook 写入通常几秒内到）
   useEffect(() => {
@@ -71,7 +88,7 @@ export default function ProPage() {
     return () => window.clearTimeout(pollRef.current);
   }, []);
 
-  const buy = (plan: Plan) => {
+  const buy = (plan: Plan | string) => {
     if (!user) {
       router.push("/account");
       return;
@@ -130,6 +147,52 @@ export default function ProPage() {
           </div>
         )}
 
+        {/* 托管用量（登录 + 托管开通时显示）：月度配额 / 试用余量 / 加油包余额 */}
+        {mounted && usage && (
+          <div className="me-sect">
+            <div className="me-sh">
+              <h3>{t("pro.usageTitle")}</h3>
+              <span className="pro-usage-sub">{usage.pro ? t("pro.usageMonth") : t("pro.usageTrial")}</span>
+            </div>
+            <div className="pro-usage">
+              {(
+                [
+                  ["d", t("pro.usageD")],
+                  ["l", t("pro.usageL")],
+                ] as ["d" | "l", string][]
+              ).map(([u, label]) => {
+                const used = usage.pro ? usage.month[u] : usage.trial[u];
+                const quota = usage.quota[u];
+                const pct = quota ? Math.min(100, Math.round((used / quota) * 100)) : 0;
+                return (
+                  <div key={u} className="pro-usage-row">
+                    <span className="pu-label">{label}</span>
+                    <span className="pu-track">
+                      <i style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className="pu-num">
+                      {used}/{quota}
+                      {usage.bonus[u] > 0 && <i className="pu-bonus">+{usage.bonus[u]}</i>}
+                    </span>
+                  </div>
+                );
+              })}
+              {usage.bonus.d + usage.bonus.l > 0 && <p className="pu-note">{t("pro.usageBonus")}</p>}
+              {BILLING.packs.some((p) => p.url) && (
+                <div className="pu-packs">
+                  {BILLING.packs
+                    .filter((p) => p.url)
+                    .map((p) => (
+                      <button key={p.sku} className="btn btn-line pu-pack" onClick={() => buy(p.sku)}>
+                        {p.unit === "d" ? t("pro.usageD") : t("pro.usageL")} {p.label} · {p.price}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 定价 */}
         {mounted && !pro && (
           <div className="me-sect">
@@ -153,6 +216,7 @@ export default function ProPage() {
                     >
                       {user ? t("pro.choose") : t("pro.goLogin")}
                     </button>
+                    {p.key === "lifetime" && <p className="pro-life-note">{t("pro.lifeNote")}</p>}
                   </div>
                 );
               })}
@@ -176,6 +240,7 @@ export default function ProPage() {
           <div className="pro-perks">
             {(
               [
+                ["pro.perkHosted", "pro.perkHostedD", { d: BILLING.hosted.proDerives, l: BILLING.hosted.proLessons }],
                 ["pro.perkProjects", "pro.perkProjectsD", { n: BILLING.freeProjectLimit }],
                 ["pro.perkExport", "pro.perkExportD", undefined],
                 ["pro.perkFuture", "pro.perkFutureD", undefined],
