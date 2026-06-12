@@ -71,7 +71,7 @@ function highlight(text: string, q: string): React.ReactNode {
 export function ProjectSwitcher() {
   const { t, lang } = useT();
   const router = useRouter();
-  const { projects, project, switchProject, startNew } = useProject();
+  const { projects, project, switchProject, startNew, cancelNew } = useProject();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
@@ -183,12 +183,13 @@ export function ProjectSwitcher() {
   const choose = useCallback(
     (p: Project) => {
       if (p.id !== project?.id) switchProject(p.id);
+      else cancelNew(); // 点的是当前项目：退出「新学习」态（首页默认新学习后，这样才直达它的地图）
       setOpen(false);
       setQuery("");
       setFilter("all");
       router.push("/");
     },
-    [project?.id, switchProject, router],
+    [project?.id, switchProject, cancelNew, router],
   );
 
   const onNew = useCallback(() => {

@@ -1,7 +1,8 @@
 "use client";
 
-// 入口 = 真实产品。无项目 → 全屏目标引导；有项目 → 地图主页（map = home）。
-// 节点 → 详情 sheet → 开始学习（分步微课全屏接管）。所有数据来自 useProject 单一真相源。
+// 入口 = 真实产品。默认打开 = 「新学习」目标引导（ChatGPT 式，composing 初始 true）；
+// 点「地图」Tab / 切换项目 / 倒推完成 → 地图主页。节点 → 详情 sheet → 开始学习（分步微课全屏接管）。
+// 所有数据来自 useProject 单一真相源。
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

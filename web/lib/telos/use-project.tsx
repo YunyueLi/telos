@@ -97,7 +97,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActive] = useState<string | null>(null);
-  const [composing, setComposing] = useState(false);
+  // 默认 true：打开首页先看到「新学习」目标输入（ChatGPT 式）；点「地图」Tab / 切换项目 / 倒推完成则进入地图。
+  const [composing, setComposing] = useState(true);
   const [dailyVersion, setDailyVersion] = useState(0); // 每次学习/改目标自增 → 重算每日信息
   const [goalNonce, setGoalNonce] = useState(0); // 刚达成今日目标 → 触发庆祝
   const [deriving, setDeriving] = useState(false);
