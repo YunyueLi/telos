@@ -135,6 +135,68 @@ export function cleanBaseUrl(raw?: string): string | undefined {
 export function directMode(): boolean {
   return keyActive() && hasLlmKey();
 }
+
+// ---- 托管模式（开箱即用 · 商业化主引擎）：无 BYOK 的登录用户 → Worker 用服务端 key 代为推理，----
+// 按账号计量（Free 试用 / Pro 月度配额 / 加油包）。身份 = Supabase access_token（auth.tsx 随会话注入）。
+let _hostedToken: string | null = null;
+export function setHostedToken(token: string | null): void {
+  const t = (token || "").trim() || null;
+  if (t === _hostedToken) return;
+  _hostedToken = t;
+  try {
+    window.dispatchEvent(new Event(LLM_EVENT)); // 登录态变化 → 引擎就绪状态变化，通知 UI 重判
+  } catch {
+    /* SSR/早期调用 */
+  }
+}
+function isLocalUrl(url: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|\/|$)/i.test(url);
+}
+// 托管就绪：配了端点且（本地 serve.py 不验身份 / 线上 Worker 需已登录携 token）。
+export function hostedReady(): boolean {
+  const url = getDeriveUrl();
+  if (!url) return false;
+  return isLocalUrl(url) || !!_hostedToken;
+}
+// 托管用量查询（/pro 页用量条）：未登录/未配端点/托管未开 → null。
+export interface HostedUsage {
+  pro: boolean;
+  month: { d: number; l: number };
+  trial: { d: number; l: number };
+  bonus: { d: number; l: number };
+  quota: { d: number; l: number };
+}
+export async function fetchHostedUsage(): Promise<HostedUsage | null> {
+  const url = getDeriveUrl();
+  if (!url || !_hostedToken) return null;
+  try {
+    const base = url.replace(/\/(derive|lesson|probe|title)\/?$/, "");
+    const res = await fetch(`${base}/billing/usage`, {
+      headers: { Authorization: `Bearer ${_hostedToken}` },
+    });
+    if (!res.ok) return null;
+    const d = (await res.json()) as HostedUsage & { ok?: boolean };
+    return d && d.quota ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+// 托管错误码 → 本地化文案（Worker 返回 {error:"<code>"}）。未识别返回 null 由调用方走通用错误。
+function hostedErrorMessage(code: unknown): string | null {
+  switch (String(code || "")) {
+    case "NEED_LOGIN":
+      return tStatic("err.needLogin");
+    case "HOSTED_TRIAL_USED":
+      return tStatic("err.trialUsed");
+    case "HOSTED_QUOTA":
+      return tStatic("err.hostedQuota");
+    case "NO_HOSTED":
+      return tStatic("err.noHosted");
+    default:
+      return null;
+  }
+}
 function directCfg(): DirectCfg {
   const c = getLlmConfig();
   return {
@@ -145,9 +207,9 @@ function directCfg(): DirectCfg {
     searchKey: (c.searchKey || "").trim() || undefined,
   };
 }
-// 引擎是否就绪（供 UI 门控）：直连(本机有 key) 或 配了倒推端点(Worker/serve.py)。
+// 引擎是否就绪（供 UI 门控）：直连(本机有 key·BYOK) 或 托管(登录即用 / 本地 serve.py)。
 export function engineReady(): boolean {
-  return directMode() || !!getDeriveUrl();
+  return directMode() || hostedReady();
 }
 
 // 一次性清理：生产页（非 localhost）若残留指向 localhost 的 `telos:derive-url` 覆盖（早期本地调试遗留），
@@ -161,16 +223,19 @@ export function cleanupStaleEndpointOverride(): void {
 }
 
 // 把用户自带配置拼成请求头（随每次倒推/微课/诊断调用发出）。
+// 无 BYOK key 时附 Supabase token → Worker 走「托管模式」（服务端 key + 按账号计量）。
 function llmHeaders(): Record<string, string> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (!_keyActive) return h; // 休眠（云端已配置但未登录）→ 不发自带配置 → 服务端无 key → 未连接（本机 key 保留）
-  const c = getLlmConfig();
-  if (c.key && c.key.trim()) h["X-Telos-Key"] = c.key.trim();
-  const base = cleanBaseUrl(c.base); // 只发合法 base，过滤掉如 "DeepSeek" 这类残留的非法值
-  if (base) h["X-Telos-Base"] = base;
-  if (c.model && c.model.trim()) h["X-Telos-Model"] = c.model.trim();
-  if (c.searchProvider && c.searchProvider.trim()) h["X-Telos-Search-Provider"] = c.searchProvider.trim();
-  if (c.searchKey && c.searchKey.trim()) h["X-Telos-Search-Key"] = c.searchKey.trim();
+  if (_keyActive) {
+    const c = getLlmConfig();
+    if (c.key && c.key.trim()) h["X-Telos-Key"] = c.key.trim();
+    const base = cleanBaseUrl(c.base); // 只发合法 base，过滤掉如 "DeepSeek" 这类残留的非法值
+    if (base) h["X-Telos-Base"] = base;
+    if (c.model && c.model.trim()) h["X-Telos-Model"] = c.model.trim();
+    if (c.searchProvider && c.searchProvider.trim()) h["X-Telos-Search-Provider"] = c.searchProvider.trim();
+    if (c.searchKey && c.searchKey.trim()) h["X-Telos-Search-Key"] = c.searchKey.trim();
+  }
+  if (!h["X-Telos-Key"] && _hostedToken) h["Authorization"] = `Bearer ${_hostedToken}`;
   return h;
 }
 
@@ -291,7 +356,8 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
     throw new Error(tStatic("err.cantReachDerive"));
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
+  if (!res.ok)
+    throw new Error(hostedErrorMessage(data.error) || String(data.error || tStatic("err.httpStatus", { status: res.status })));
   const points = data.points;
   if (!Array.isArray(points) || points.length === 0) throw new Error(tStatic("err.noPoints"));
   return {
@@ -391,7 +457,8 @@ export async function generateLesson(
     throw new Error(tStatic("err.cantReachLesson"));
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
+  if (!res.ok)
+    throw new Error(hostedErrorMessage(data.error) || String(data.error || tStatic("err.httpStatus", { status: res.status })));
   return finalizeLesson(data);
 }
 
@@ -470,6 +537,7 @@ export async function generateProbes(
     throw new Error(tStatic("err.cantReachProbe"));
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(data.error || tStatic("err.httpStatus", { status: res.status })));
+  if (!res.ok)
+    throw new Error(hostedErrorMessage(data.error) || String(data.error || tStatic("err.httpStatus", { status: res.status })));
   return finalizeProbes(data);
 }

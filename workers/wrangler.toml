@@ -2,6 +2,14 @@ name = "telos-derive"
 main = "derive.js"
 compatibility_date = "2024-11-01"
 
+# ── 托管 AI 用量表（KV）──
+# 开通托管模式（用户登录即用、按账号计量）需要这个 KV：
+#   npx wrangler kv namespace create TELOS_USAGE
+# 把命令输出的 id 填到下面并取消注释；不配置则托管模式自动关闭（NO_HOSTED），BYOK 不受影响。
+# [[kv_namespaces]]
+# binding = "TELOS_USAGE"
+# id = "<paste-id-here>"
+
 # 非敏感默认值（可改）。API key 不放这里——用 `wrangler secret put TELOS_LLM_API_KEY` 设置。
 [vars]
 TELOS_LLM_BASE_URL = "https://api.deepseek.com"
@@ -18,3 +26,10 @@ BILLING_PROVIDER = "creem"
 #   npx wrangler secret put BILLING_WEBHOOK_SECRET     ← 服务商 webhook 签名密钥
 #   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY  ← Supabase service_role（写 app_metadata 用）
 SUPABASE_URL = "https://gbvetfyudlbdiydapipr.supabase.co"
+# Supabase publishable/anon key（公开值，验证用户 token 用——托管模式身份校验）
+SUPABASE_ANON_KEY = "sb_publishable_1wSDq-mSXJMhJ9gppIx7gg_S8Ta--6G"
+# ── 托管配额（可调）──：Pro 月度 / Free 试用(账号总量)。d=倒推 l=微课·出题
+HOSTED_PRO_DERIVES = "30"
+HOSTED_PRO_LESSONS = "600"
+HOSTED_TRIAL_DERIVES = "3"
+HOSTED_TRIAL_LESSONS = "60"

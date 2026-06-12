@@ -22,15 +22,28 @@ export const BILLING = {
   } as Record<Plan, { url: string; price: string; save: string }>,
   // 用户自助管理/取消订阅（customer portal）
   manageUrl: "",
+  // 托管 AI 配额（展示用——真源在 workers/wrangler.toml 的 HOSTED_* vars，两处保持一致）
+  hosted: {
+    proDerives: 30,
+    proLessons: 600,
+    trialDerives: 3,
+    trialLessons: 60,
+  },
+  // 加油包（创建产品后填 checkout 链接；plan 传 pack_d10 / pack_l200 这类 SKU 码，webhook 自动充值）
+  packs: [
+    { sku: "pack_d10", price: "$1.9", label: "+10", unit: "d" as const, url: "" },
+    { sku: "pack_l200", price: "$1.9", label: "+200", unit: "l" as const, url: "" },
+  ],
 };
 
 export function billingConfigured(): boolean {
   return Boolean(BILLING.plans.monthly.url || BILLING.plans.yearly.url || BILLING.plans.lifetime.url);
 }
 
-// 收银台链接：带上 user_id + plan（webhook 回传后据此定位账号与方案）与预填邮箱。
-export function checkoutUrl(plan: Plan, uid: string, email?: string): string {
-  const base = BILLING.plans[plan]?.url || "";
+// 收银台链接：带上 user_id + plan/SKU（webhook 回传后据此定位账号与方案；pack_* 走加油包充值）与预填邮箱。
+export function checkoutUrl(plan: Plan | string, uid: string, email?: string): string {
+  const base =
+    BILLING.plans[plan as Plan]?.url || BILLING.packs.find((p) => p.sku === plan)?.url || "";
   if (!base) return "";
   const u = new URL(base);
   if (BILLING.provider === "lemonsqueezy") {

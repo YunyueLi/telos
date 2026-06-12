@@ -13,7 +13,8 @@
 - `core/` — 学习引擎，Python 零依赖（KST · BKT+CBM 诊断 · FIRe · FSRS · LLM 倒推）。`serve.py` = 本地 CORS 代理（读 `core/.env` 的 key，跑 127.0.0.1:8787，路由 `/derive` `/lesson` `/probe`）。
 - `web/` — 产品，Next.js 16 + React 19 + Tailwind v4 + TS，**静态导出**（`output:export`，prod `basePath=/telos/app`）。GitHub Pages 部署：landing 在 `/telos/`，app 在 `/telos/app/`。
 - `workers/` — 生产用 Cloudflare Worker 代理（镜像 serve.py）+ **付费 webhook `/billing/webhook`**（验签后用 service_role 写 Supabase `app_metadata.telos_pro`；service_role/webhook secret 只存 wrangler secret，绝不进前端/仓库）。
-- **付费（Telos Pro）**：配置单点 `web/lib/telos/billing-config.ts`（服务商/价格/checkout/限额）；权益 `web/lib/telos/billing.ts`（`isPro()`/`refreshEntitlement()`，真源=app_metadata）；免费=3 项目+水印导出，Pro=无限+无水印。定价页 `/pro`。
+- **付费（Telos Pro）**：配置单点 `web/lib/telos/billing-config.ts`（服务商/价格/checkout/限额/托管配额/加油包）；权益 `web/lib/telos/billing.ts`（`isPro()`/`refreshEntitlement()`，真源=app_metadata）。免费=BYOK 无限+托管试用 3 次+3 项目+水印导出；Pro=托管 AI 月度配额（30 倒推+600 微课）+无限项目+无水印+Anki 导出。定价页 `/pro`。
+- **托管 AI**：无 BYOK 的请求带 Supabase token → Worker `hostedGate` 验身份 + KV(`TELOS_USAGE`) 计量（月度/试用/加油包 `pack_d10|pack_l200`）；BYOK 请求旁路计量零成本。错误码 NEED_LOGIN/HOSTED_TRIAL_USED/HOSTED_QUOTA/NO_HOSTED 前端本地化。买断(lifetime)**不含**托管用量。
 - **设计基准 = 实际 App（`/telos/app/`，即 `web/`）**，所有产品视觉/品牌/图标以它为准。`landing/index.html` **已过时**，勿再当基准；待重写以对齐 App（见 HANDOFF P2）。
 
 ## web 关键

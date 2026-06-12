@@ -5,6 +5,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { cloudConfigured, supabase } from "./supabase";
+import { setHostedToken } from "./derive";
 import { BASE } from "@/lib/base";
 
 export type OAuthProvider = "google" | "github";
@@ -45,10 +46,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sb.auth.getSession().then(({ data }) => {
       if (!alive) return;
       setSession(data.session);
+      setHostedToken(data.session?.access_token ?? null); // 托管模式身份（无 BYOK 时随请求发 Worker）
       setReady(true);
     });
     const { data: sub } = sb.auth.onAuthStateChange((_e, s) => {
-      if (alive) setSession(s);
+      if (!alive) return;
+      setSession(s);
+      setHostedToken(s?.access_token ?? null);
     });
     return () => {
       alive = false;

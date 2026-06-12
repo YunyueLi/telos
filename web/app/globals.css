@@ -268,10 +268,12 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-dots > i:nth-child(2){animation-delay:.18s}
 .ob-dots > i:nth-child(3){animation-delay:.36s}
 @keyframes obDot{0%,70%,100%{opacity:.22;transform:translateY(0)}35%{opacity:1;transform:translateY(-1px)}}
-/* 欢迎页：未配置端点时的轻提示（取代内嵌配置面板） */
+/* 欢迎页：引擎未就绪时的入口行——主推「登录免费试用」（托管），次选「自带 key」 */
+.ob-cfgrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ob-cfglink{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;text-decoration:none;background:var(--card)}
 .ob-cfglink:hover{border-color:var(--ink);color:var(--ink)}
 .ob-cfglink .ic{width:12px;height:12px}
+.ob-cfglink-primary{border:1.5px solid var(--ink);color:var(--ink);font-weight:600}
 /* 设置页：语言按钮组 */
 .set-langs{display:flex;flex-wrap:wrap;gap:8px}
 .set-lang{font:500 13px var(--sans);color:var(--ink-2);background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;cursor:pointer}
@@ -601,6 +603,19 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .pro-qa p{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
 .pro-restore{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:26px}
 .pro-restore-msg{font:500 12px var(--mono);color:var(--ink-2);text-align:center}
+/* 托管用量条 */
+.pro-usage-sub{margin-left:auto;font:500 10.5px var(--mono);color:var(--ink-3)}
+.pro-usage{display:flex;flex-direction:column;gap:11px;border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:16px 18px}
+.pro-usage-row{display:flex;align-items:center;gap:12px}
+.pu-label{flex:none;width:96px;font:600 12px var(--sans);color:var(--ink-2)}
+.pu-track{flex:1;height:6px;border-radius:999px;background:var(--hatch);overflow:hidden}
+.pu-track i{display:block;height:100%;background:var(--ink);border-radius:999px;transition:width .4s ease}
+.pu-num{flex:none;min-width:64px;text-align:right;font:600 11.5px var(--mono);color:var(--ink-2)}
+.pu-bonus{font-style:normal;color:var(--ink-3);margin-left:4px}
+.pu-note{font:500 10.5px var(--mono);color:var(--ink-3)}
+.pu-packs{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.pu-pack{padding:8px 13px;font-size:12px}
+.pro-life-note{font-size:11.5px;line-height:1.5;color:var(--ink-3);margin-top:8px}
 /* 设置页 Pro 卡 */
 .set-pro{display:flex;align-items:center;gap:13px;border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:15px 17px;text-decoration:none;color:inherit;transition:border-color .15s}
 .set-pro:hover{border-color:var(--ink)}

@@ -15,6 +15,8 @@ import PathView from "@/components/path-view";
 // 引用的旧 chunk 已 404 → 地图永远停在「加载地图…」，需再刷新才好。静态导入后页面 JS 能起，地图必能起。
 import DeriveCanvas from "@/components/canvas";
 import { useProject } from "@/lib/telos/use-project";
+import { useAuth } from "@/lib/telos/auth";
+import { cloudConfigured } from "@/lib/telos/supabase";
 import { domainLabel } from "@/lib/telos/engine";
 import { engineReady, LLM_EVENT } from "@/lib/telos/derive";
 import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
@@ -102,6 +104,7 @@ function Onboarding({
   projectCount: number;
 }) {
   const { t } = useT();
+  const { user } = useAuth();
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
   const [cfgUrl, setCfgUrl] = useState("");
@@ -263,10 +266,19 @@ function Onboarding({
       </div>
 
       {mounted && !cfgUrl && (
-        <Link href="/settings" className="ob-cfglink">
-          <span className="dot dot-off" /> {t("ob.cfgNeed")}
-          <Icon name="arrow" style={{ width: 12, height: 12 }} />
-        </Link>
+        <div className="ob-cfgrow">
+          {cloudConfigured() && !user && (
+            // 引擎未就绪且未登录：主推「登录免费试用」（托管 AI，无需配 key——商业化主入口）
+            <Link href="/account" className="ob-cfglink ob-cfglink-primary">
+              <Icon name="spark" style={{ width: 12, height: 12 }} /> {t("ob.tryHosted")}
+              <Icon name="arrow" style={{ width: 12, height: 12 }} />
+            </Link>
+          )}
+          <Link href="/settings" className="ob-cfglink">
+            <span className="dot dot-off" /> {t("ob.cfgNeed")}
+            <Icon name="arrow" style={{ width: 12, height: 12 }} />
+          </Link>
+        </div>
       )}
     </div>
   );

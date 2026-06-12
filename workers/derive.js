@@ -878,6 +878,126 @@ async function probes(body, env) {
   return { probes: out };
 }
 
+// ════════════════ 托管 AI（开箱即用）：身份 + 配额计量 ════════════════
+// 商业模型：BYOK（请求带 X-Telos-Key）→ 直接放行、不计量（用户用自己的 key，我们零成本）；
+// 无 BYOK → 「托管模式」：用服务端 key 代为推理，按账号计量——Free 试用(总量) / Pro 月度配额 / 加油包(bonus)。
+// 依赖：TELOS_USAGE (KV 绑定) + SUPABASE_ANON_KEY (验 token 用，公开值)。缺任一 → 托管关闭(NO_HOSTED)。
+// 计量单位：d=倒推次数（重操作）；l=微课/出题次数（轻操作）。title 不计量（随倒推的小请求）。
+
+function hostedEnabled(env) {
+  return !!(env.TELOS_LLM_API_KEY && env.TELOS_USAGE && env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
+}
+
+// 验证 Supabase access_token → { id, pro }；无效返回 null。
+async function verifyUser(env, token) {
+  if (!token) return null;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const u = await res.json();
+    if (!u || !u.id) return null;
+    const m = u.app_metadata || {};
+    const until = m.telos_pro_until;
+    const t = until == null || until === "" ? null : typeof until === "number" ? until : Date.parse(String(until));
+    const pro = m.telos_pro === true && (t == null || t > Date.now());
+    return { id: u.id, pro };
+  } catch {
+    return null;
+  }
+}
+
+const monthKey = () => {
+  const d = new Date();
+  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+};
+const readJson = async (kv, key) => {
+  try {
+    return (await kv.get(key, "json")) || {};
+  } catch {
+    return {};
+  }
+};
+
+function hostedQuotas(env) {
+  const n = (v, d) => {
+    const x = parseInt(String(v ?? ""), 10);
+    return Number.isFinite(x) && x >= 0 ? x : d;
+  };
+  return {
+    pro: { d: n(env.HOSTED_PRO_DERIVES, 30), l: n(env.HOSTED_PRO_LESSONS, 600) },
+    trial: { d: n(env.HOSTED_TRIAL_DERIVES, 3), l: n(env.HOSTED_TRIAL_LESSONS, 60) },
+  };
+}
+
+// 托管门禁：unit ∈ "d"|"l"|null(不计量)。通过 → {user, commit()}；拒绝 → {deny: Response}。
+async function hostedGate(request, env, unit) {
+  if (!hostedEnabled(env)) return { deny: json({ error: "NO_HOSTED" }, 503, env) };
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const user = await verifyUser(env, token);
+  if (!user) return { deny: json({ error: "NEED_LOGIN" }, 401, env) };
+  if (!unit) return { user, commit: async () => {} };
+  const kv = env.TELOS_USAGE;
+  const q = hostedQuotas(env);
+  const mk = `u:${user.id}:${monthKey()}`;
+  const tk = `t:${user.id}`;
+  const bk = `b:${user.id}`;
+  const [month, trial, bonus] = await Promise.all([readJson(kv, mk), readJson(kv, tk), readJson(kv, bk)]);
+  const used = (o) => ({ d: o.d || 0, l: o.l || 0 });
+  const m = used(month);
+  const t = used(trial);
+  const b = used(bonus); // bonus = 剩余可用（充值进、消耗减）
+  let commit;
+  if (user.pro) {
+    if (m[unit] < q.pro[unit]) {
+      commit = async () => kv.put(mk, JSON.stringify({ ...m, [unit]: m[unit] + 1 }), { expirationTtl: 60 * 60 * 24 * 62 });
+    } else if (b[unit] > 0) {
+      commit = async () => kv.put(bk, JSON.stringify({ ...b, [unit]: b[unit] - 1 }));
+    } else {
+      return { deny: json({ error: "HOSTED_QUOTA", used: m[unit], quota: q.pro[unit] }, 429, env) };
+    }
+  } else {
+    if (t[unit] < q.trial[unit]) {
+      commit = async () => kv.put(tk, JSON.stringify({ ...t, [unit]: t[unit] + 1 }));
+    } else if (b[unit] > 0) {
+      commit = async () => kv.put(bk, JSON.stringify({ ...b, [unit]: b[unit] - 1 }));
+    } else {
+      return { deny: json({ error: "HOSTED_TRIAL_USED", used: t[unit], quota: q.trial[unit] }, 402, env) };
+    }
+  }
+  return { user, commit };
+}
+
+// 用量查询（/billing/usage）：给 /pro 页画用量条。
+async function hostedUsage(request, env) {
+  if (!hostedEnabled(env)) return json({ error: "NO_HOSTED" }, 503, env);
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const user = await verifyUser(env, token);
+  if (!user) return json({ error: "NEED_LOGIN" }, 401, env);
+  const kv = env.TELOS_USAGE;
+  const q = hostedQuotas(env);
+  const [month, trial, bonus] = await Promise.all([
+    readJson(kv, `u:${user.id}:${monthKey()}`),
+    readJson(kv, `t:${user.id}`),
+    readJson(kv, `b:${user.id}`),
+  ]);
+  return json(
+    {
+      ok: true,
+      pro: user.pro,
+      month: { d: month.d || 0, l: month.l || 0 },
+      trial: { d: trial.d || 0, l: trial.l || 0 },
+      bonus: { d: bonus.d || 0, l: bonus.l || 0 },
+      quota: user.pro ? q.pro : q.trial,
+    },
+    200,
+    env,
+  );
+}
+
 // ════════════════ Telos Pro 计费 webhook ════════════════
 // 支付服务商(MoR) → 本端点（验 HMAC 签名）→ 用 service_role 把权益写进 Supabase app_metadata。
 // app_metadata 用户不可自改（区别于 user_metadata），前端 billing.ts 读它解锁 Pro。
@@ -909,17 +1029,24 @@ const ms = (v) => {
   return Number.isFinite(t) ? t : null;
 };
 
-// 事件 → 权益变更。返回 { uid, patch } 或 null（与本系统无关的事件直接 ACK）。
+// 事件 → 权益变更。返回 { uid, patch } / { uid, pack }（加油包）/ null（无关事件直接 ACK）。
+// 加油包 SKU 约定：checkout 链接的 plan 传 `pack_d10`（10 次倒推）/ `pack_l200`（200 次微课）→ 充进 KV bonus。
 function billingMapEvent(provider, evt) {
   const okPlan = (p) => (["monthly", "yearly", "lifetime"].includes(p) ? p : null);
+  const okPack = (p) => {
+    const m = /^pack_([dl])(\d{1,5})$/.exec(p || "");
+    return m ? { unit: m[1], n: parseInt(m[2], 10) } : null;
+  };
   if (provider === "lemonsqueezy") {
     const name = evt?.meta?.event_name || "";
     const custom = evt?.meta?.custom_data || {};
     const uid = String(custom.user_id || "").trim();
     const plan = okPlan(String(custom.plan || ""));
+    const pack = okPack(String(custom.plan || ""));
     const a = evt?.data?.attributes || {};
     if (!uid) return { uid: "", patch: null, name };
     if (name === "order_created") {
+      if (pack) return { uid, name, pack };
       if (plan === "lifetime") return { uid, name, patch: { pro: true, plan, until: null } };
       return null; // 订阅的 order 由 subscription_* 事件负责
     }
@@ -941,9 +1068,11 @@ function billingMapEvent(provider, evt) {
   const meta = obj.metadata || obj.subscription?.metadata || obj.order?.metadata || {};
   const uid = String(meta.user_id || "").trim();
   const plan = okPlan(String(meta.plan || ""));
+  const pack = okPack(String(meta.plan || ""));
   if (!uid) return { uid: "", patch: null, name };
   const periodEnd = ms(obj.current_period_end_date || obj.subscription?.current_period_end_date);
   if (name === "checkout.completed") {
+    if (pack) return { uid, name, pack };
     if (plan === "lifetime") return { uid, name, patch: { pro: true, plan, until: null } };
     return { uid, name, patch: { pro: true, plan, until: periodEnd } }; // 订阅后续由 subscription.* 修正
   }
@@ -994,12 +1123,25 @@ async function billingWebhook(request, env) {
   }
   const r = billingMapEvent(provider, evt);
   if (!r) return json({ ok: true, skip: true }, 200, env); // 无关事件：直接 ACK
-  if (!r.uid || !r.patch) {
+  if (!r.uid || (!r.patch && !r.pack)) {
     // 缺 user_id（如买家没经过我们带参的链接）：ACK 但记录，避免服务商无限重试
     console.warn("[billing] event without user_id:", r.name);
     return json({ ok: true, skip: "no user_id" }, 200, env);
   }
   try {
+    if (r.pack) {
+      // 加油包：充进 KV bonus（托管配额余额）。无 KV 绑定时记录并 ACK（不可重试修复，须人工补）。
+      if (!env.TELOS_USAGE) {
+        console.error("[billing] pack purchased but TELOS_USAGE KV missing:", r.uid.slice(0, 8), r.pack);
+        return json({ ok: true, skip: "no kv" }, 200, env);
+      }
+      const bk = `b:${r.uid}`;
+      const cur = (await env.TELOS_USAGE.get(bk, "json")) || {};
+      const next = { ...cur, [r.pack.unit]: (cur[r.pack.unit] || 0) + r.pack.n };
+      await env.TELOS_USAGE.put(bk, JSON.stringify(next));
+      console.info("[billing]", r.name, "→", r.uid.slice(0, 8), `pack +${r.pack.n}${r.pack.unit}`);
+      return json({ ok: true }, 200, env);
+    }
     await billingPatchUser(env, r.uid, r.patch);
     console.info("[billing]", r.name, "→", r.uid.slice(0, 8), r.patch.pro ? `pro(${r.patch.plan})` : "off");
     return json({ ok: true }, 200, env);
@@ -1024,12 +1166,28 @@ export default {
         {
           ok: true,
           available: !!eenv.TELOS_LLM_API_KEY,
+          hosted: hostedEnabled(env), // 托管模式（登录即用、按账号计量）是否开启
           model: eenv.TELOS_LLM_MODEL || "deepseek-v4-pro",
           search: { provider: sc.provider, available: sc.provider !== "none" && !!sc.key },
         },
         200,
         env,
       );
+    }
+    if (request.method === "GET" && path === "/billing/usage") {
+      return hostedUsage(request, env);
+    }
+    // 托管门禁：BYOK 请求（带 X-Telos-Key）原样放行不计量；否则验账号 + 扣配额。
+    // gate.commit() 在推理成功后调用——失败的请求不扣次数。
+    let hostedCommit = null;
+    if (request.method === "POST" && ["/derive", "/lesson", "/probe", "/title"].includes(path)) {
+      const byok = !!(request.headers.get("X-Telos-Key") || "").trim();
+      if (!byok) {
+        const unit = path === "/derive" ? "d" : path === "/title" ? null : "l";
+        const gate = await hostedGate(request, env, unit);
+        if (gate.deny) return gate.deny;
+        hostedCommit = gate.commit;
+      }
     }
     if (request.method === "POST" && path === "/billing/webhook") {
       return billingWebhook(request, env); // 支付服务商回调（验签在内部）
@@ -1048,7 +1206,9 @@ export default {
       if (goal.length > 200) return json({ error: "goal 过长" }, 400, env);
       if (!eenv.TELOS_LLM_API_KEY) return json({ error: "NO_KEY" }, 401, env);
       try {
-        return json(await derive(goal, eenv, lang), 200, env);
+        const out = await derive(goal, eenv, lang);
+        if (hostedCommit) await hostedCommit(); // 成功才扣配额
+        return json(out, 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }
@@ -1061,7 +1221,9 @@ export default {
         return json({ error: "请求体需为 JSON" }, 400, env);
       }
       try {
-        return json(await lesson(body, eenv), 200, env);
+        const out = await lesson(body, eenv);
+        if (hostedCommit) await hostedCommit();
+        return json(out, 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }
@@ -1085,7 +1247,9 @@ export default {
         return json({ error: "请求体需为 JSON" }, 400, env);
       }
       try {
-        return json(await probes(body, eenv), 200, env);
+        const out = await probes(body, eenv);
+        if (hostedCommit) await hostedCommit();
+        return json(out, 200, env);
       } catch (e) {
         return json({ error: String(e.message || e) }, 502, env);
       }

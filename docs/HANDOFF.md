@@ -98,6 +98,8 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
   - 免费 vs Pro：免费=3 项目 + 带水印导出；Pro=无限项目 + 无水印导出（`map-export.ts` 按 `watermark:!isPro()`）+ 未来 Pro 功能。
   - UI：`/pro` 定价页（登录→checkout 带 `user_id+plan`→回跳 `?success=1` 轮询确认；恢复购买=refreshEntitlement）；设置页 Pro 卡；导出菜单「去水印·Pro」；onboarding 超限提示卡 + `use-project.derive()` 硬校验。
   - 调试：本机 `localStorage.telos:pro=1` 强制 Pro（仅本机展示）；正式权益以 app_metadata 为准。
+  - **托管 AI（开箱即用）**：无 BYOK 的请求（不带 `X-Telos-Key`）→ Worker `hostedGate` 验 Supabase token（`/auth/v1/user`）→ 配额（KV `TELOS_USAGE`：`u:<uid>:<YYYYMM>` 月度 / `t:<uid>` 试用总量 / `b:<uid>` 加油包余额；vars `HOSTED_*` 可调：Pro 30 倒推+600 微课/月，试用 3+60）→ 成功才 `commit()` 扣次。错误码 NEED_LOGIN/HOSTED_TRIAL_USED/HOSTED_QUOTA/NO_HOSTED → 前端 `derive.ts hostedErrorMessage` 本地化。客户端：`auth.tsx` 随会话 `setHostedToken`，`llmHeaders` 无 BYOK 时带 Bearer；`engineReady = directMode || hostedReady`；`/billing/usage` 给 /pro 用量条。加油包 SKU `pack_d10`/`pack_l200`（checkout plan 传值，webhook 充 KV bonus）。BYOK 请求完全旁路计量（零成本路径不变）。
+  - **Anki 导出（Pro）**：`lib/telos/anki-export.ts` 官方文本导入格式（#separator/#html/#tags 文件头），正面=能力、背面=desc+怎么练+达标线、标签=telos+阶段；导出菜单 Pro 显示下载、免费显示 `· Pro` 引导。
 
 ## 6. 坑（必读）
 
@@ -124,7 +126,8 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 | 5 | 跨设备连胜/激励同步（`user_meta` 或 user_metadata） | P2 | 我（可仿 BYOK 同步做） | 可选；连胜目前仅本地 |
 | 6 | 文档继续扫（STRATEGY/ROADMAP 过时项） | P2 | **我（可独立）** | README/DERIVE 本程已扫 |
 | 7 | Supabase 邮件模板本地化 · README 截图GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 |
-| 8 | **开通付费（Telos Pro）** | P1 | **用户外部动作** | 代码全就绪（webhook/权益/定价页/水印/项目上限）。剩：① 注册支付服务商(MoR)并建 3 个产品（月/年/买断）；② 把 3 个 checkout 链接 + customer portal 链接填进 `web/lib/telos/billing-config.ts`；③ 服务商后台 webhook 指到 `https://<worker>.workers.dev/billing/webhook`；④ `cd workers && npx wrangler secret put BILLING_WEBHOOK_SECRET && npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY && npx wrangler deploy`；⑤ 沙盒买一单验证 `/pro` 自动解锁 |
+| 8 | **开通付费（Telos Pro）** | P1 | **用户外部动作** | 代码全就绪（webhook/权益/定价页/水印/项目上限）。剩：① 注册支付服务商(MoR)并建 3 个产品（月/年/买断）+ 2 个加油包（SKU 用 `pack_d10`/`pack_l200` 传 plan）；② 把 checkout 链接 + customer portal 填进 `web/lib/telos/billing-config.ts`（plans + packs）；③ 服务商后台 webhook 指到 `https://telos-derive.xuanlyy.workers.dev/billing/webhook`；④ `cd workers && npx wrangler secret put BILLING_WEBHOOK_SECRET && npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY && npx wrangler deploy`；⑤ 沙盒买一单验证 `/pro` 自动解锁 |
+| 9 | **激活托管 AI（开箱即用 · 商业化主引擎）** | P1 | **用户外部动作** | 代码全就绪（Worker 计量门禁 `hostedGate`/试用/月度配额/加油包 KV、客户端 token 注入与错误文案、/pro 用量条、引导页「登录免费试用」CTA）。剩：① `cd workers && npx wrangler kv namespace create TELOS_USAGE`，把 id 填进 wrangler.toml 并取消注释；② 重新设置服务端 key：`npx wrangler secret put TELOS_LLM_API_KEY`（+ 可选 `TELOS_SEARCH_API_KEY`，之前纯 BYOK 时代删过）；③ `npx wrangler deploy`；④ 验证：`curl https://telos-derive.xuanlyy.workers.dev/health` 应 `hosted:true`，未登录 POST /derive 应 401 NEED_LOGIN。⚠️ workers.dev 被墙：国内用户要用托管需给 Worker 挂**自有域名**（买域名 → CF 添加 custom domain → 改 gh variable `NEXT_PUBLIC_TELOS_DERIVE_URL`），海外用户现状即可用 |
 
 > 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#2 GitHub、#3 建表。
 

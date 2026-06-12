@@ -287,6 +287,20 @@ export default function DeriveCanvas({
     [nodes, edges, title, safeName, t],
   );
 
+  // 导出 Anki 卡组（Pro）：官方文本导入格式，正面=能力 背面=描述/练法/达标线，带阶段标签。
+  const exportAnki = useCallback(async () => {
+    const { buildAnkiTsv } = await import("@/lib/telos/anki-export");
+    const tsv = buildAnkiTsv(graph, {
+      how: t("np.howToPractice"),
+      benchmark: t("np.benchmark"),
+      stage: t("home.modulesTitle"),
+    });
+    const url = URL.createObjectURL(new Blob([tsv], { type: "text/plain;charset=utf-8" }));
+    downloadHref(url, `${safeName}-anki.txt`);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    setMenuOpen(false);
+  }, [graph, safeName, t]);
+
   // 导出为思维导图（Markdown 大纲，按阶段分组）：任何思维导图/笔记工具都能直接吃。
   const exportMarkdown = useCallback(() => {
     const ids = graph.ids();
@@ -369,6 +383,15 @@ export default function DeriveCanvas({
                     <button role="menuitem" onClick={exportMarkdown}>
                       {t("export.mindmap")}
                     </button>
+                    {isPro() ? (
+                      <button role="menuitem" onClick={exportAnki}>
+                        {t("export.anki")}
+                      </button>
+                    ) : (
+                      <Link role="menuitem" className={styles.exportPro} href="/pro" onClick={() => setMenuOpen(false)}>
+                        <Icon name="spark" style={{ width: 12, height: 12 }} /> {t("export.ankiPro")}
+                      </Link>
+                    )}
                     {!isPro() && (
                       <Link role="menuitem" className={styles.exportPro} href="/pro" onClick={() => setMenuOpen(false)}>
                         <Icon name="spark" style={{ width: 12, height: 12 }} /> {t("pro.exportMark")}
