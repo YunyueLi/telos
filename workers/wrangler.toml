@@ -2,6 +2,10 @@ name = "telos-derive"
 main = "derive.js"
 compatibility_date = "2024-11-01"
 
+# 自定义域：把 Worker 暴露在 ungetsu.net 子域（Cloudflare 代理 → 国内可达，绕开被墙的 *.workers.dev）。
+# 需 ungetsu.net 在本 Cloudflare 账号；deploy 时 wrangler 自动建 DNS 记录 + 签发证书。
+routes = [{ pattern = "telos-api.ungetsu.net", custom_domain = true }]
+
 # ── 托管 AI 用量表（KV）──
 # 开通托管模式（用户登录即用、按账号计量）需要这个 KV：
 #   npx wrangler kv namespace create TELOS_USAGE
