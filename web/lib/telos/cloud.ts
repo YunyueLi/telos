@@ -5,7 +5,7 @@
 // 受 RLS 保护（仅本人可读写）。合并策略：按 data.updatedAt 最后写入者胜（per-project）。
 // 见 SUPABASE.md 建表脚本。未配置 / 未登录时所有函数安全空转。
 import { supabase } from "./supabase";
-import type { Project } from "./project";
+import { normalizeProject, type Project } from "./project";
 
 const TABLE = "projects";
 
@@ -26,7 +26,8 @@ export async function pullProjects(): Promise<Project[]> {
   if (!sb) return [];
   const { data, error } = await sb.from(TABLE).select("data");
   if (error || !data) return [];
-  return data.map((r) => (r as { data: unknown }).data).filter(valid);
+  // 补全 state（云端可能存着旧格式/残缺数据）→ 同步进 React state 渲染时不白屏。
+  return data.map((r) => (r as { data: unknown }).data).filter(valid).map(normalizeProject);
 }
 
 export async function pushProject(p: Project): Promise<{ ok: boolean; error?: string }> {
