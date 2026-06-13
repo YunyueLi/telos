@@ -129,8 +129,8 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 | 5 | 跨设备连胜/激励同步（`user_meta` 或 user_metadata） | P2 | 我（可仿 BYOK 同步做） | 可选；连胜目前仅本地 |
 | 6 | 文档继续扫（STRATEGY/ROADMAP 过时项） | P2 | **我（可独立）** | README/DERIVE 本程已扫 |
 | 7 | Supabase 邮件模板本地化 · README 截图GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 |
-| 8 | **开通付费（Telos Pro）** | P1 | **用户外部动作** | 代码全就绪（webhook/权益/定价页/水印/项目上限）。剩：① 注册支付服务商(MoR)并建 3 个产品（月/年/买断）+ 2 个加油包（SKU 用 `pack_d10`/`pack_l200` 传 plan）；② 把 checkout 链接 + customer portal 填进 `web/lib/telos/billing-config.ts`（plans + packs）；③ 服务商后台 webhook 指到 `https://telos-derive.xuanlyy.workers.dev/billing/webhook`；④ `cd workers && npx wrangler secret put BILLING_WEBHOOK_SECRET && npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY && npx wrangler deploy`；⑤ 沙盒买一单验证 `/pro` 自动解锁 |
-| 9 | **激活托管 AI（开箱即用 · 商业化主引擎）** | P1 | **用户外部动作** | 代码全就绪（Worker 计量门禁 `hostedGate`/试用/月度配额/加油包 KV、客户端 token 注入与错误文案、/pro 用量条、引导页「登录免费试用」CTA）。剩：① `cd workers && npx wrangler kv namespace create TELOS_USAGE`，把 id 填进 wrangler.toml 并取消注释；② 重新设置服务端 key：`npx wrangler secret put TELOS_LLM_API_KEY`（+ 可选 `TELOS_SEARCH_API_KEY`，之前纯 BYOK 时代删过）；③ `npx wrangler deploy`；④ 验证：`curl https://telos-derive.xuanlyy.workers.dev/health` 应 `hosted:true`，未登录 POST /derive 应 401 NEED_LOGIN。⚠️ workers.dev 被墙：国内用户要用托管需给 Worker 挂**自有域名**（买域名 → CF 添加 custom domain → 改 gh variable `NEXT_PUBLIC_TELOS_DERIVE_URL`），海外用户现状即可用 |
+| 8 | **开通付费（Telos Pro）** | P1 | **用户外部动作** | 代码全就绪（webhook/权益/定价页/水印/项目上限）。剩：① 注册支付服务商(MoR)并建 3 个产品（月/年/买断）+ 2 个加油包（SKU 用 `pack_d10`/`pack_l200` 传 plan）；② 把 checkout 链接 + customer portal 填进 `web/lib/telos/billing-config.ts`（plans + packs）；③ 服务商后台 webhook 指到 `https://telos-api.ungetsu.net/billing/webhook`（自定义域；原 *.workers.dev 已禁用）；④ `cd workers && npx wrangler secret put BILLING_WEBHOOK_SECRET && npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY && npx wrangler deploy`；⑤ 沙盒买一单验证 `/pro` 自动解锁 |
+| 9 | **激活托管 AI（开箱即用 · 商业化主引擎）** | P1 | **用户外部动作** | 代码全就绪（Worker 计量门禁 `hostedGate`/试用/月度配额/加油包 KV、客户端 token 注入与错误文案、/pro 用量条、引导页「登录免费试用」CTA）。**本程已做**：✅ KV `TELOS_USAGE` 建+绑+灌付费模板；✅ Worker deploy（含 `/template` 鉴权下发）；✅ 自定义域 `telos-api.ungetsu.net`（CF 代理·国内可达）+ 前端端点 gh variable 已切（根治 workers.dev 被墙）。**唯剩开托管 AI**（产生 LLM 成本·商业决策）：`cd workers && npx wrangler secret put TELOS_LLM_API_KEY`（+可选 `TELOS_SEARCH_API_KEY`）+ `npx wrangler deploy` → `curl https://telos-api.ungetsu.net/health` 应 `hosted:true`。**付费模板下发已凭 KV+Supabase 独立生效，不依赖此 key。** |
 
 > 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#2 GitHub、#3 建表。
 
@@ -176,9 +176,9 @@ B) **倒推/key（已闭环，留作回归）**：
 - 当前代码 BYOK 设计：登录→`keyActive=true`＋`getUser` 拉回账号 key；登出→`keyActive=false`（休眠不删）→未连接；新设备→`getUser` 拉账号。`getDeriveUrl`：生产页 env 端点权威、忽略覆盖。
 
 ### P0 · 让线上能倒推 —— ✅ 已完成
-- **Worker**：`telos-derive.xuanlyy.workers.dev`（用户 Cloudflare 账号 `xuanlyy`，`npx wrangler deploy` 部署；`wrangler.toml` name=telos-derive、model=deepseek-v4-pro、provider=tavily、`ALLOW_ORIGIN=https://yunyueli.github.io`）。
+- **Worker**：`telos-api.ungetsu.net`（**自定义域**·CF 代理国内可达，根治 `*.workers.dev` 被墙；账号 `xuanlyy`，`npx wrangler deploy`；`wrangler.toml` name=telos-derive、`routes custom_domain`、model=deepseek-v4-pro、provider=tavily、`ALLOW_ORIGIN=https://telos.ungetsu.net`、KV `TELOS_USAGE` 已绑）。原 `telos-derive.xuanlyy.workers.dev` 已禁用。
 - **密钥**（用户 `wrangler secret put` 设，**值只填 value 不要带 `KEY=` 前缀**——曾踩坑把整行当 name）：`TELOS_LLM_API_KEY`(DeepSeek) + `TELOS_SEARCH_API_KEY`(Tavily)。`/health` → `available:true`、`search.available:true`。
-- **接线**：`gh variable set NEXT_PUBLIC_TELOS_DERIVE_URL https://telos-derive.xuanlyy.workers.dev/derive` + `deploy.yml` build env 已加该行 → 重新部署，线上 JS 已含该 URL。
+- **接线**：`gh variable set NEXT_PUBLIC_TELOS_DERIVE_URL https://telos-api.ungetsu.net/derive`（已切新域）+ `deploy.yml` build env 注入 → 重新部署后线上 JS 含该 URL。
 - **实测**：curl POST /derive 返回 48 节点；CORS 预检 github.io → 204 放行。端点路由：`/derive /lesson /probe /title /health`（前端把 `/derive` 替换出其余）。
 - 改 `workers/derive.js` 后用户须重 `npx wrangler deploy`（助手可代跑 deploy，但 secret 须用户本人）。
 
