@@ -60,9 +60,9 @@ create policy "update own" on public.leaderboard for update using (auth.uid() = 
 - **URL Configuration → Redirect URLs** 加入这两个（OAuth / 魔法链接 / 邮件确认都会回跳到 `/account/`）：
   ```
   http://localhost:3000/account/
-  https://yunyueli.github.io/telos/app/account/
+  https://telos.ungetsu.net/app/account/
   ```
-  Site URL 可设为 `https://yunyueli.github.io/telos/app/`。
+  Site URL 可设为 `https://telos.ungetsu.net/app/`。
 
 > 只想要账密 + 魔法链接、暂不接 OAuth？跳过 Google/GitHub 即可，登录页的对应按钮点了会提示未启用，不影响其余功能。
 

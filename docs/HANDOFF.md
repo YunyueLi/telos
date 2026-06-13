@@ -45,7 +45,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **改 `core/telos_core/llm.py` 必须重启 serve.py**。**Turbopack 旧 CSS 缓存**老毛病：globals.css 改了不生效 → `rm -rf web/.next` 重启。
 - 后台 serve.py/web 在会话结束会停，重开直接再 `./start.sh`。
 
-## 2. 线上现状（GitHub Pages：landing `/telos/`，app `/telos/app/`）
+## 2. 线上现状（自定义域 `telos.ungetsu.net`：landing `/`，app `/app/`；旧 `…github.io/telos/*` 由 GitHub 自动 301）
 
 | 能力 | 线上状态 |
 |---|---|
@@ -78,7 +78,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - 项目：**YunyueLi's Project**，URL `https://gbvetfyudlbdiydapipr.supabase.co`（Singapore）。
 - Key：用**新版 publishable key**（`sb_publishable_…`，公开可暴露、受 RLS 保护）。存放：本地 `web/.env.local` + 线上 Actions Variables。**绝不用 `sb_secret_…`**。
 - 已配：`mailer_autoconfirm = true`（**注册即登录、不发确认邮件**）；Email provider 开；`projects` 表 + RLS「own rows」已建（脚本见 `SUPABASE.md` §2）。
-- **未配（待办，见 P1）**：Google/GitHub provider（`google=false, github=false`）；**Redirect URLs 未加**（魔法链接 / OAuth / 邮件确认回跳要用——加 `http://localhost:3000/account/` 和 `https://yunyueli.github.io/telos/app/account/`）。
+- **未配（待办，见 P1）**：Google/GitHub provider（`google=false, github=false`）；**Redirect URLs 未加**（魔法链接 / OAuth / 邮件确认回跳要用——加 `http://localhost:3000/account/` 和 `https://telos.ungetsu.net/app/account/`）。
 - **测试账号待清**：`telos.e2e.check@gmail.com`、`telos.iatest@gmail.com`（实测建的，项目数据已删）。可在 Authentication → Users 删掉。
 
 ## 5. 架构新增 + 关键文件
@@ -112,7 +112,7 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 - **i18n**：自研 9 语（`web/lib/telos/i18n-dict.ts`），**加 key 必须补全 9 语**；**重复 key 会让 `next build` TS 报错**（曾踩 common.close）。
 - **.gitignore 实际只忽略 `.env` 与 `.env*.local`**——`core/.env.example`、`web/.env.example` **可提交且已在仓库**（`.env.local.example` 这种带 `.local` 的才会被忽略，故 web 模板命名为 `.env.example`）。`start.sh` 首次自动 `cp core/.env.example core/.env`。（旧版误记为"全忽略、别建 .example"，已纠正。）
 - **设计语言**：纯黑白+暖灰纸感；Fraunces+Inter+JetBrains Mono；手绘线性图标（`sketch-defs.tsx` 的 `#i-<name>` + `icon.tsx` IconName）；**禁 emoji**；看板娘黑白墨线。
-- **静态导出**：`output:export`，prod `basePath=/telos/app`；`lib/base.ts` 的 `BASE`/`asset()` 给裸 `<img>`/href 用。
+- **静态导出**：`output:export`，prod `basePath=/app`；`lib/base.ts` 的 `BASE`/`asset()` 给裸 `<img>`/href 用。
 
 ## 7. 后续工作（按优先级 · 续作主看这里）
 
@@ -184,7 +184,7 @@ B) **倒推/key（已闭环，留作回归）**：
 
 ### P1 · GitHub 登录（魔法链接 + Google 已开）
 > 云同步对任何已登录用户都生效，与登录方式无关。邮箱+密码 / 魔法链接 / Google 均已可用。
-- **已完成**：Redirect URLs（`http://localhost:3000/account/` + `https://yunyueli.github.io/telos/app/account/`，Site URL `…/telos/app/`）；Google OAuth（client 配进 Supabase，provider 开，可登）。
+- **已完成**：Redirect URLs（`http://localhost:3000/account/` + `https://telos.ungetsu.net/app/account/`，Site URL `…/app/`）；Google OAuth（client 配进 Supabase，provider 开，可登）。
 - **剩 GitHub**：GitHub → Settings → Developer settings → OAuth Apps 建一个，回调 `https://gbvetfyudlbdiydapipr.supabase.co/auth/v1/callback`，client id/secret 填进 Supabase Google→GitHub provider。登录页按钮已就绪，开了即生效（GitHub 同意页天然显示 OAuth App 名「Telos」，无 Google 那种 supabase.co 域名问题）。
 - 密码重置：`resetPasswordForEmail` 已接（「忘记密码」），同样需 Redirect URLs + 邮件模板。
 

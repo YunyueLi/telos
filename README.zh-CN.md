@@ -13,9 +13,9 @@
 &nbsp;[![Stars](https://img.shields.io/github/stars/YunyueLi/telos?style=flat&color=111&label=Stars)](https://github.com/YunyueLi/telos)
 &nbsp;[![English](https://img.shields.io/badge/README-English-111.svg)](README.md)
 
-### ▶ [**立即体验**](https://yunyueli.github.io/telos/app/) —— 免安装；自带 key，免费用
+### ▶ [**立即体验**](https://telos.ungetsu.net/app/) —— 免安装；自带 key，免费用
 
-<sub>[落地页](https://yunyueli.github.io/telos/) · [自己跑起来](#自己跑起来一条命令) · [工作原理](#工作原理) · [免费与 Pro](#免费与-pro) · [部署自己的](#部署自己的)</sub>
+<sub>[落地页](https://telos.ungetsu.net/) · [自己跑起来](#自己跑起来一条命令) · [工作原理](#工作原理) · [免费与 Pro](#免费与-pro) · [部署自己的](#部署自己的)</sub>
 
 </div>
 
@@ -37,9 +37,9 @@
 | **配置** | 登录 | `git clone` + 1 个 API key + `make` | fork + 一键 Worker |
 | **要 key 吗** | 目前要——绑定一次（免 key 托管 AI 逐步开放） | 要（DeepSeek / OpenAI / 兼容） | 要（你的用户各自带） |
 | **数据存哪** | 浏览器（+ 可选账号同步） | 你本机 | 用户浏览器 / 你的 Supabase |
-| **去哪** | **[打开应用 ▶](https://yunyueli.github.io/telos/app/)** | [↓ 自己跑起来](#自己跑起来一条命令) | [↓ 部署自己的](#部署自己的) |
+| **去哪** | **[打开应用 ▶](https://telos.ungetsu.net/app/)** | [↓ 自己跑起来](#自己跑起来一条命令) | [↓ 部署自己的](#部署自己的) |
 
-> 第一次来？**直接[打开在线版](https://yunyueli.github.io/telos/app/)** —— 登录、绑定 key、说个目标，看它倒推出地图。README 余下部分是给「想本地跑 / 自己部署」的人看的。
+> 第一次来？**直接[打开在线版](https://telos.ungetsu.net/app/)** —— 登录、绑定 key、说个目标，看它倒推出地图。README 余下部分是给「想本地跑 / 自己部署」的人看的。
 
 ## 自己跑起来（一条命令）
 
