@@ -36,6 +36,7 @@ export default function MePage() {
     useProject();
   const { configured, user, signOut } = useAuth();
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const [openStage, setOpenStage] = useState<string | null>(null); // 掌握进度：展开的阶段（手风琴）
   const PROJECT_CAP = 6; // 默认最多 2 行（桌面 3 列）；多的折叠
 
   const newLearning = () => {
@@ -261,27 +262,71 @@ export default function MePage() {
           {!project || !graph || !view ? (
             <p className="me-note">{t("me.noProjectYet")}</p>
           ) : (
-            GROUPS.map((grp) => {
-              const items = graph.ids().filter((id) => view.visual[id] === grp.key);
-              if (items.length === 0) return null;
-              return (
-                <div key={grp.key} className="me-grp">
-                  <div className="me-glab">
-                    <span className={`stt ${grp.key}`} />
-                    {t(grp.titleKey)}
-                    <span className="c">{items.length}</span>
+            view.modules.length > 0 ? (
+              // 阶段概览：与地图侧栏同一套数据（view.modules）。平时只看阶段行（序号·标题·进度条·已掌握/总），
+              // 点开看该阶段能力点——节点量大时不再平铺堆积。
+              <div className="mh-mods me-stages">
+                {view.modules.map((m, i) => {
+                  const mp = m.total ? Math.round((m.mastered / m.total) * 100) : 0;
+                  const open = openStage === m.id;
+                  const nodes = graph.ids().filter((id) => (graph.get(id).module || "") === m.id);
+                  return (
+                    <div key={m.id} className={`mh-mod-wrap ${open ? "open" : ""}`}>
+                      <button
+                        className="mh-mod"
+                        onClick={() => setOpenStage(open ? null : m.id)}
+                        aria-expanded={open}
+                        title={m.title}
+                      >
+                        <span className="mh-mod-i">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="mh-mod-main">
+                          <span className="mh-mod-t">{m.title || t("me.stageN", { n: i + 1 })}</span>
+                          <span className="mh-mod-track">
+                            <i style={{ width: `${mp}%` }} />
+                          </span>
+                        </span>
+                        <span className="mh-mod-n">
+                          {m.mastered}/{m.total}
+                        </span>
+                        <Icon name="chevron" className={`mh-mod-cv ${open ? "up" : ""}`} style={{ width: 14, height: 14 }} />
+                      </button>
+                      {open && (
+                        <div className="me-chips me-stage-chips">
+                          {nodes.map((id) => (
+                            <span key={id} className={`me-chip ${view.visual[id]}`}>
+                              {graph.get(id).name}
+                              <s>{domainLabel(graph.get(id).domain, t)}</s>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              GROUPS.map((grp) => {
+                const items = graph.ids().filter((id) => view.visual[id] === grp.key);
+                if (items.length === 0) return null;
+                return (
+                  <div key={grp.key} className="me-grp">
+                    <div className="me-glab">
+                      <span className={`stt ${grp.key}`} />
+                      {t(grp.titleKey)}
+                      <span className="c">{items.length}</span>
+                    </div>
+                    <div className="me-chips">
+                      {items.map((id) => (
+                        <span key={id} className={`me-chip ${grp.key}`}>
+                          {graph.get(id).name}
+                          <s>{domainLabel(graph.get(id).domain, t)}</s>
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="me-chips">
-                    {items.map((id) => (
-                      <span key={id} className={`me-chip ${grp.key}`}>
-                        {graph.get(id).name}
-                        <s>{domainLabel(graph.get(id).domain, t)}</s>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
+                );
+              })
+            )
           )}
         </div>
       </div>

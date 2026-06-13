@@ -725,6 +725,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .me-chip.lock{border-style:dashed;color:var(--ink-3)}
 .me-chip s{text-decoration:none;font:500 9px var(--mono);color:var(--ink-3);margin-left:6px}
 .me-chip.done s{color:rgba(240,238,233,.7)}
+.me-stages{margin-top:2px}
+.me-stage-chips{padding:4px 4px 14px 23px}
 .me-projects{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
 .me-proj{position:relative;display:flex;border:1px solid var(--line-soft);border-radius:14px;background:var(--card);overflow:hidden}
 .me-proj.on{border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,19,16,.06)}
