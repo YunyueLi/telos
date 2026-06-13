@@ -3,7 +3,7 @@
 // 自动迁移旧的单项目 telos:project。供 useProject / 复习 / XP / 备份共用。
 "use client";
 
-import type { KnowledgePoint, LearnerState } from "./engine";
+import { emptyState, type KnowledgePoint, type LearnerState } from "./engine";
 
 const PKEY = "telos:projects";
 const AKEY = "telos:active";
@@ -38,13 +38,38 @@ function isValid(p: unknown): p is Project {
   return !!o && Array.isArray(o.points) && o.points.length > 0 && !!o.state;
 }
 
+// state 结构补全：旧格式 / 跨版本 / 云端同步回来的历史数据可能缺字段（如只有 mastery 没 cards），
+// 渲染时 Object.keys(state.cards) 之类会抛 "Cannot convert undefined or null to object" → 整页白屏。
+// 在读取边界统一用 emptyState() 补缺、并校验每个字段类型，保证结构完整向后兼容（正常项目本就完整 → 等价默认）。
+function normalizeState(s: unknown): LearnerState {
+  const base = emptyState();
+  const o = (s && typeof s === "object" ? s : {}) as Partial<LearnerState>;
+  return {
+    mastery: o.mastery && typeof o.mastery === "object" ? o.mastery : base.mastery,
+    cards: o.cards && typeof o.cards === "object" ? o.cards : base.cards,
+    day: typeof o.day === "number" ? o.day : base.day,
+    version: typeof o.version === "number" ? o.version : base.version,
+  };
+}
+
+// 读取边界统一补全：每个流入 App 的项目都带结构完整的 state（localStorage 与云端同步共用此函数）。
+export function normalizeProject(p: Project): Project {
+  return { ...p, state: normalizeState(p.state) };
+}
+
 function readMap(): Record<string, Project> {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(PKEY);
     if (raw) {
-      const m = JSON.parse(raw) as Record<string, Project>;
-      return m && typeof m === "object" ? m : {};
+      const m = JSON.parse(raw) as Record<string, unknown> | null;
+      if (!m || typeof m !== "object") return {};
+      const out: Record<string, Project> = {};
+      // 跳过残缺(无 points)项目，并补全每个项目的 state，避免渲染时白屏（见 normalizeState）。
+      for (const [id, p] of Object.entries(m)) {
+        if (isValid(p)) out[id] = normalizeProject(p);
+      }
+      return out;
     }
     // 迁移旧的单项目
     const legacy = window.localStorage.getItem(LEGACY);
@@ -53,14 +78,7 @@ function readMap(): Record<string, Project> {
       if (isValid(p)) {
         const id = p.id || genId();
         const now = p.updatedAt || Date.now();
-        const proj: Project = {
-          id,
-          goal: p.goal!,
-          points: p.points!,
-          state: p.state!,
-          createdAt: p.createdAt || now,
-          updatedAt: now,
-        };
+        const proj = normalizeProject({ ...p, id, createdAt: p.createdAt || now, updatedAt: now });
         const map = { [id]: proj };
         window.localStorage.setItem(PKEY, JSON.stringify(map));
         if (!window.localStorage.getItem(AKEY)) window.localStorage.setItem(AKEY, id);
