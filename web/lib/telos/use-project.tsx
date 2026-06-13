@@ -218,10 +218,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       const merged = [...m.values()].sort(byRecent);
       for (const p of merged) upsertProject(p);
       setProjects(merged);
-      if (!getActiveId() && merged[0]) {
-        setActiveId(merged[0].id);
-        setActive(merged[0].id);
-      }
+      // 刷新「当前项目」React state：getActiveId() 已含「localStorage 未存 → 取最近项目」兜底。
+      // 新设备首次登录时 mount 阶段 listProjects 为空、activeId 停在 null；同步 upsert 后必须重取一次，
+      // 否则顶栏切换器读 project=null 不显示，要手动点项目（switchProject）才出现（用户实测反馈）。
+      const active = getActiveId();
+      if (active) setActiveId(active); // 命中「最近项目」兜底时落盘 telos:active，持久化此选择
+      setActive(active);
       for (const p of merged) {
         const r = remote.find((x) => x.id === p.id);
         if (!r || (p.updatedAt || 0) > (r.updatedAt || 0)) await pushProject(p);
