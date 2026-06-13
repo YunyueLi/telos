@@ -44,6 +44,7 @@ jobs:
           cp -R landing/. deploy/
           cp -R web/out/. deploy/app/
           touch deploy/.nojekyll
+          echo telos.ungetsu.net > deploy/CNAME
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4

@@ -1,6 +1,6 @@
 # Telos · 设计参考（Design System）
 
-> 单一权威设计参考。**设计基准 = 实际 App（`/telos/app/`，即 `web/`）**；`landing/index.html` 已过时（待重写对齐 App）。
+> 单一权威设计参考。**设计基准 = 实际 App（`/app/`，即 `web/`）**；`landing/index.html` 已过时（待重写对齐 App）。
 > 令牌实现在 `web/app/globals.css`，图标在 `web/components/sketch-defs.tsx` + `icon.tsx`，看板娘在 `web/public/portraits/`。
 
 ---

@@ -13,9 +13,9 @@
 &nbsp;[![Stars](https://img.shields.io/github/stars/YunyueLi/telos?style=flat&color=111&label=Stars)](https://github.com/YunyueLi/telos)
 &nbsp;[![中文](https://img.shields.io/badge/README-中文-111.svg)](README.zh-CN.md)
 
-### ▶ [**Try it now**](https://yunyueli.github.io/telos/app/) — no install; bring your own key, free
+### ▶ [**Try it now**](https://telos.ungetsu.net/app/) — no install; bring your own key, free
 
-<sub>[Landing](https://yunyueli.github.io/telos/) · [Run it yourself](#run-it-yourself-one-command) · [How it works](#how-it-works) · [Free & Pro](#free--pro) · [Deploy your own](#deploy-your-own)</sub>
+<sub>[Landing](https://telos.ungetsu.net/) · [Run it yourself](#run-it-yourself-one-command) · [How it works](#how-it-works) · [Free & Pro](#free--pro) · [Deploy your own](#deploy-your-own)</sub>
 
 </div>
 
@@ -37,9 +37,9 @@ goal ─▶ reverse-derive ─▶ a module-organized prerequisite map (30–80 t
 | **Setup** | Sign in | `git clone` + 1 API key + `make` | Fork + 1-click Worker |
 | **Needs a key?** | Yes for now — bind once (key-free hosted AI rolling out) | Yes (DeepSeek / OpenAI / compatible) | Yes (your users bring their own) |
 | **Your data** | Browser (+ optional account sync) | Your machine | Your users' browsers / your Supabase |
-| **Go** | **[Open the app ▶](https://yunyueli.github.io/telos/app/)** | [↓ Run it yourself](#run-it-yourself-one-command) | [↓ Deploy your own](#deploy-your-own) |
+| **Go** | **[Open the app ▶](https://telos.ungetsu.net/app/)** | [↓ Run it yourself](#run-it-yourself-one-command) | [↓ Deploy your own](#deploy-your-own) |
 
-> New here? **Just [open the hosted app](https://yunyueli.github.io/telos/app/)** — sign in, bind your key, type a goal, watch it build your map. The rest of this README is for running or hosting it yourself.
+> New here? **Just [open the hosted app](https://telos.ungetsu.net/app/)** — sign in, bind your key, type a goal, watch it build your map. The rest of this README is for running or hosting it yourself.
 
 ## Run it yourself (one command)
 

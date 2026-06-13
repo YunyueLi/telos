@@ -6,12 +6,14 @@ import { dirname } from "node:path";
 // makes Turbopack infer the wrong root).
 const root = dirname(fileURLToPath(import.meta.url));
 
-// Static export for GitHub Pages, served under https://<user>.github.io/telos/app/
+// Static export served under the custom domain https://telos.ungetsu.net/app/.
+// (The GitHub Pages project URL …github.io/telos/app/ 301-redirects here once the
+//  custom domain is set, so the app lives at /app — no /telos prefix.)
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: isProd ? "/telos/app" : undefined,
+  basePath: isProd ? "/app" : undefined,
   trailingSlash: true,
   images: { unoptimized: true },
   turbopack: { root },
