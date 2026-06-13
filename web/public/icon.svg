@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Telos">
+  <rect width="512" height="512" fill="#F7F5F0"/>
+  <g fill="none" stroke="#141310" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="256" cy="256" r="150" stroke-width="11"/>
+    <circle cx="256" cy="256" r="114" stroke-width="3"/>
+    <path d="M256 96 V134 M256 378 V416 M96 256 H134 M378 256 H416" stroke-width="8"/>
+    <path d="M256 150 L302 256 L256 362 L210 256 Z" stroke-width="6"/>
+  </g>
+  <path d="M256 150 L302 256 L256 256 Z" fill="#141310"/>
+  <circle cx="256" cy="256" r="13" fill="#F7F5F0" stroke="#141310" stroke-width="6"/>
+</svg>
