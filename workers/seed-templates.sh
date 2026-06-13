@@ -29,8 +29,8 @@ for id in $ids; do
   tmp="$(mktemp)"
   jq -c --arg k "$id" '.[$k]' "$SRC" >"$tmp"
   n=$(jq 'length' "$tmp")
-  echo "→ tpl:$id（$n 个能力点）"
-  npx wrangler kv key put "tpl:$id" --path="$tmp" --binding="$BINDING" --remote
+  echo "→ tpl:${id} (${n} 节点)"
+  npx wrangler kv key put "tpl:${id}" --path="$tmp" --binding="$BINDING" --remote
   rm -f "$tmp"
 done
 

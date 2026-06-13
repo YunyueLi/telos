@@ -7,9 +7,9 @@ compatibility_date = "2024-11-01"
 #   npx wrangler kv namespace create TELOS_USAGE
 # 把命令输出的 id 填到下面并取消注释；不配置则托管模式自动关闭（NO_HOSTED），BYOK 不受影响。
 # 同一个 KV 还存付费模板内容（键 tpl:<id>）：建好后在本目录跑 `./seed-templates.sh` 灌入，Worker /template 鉴权后下发。
-# [[kv_namespaces]]
-# binding = "TELOS_USAGE"
-# id = "<paste-id-here>"
+[[kv_namespaces]]
+binding = "TELOS_USAGE"
+id = "a8443863386d445d8dbdcadf6dfab19c"
 
 # 非敏感默认值（可改）。API key 不放这里——用 `wrangler secret put TELOS_LLM_API_KEY` 设置。
 [vars]
