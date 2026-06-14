@@ -50,7 +50,7 @@ function Ring({ pct, met }: { pct: number; met: boolean }) {
 
 export function StreakBoard() {
   const { t, lang } = useT();
-  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, dailyVersion, setDailyGoal, view } =
+  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, spendable, canRedeem, freezeCost, redeemFreeze, dailyVersion, setDailyGoal, view } =
     useProject();
 
   // 等级 / 段位 / 个人纪录（全本地真实算，随学习重算）。
@@ -201,6 +201,13 @@ export function StreakBoard() {
                 <b>{t("daily.freezeN", { n: freezes })}</b>
                 <span>{freezes > 0 ? t("daily.freezeOn") : t("daily.freezeOff")}</span>
               </div>
+              {freezes < 2 && (
+                <button className="fz-redeem" onClick={() => redeemFreeze()} disabled={!canRedeem}>
+                  {canRedeem
+                    ? t("daily.freezeRedeem", { n: freezeCost })
+                    : t("daily.freezeNeed", { n: Math.max(0, freezeCost - spendable) })}
+                </button>
+              )}
             </div>
           </section>
 
