@@ -435,7 +435,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     freezes: daily?.freezes ?? 0,
     spendable: daily?.spendable ?? 0,
     canRedeem: daily?.canRedeem ?? false,
-    freezeCost: daily?.freezeCost ?? 200,
+    freezeCost: daily?.freezeCost ?? 100,
     dailyVersion,
     goalNonce,
     setDailyGoal: updateDailyGoal,

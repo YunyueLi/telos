@@ -910,6 +910,24 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .se-track{height:6px;border-radius:999px;background:var(--line-soft);overflow:hidden}
 .se-track i{display:block;height:100%;background:var(--ink);border-radius:999px;transition:width .45s ease}
 .se-ms-lab{font:600 11px var(--mono);letter-spacing:.04em;color:var(--ink-3)}
+.ink-card .ink-head{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.ink-drop{width:34px;height:34px;flex:none;display:grid;place-items:center}
+.ink-drop svg{width:27px;height:27px;fill:var(--ink)}
+.ink-bal{display:flex;align-items:baseline;gap:6px;flex:none}
+.ink-bal b{font:500 30px var(--serif);line-height:.9}
+.ink-bal span{font:500 11px var(--mono);color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.ink-what{margin:0;flex:1;min-width:150px;font:400 12px/1.5 var(--sans);color:var(--ink-3)}
+.ink-earn{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.ink-earn span{font:600 11px var(--mono);color:var(--ink-2);background:var(--card);border:1px solid var(--line-soft);border-radius:8px;padding:5px 10px}
+/* 统一印章（成就墙集章卡 / 里程碑）*/
+.stamp{position:relative;display:grid;place-items:center;width:46px;height:46px;flex:none}
+.stamp-ring{position:absolute;inset:0;width:100%;height:100%}
+.stamp-o1,.stamp-o2{fill:none;stroke:var(--line-soft);stroke-width:1.5}
+.stamp-ic{position:relative;z-index:1;width:20px;height:20px;color:var(--ink-3)}
+.stamp.on{transform:rotate(-4deg)}
+.stamp.on .stamp-o1{stroke:var(--ink);stroke-width:1.9}
+.stamp.on .stamp-o2{stroke:var(--ink)}
+.stamp.on .stamp-ic{color:var(--ink)}
 .streak-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .streak-col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .streak-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:18px}

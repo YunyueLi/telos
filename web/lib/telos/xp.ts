@@ -6,6 +6,7 @@
 "use client";
 
 import type { KnowledgeGraph, LearnerState } from "./engine";
+import { earnInk, spendInk, getInk, FREEZE_INK, DAILY_INK } from "./ink";
 
 // 掌握一个知识点的 XP：越深(前置越多)越值钱；目标点额外加成。
 export function computeXp(g: KnowledgeGraph, state: LearnerState, threshold = 0.8): number {
@@ -60,9 +61,9 @@ export interface DailyInfo {
   streak: number;
   freezes: number;
   goalMet: boolean;
-  spendable: number; // 可花费 XP（累计 totalXp − 已花费 spent）
-  freezeCost: number; // 兑换 1 个断签保护的 XP
-  canRedeem: boolean; // 可兑换（XP 够 且 未达保护上限）
+  spendable: number; // 当前「墨」余额（可花软通货；XP 不再可花，回归纯能力刻度）
+  freezeCost: number; // 兑换 1 个断签保护所需的墨
+  canRedeem: boolean; // 可兑换（墨够 且 未达保护上限）
 }
 
 // ---- 本地日期工具（用本地时区，贴合用户对"今天"的感知；diff 用 UTC 避免 DST）----
@@ -197,9 +198,7 @@ function load(): Daily {
 export function getDailyInfo(): DailyInfo {
   const d = load();
   const xp = d.days[today()] ?? 0;
-  let total = 0;
-  for (const k in d.days) total += d.days[k];
-  const spendable = Math.max(0, total - (d.spent || 0));
+  const balance = getInk().balance; // 「墨」余额（双轨：XP 是刻度、墨是可花筹码）
   return {
     xp,
     goal: d.goal,
@@ -207,9 +206,9 @@ export function getDailyInfo(): DailyInfo {
     streak: streakOf(d),
     freezes: d.freezes,
     goalMet: xp >= d.goal,
-    spendable,
-    freezeCost: FREEZE_COST,
-    canRedeem: spendable >= FREEZE_COST && d.freezes < MAX_FREEZE,
+    spendable: balance,
+    freezeCost: FREEZE_INK,
+    canRedeem: balance >= FREEZE_INK && d.freezes < MAX_FREEZE,
   };
 }
 
@@ -236,7 +235,9 @@ export function addDailyXp(amount: number): { streak: number; goalMet: boolean; 
     }
   }
   persist(d);
-  return { streak, goalMet: after >= d.goal, justMetGoal: amount > 0 && before < d.goal && after >= d.goal };
+  const justMetGoal = amount > 0 && before < d.goal && after >= d.goal;
+  if (justMetGoal) earnInk(DAILY_INK); // 每日首次达成目标 → 赚墨（稳定产出，类似 Finch「每日领」）
+  return { streak, goalMet: after >= d.goal, justMetGoal };
 }
 
 // 倒推新蓝图：给一点参与 XP（不足以单独达标）。
@@ -251,20 +252,15 @@ export function setDailyGoal(goal: number): void {
   persist(d);
 }
 
-// 用累积 XP 兑换 1 个断签保护：扣 spent（不动毛 totalXp → 不掉等级），freezes +1（封顶 MAX_FREEZE）。
+// 用「墨」兑换 1 个断签保护：花 FREEZE_INK 墨，freezes +1（封顶 MAX_FREEZE）。XP 不参与（纯能力刻度）。
 export function redeemFreeze(): { ok: boolean; freezes: number; spendable: number } {
   const d = readRaw();
-  let total = 0;
-  for (const k in d.days) total += d.days[k];
-  const spendable = Math.max(0, total - (d.spent || 0));
-  if (spendable >= FREEZE_COST && d.freezes < MAX_FREEZE) {
-    d.spent = (d.spent || 0) + FREEZE_COST;
-    d.freezes += 1;
-    reconcile(d);
-    persist(d);
-    return { ok: true, freezes: d.freezes, spendable: spendable - FREEZE_COST };
-  }
-  return { ok: false, freezes: d.freezes, spendable };
+  if (d.freezes >= MAX_FREEZE) return { ok: false, freezes: d.freezes, spendable: getInk().balance };
+  if (!spendInk(FREEZE_INK)) return { ok: false, freezes: d.freezes, spendable: getInk().balance };
+  d.freezes += 1;
+  reconcile(d);
+  persist(d);
+  return { ok: true, freezes: d.freezes, spendable: getInk().balance };
 }
 
 // ---- 等级 / 段位 / 统计（④⑤ 本地真实算）----
