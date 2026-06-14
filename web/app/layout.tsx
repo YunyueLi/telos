@@ -34,8 +34,13 @@ export const metadata: Metadata = {
   manifest: `${BASE}/manifest.webmanifest`,
   appleWebApp: { capable: true, title: "Telos", statusBarStyle: "default" },
   icons: {
-    icon: [{ url: `${BASE}/icon.svg`, type: "image/svg+xml" }], // 浏览器标签 favicon：罗盘（小尺寸清晰）
-    apple: [{ url: `${BASE}/icon-192.png` }], // iOS 主屏：看板娘头像
+    icon: [
+      { url: `${BASE}/favicon-32.png`, sizes: "32x32", type: "image/png" },
+      { url: `${BASE}/favicon-16.png`, sizes: "16x16", type: "image/png" },
+      { url: `${BASE}/favicon-48.png`, sizes: "48x48", type: "image/png" },
+      { url: `${BASE}/favicon-96.png`, sizes: "96x96", type: "image/png" },
+    ], // 浏览器标签 favicon：看板娘正脸头像（avatar，替代早期罗盘/三角占位）
+    apple: [{ url: `${BASE}/apple-icon.png`, sizes: "180x180" }], // iOS 主屏：看板娘正脸
   },
 };
 
