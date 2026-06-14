@@ -40,6 +40,8 @@ export function PortraitGallery({ projects }: { projects: Project[] }) {
     ...s,
     items: PORTRAITS.filter((p) => p.series === s.key),
   })).filter((g) => g.items.length > 0);
+  // 还没立绘入库的系列 → "即将到来"预告（呈现 5 系列蓝图，制造收集期待；立绘入库即自动转为正式分组）
+  const coming = SERIES.filter((s) => !PORTRAITS.some((p) => p.series === s.key));
 
   return (
     <div className="pg">
@@ -99,6 +101,22 @@ export function PortraitGallery({ projects }: { projects: Project[] }) {
         </div>
       ))}
 
+      {coming.length > 0 && (
+        <div className="pg-coming">
+          <div className="pg-sh">
+            <b>{t("pt.coming")}</b>
+          </div>
+          <div className="pg-coming-list">
+            {coming.map((s) => (
+              <span key={s.key} className="pg-coming-chip">
+                <Icon name="clock" />
+                {t(s.nameKey)}
+                <s>{t(s.subKey)}</s>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <p className="pg-more">{t("pt.more")}</p>
     </div>
   );

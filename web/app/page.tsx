@@ -16,6 +16,7 @@ import PathView from "@/components/path-view";
 import DeriveCanvas from "@/components/canvas";
 import { useProject } from "@/lib/telos/use-project";
 import { useCurrentPortraitFile } from "@/lib/telos/portraits";
+import { moodFace, type Mood } from "@/lib/telos/mood";
 import { useAuth } from "@/lib/telos/auth";
 import { cloudConfigured } from "@/lib/telos/supabase";
 import { domainLabel } from "@/lib/telos/engine";
@@ -112,7 +113,11 @@ function Onboarding({
   const [pro, setPro] = useState(false);
   const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
   const taRef = useRef<HTMLTextAreaElement | null>(null);
-  const heroFace = useCurrentPortraitFile(); // 当前陪伴看板娘（形象集里选的）
+  const manualFace = useCurrentPortraitFile(); // 形象集里手动选的陪伴形象
+  // 情境神态：无项目→迎新；有项目→用手动选的（她还会随场景说话——"活的"陪伴，不只一张死图）
+  const heroMood: Mood = projectCount > 0 ? "idle" : "welcome";
+  const heroFace = moodFace(heroMood)?.file ?? manualFace;
+  const heroBubbleKey = heroMood === "welcome" ? "mood.welcome" : "mood.idle";
   // 免费版项目数上限：超限时在输入框下方给事前提示（derive 内还有硬校验兜底）
   const limitReached = mounted && !pro && projectCount >= BILLING.freeProjectLimit;
 
@@ -245,6 +250,7 @@ function Onboarding({
             <path d="M32 250l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" />
             <path d="M270 270c9-6 17-6 24 0" strokeWidth="2.2" />
           </svg>
+          <div className="ob-bubble" role="status">{t(heroBubbleKey)}</div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <span className="pcirc">
             <img src={asset(`/portraits/${heroFace}.png`)} alt="Telos 老师" />
