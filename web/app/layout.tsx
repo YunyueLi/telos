@@ -35,12 +35,12 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Telos", statusBarStyle: "default" },
   icons: {
     icon: [
-      { url: `${BASE}/favicon-32.png`, sizes: "32x32", type: "image/png" },
-      { url: `${BASE}/favicon-16.png`, sizes: "16x16", type: "image/png" },
-      { url: `${BASE}/favicon-48.png`, sizes: "48x48", type: "image/png" },
-      { url: `${BASE}/favicon-96.png`, sizes: "96x96", type: "image/png" },
-    ], // 浏览器标签 favicon：看板娘正脸头像（avatar，替代早期罗盘/三角占位）
-    apple: [{ url: `${BASE}/apple-icon.png`, sizes: "180x180" }], // iOS 主屏：看板娘正脸
+      { url: `${BASE}/favicon-32.png?v=2`, sizes: "32x32", type: "image/png" },
+      { url: `${BASE}/favicon-16.png?v=2`, sizes: "16x16", type: "image/png" },
+      { url: `${BASE}/favicon-48.png?v=2`, sizes: "48x48", type: "image/png" },
+      { url: `${BASE}/favicon-96.png?v=2`, sizes: "96x96", type: "image/png" },
+    ], // 浏览器标签 favicon：hero 主形象（?v=2 强制绕过顽固的 favicon 缓存）
+    apple: [{ url: `${BASE}/apple-icon.png?v=2`, sizes: "180x180" }], // iOS 主屏：hero
   },
 };
 
