@@ -60,6 +60,12 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${jbmono.variable}`}
     >
       <body>
+        {/* 防 FOUC：HTML 解析早期就把已存的纸张主题落到 <html data-theme>，避免首屏闪默认色 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('telos:theme');if(t&&t!=='su')document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
+          }}
+        />
         <SketchDefs />
         <ChunkGuard />
         <PWARegister />

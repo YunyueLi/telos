@@ -18,6 +18,7 @@ import { buildCertificate, certSerial } from "@/lib/telos/certificate";
 import { registerCertificate } from "@/lib/telos/derive";
 import { PortraitGallery } from "@/components/portrait-gallery";
 import { earnGraphInk } from "@/lib/telos/ink";
+import { ThemePicker } from "@/components/theme-picker";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -347,6 +348,15 @@ export default function MePage() {
             <h3>{t("pt.galleryTitle")}</h3>
           </div>
           <PortraitGallery projects={projects} />
+        </div>
+
+        {/* 纸张主题（cosmetic 装扮 · 免费 2 款 + Pro 全解锁） */}
+        <div className="me-sect">
+          <div className="me-sh">
+            <h3>{t("theme.pickerTitle")}</h3>
+          </div>
+          <p className="me-note" style={{ marginBottom: 14 }}>{t("theme.sub")}</p>
+          <ThemePicker />
         </div>
       </div>
     </AppShell>
