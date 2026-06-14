@@ -5,6 +5,8 @@ import { SketchDefs } from "@/components/sketch-defs";
 import { ChunkGuard } from "@/components/chunk-guard";
 import { PWARegister } from "@/components/pwa-register";
 import { ProjectProvider } from "@/lib/telos/use-project";
+import { PortraitUnlockToast } from "@/components/portrait-unlock-toast";
+import { ThemeInit } from "@/components/theme-init";
 import { AuthProvider } from "@/lib/telos/auth";
 import { LangProvider } from "@/lib/telos/i18n";
 import { BASE } from "@/lib/base";
@@ -60,18 +62,16 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${jbmono.variable}`}
     >
       <body>
-        {/* 防 FOUC：HTML 解析早期就把已存的纸张主题落到 <html data-theme>，避免首屏闪默认色 */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('telos:theme');if(t&&t!=='su')document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
-          }}
-        />
+        <ThemeInit />
         <SketchDefs />
         <ChunkGuard />
         <PWARegister />
         <LangProvider>
           <AuthProvider>
-            <ProjectProvider>{children}</ProjectProvider>
+            <ProjectProvider>
+              <PortraitUnlockToast />
+              {children}
+            </ProjectProvider>
           </AuthProvider>
         </LangProvider>
       </body>
