@@ -120,6 +120,23 @@ export function StreakBoard() {
   const goalOpts: MenuOption[] = GOAL_OPTIONS.map((g) => ({ value: String(g), label: t(`daily.tier${g}`) }));
   const remain = Math.max(0, dailyGoal - dailyXp);
 
+  // 连胜里程碑（goal-gradient：显示距下一台阶的接近度）+ 看板娘陪伴语（正向、绝不愧疚式）。
+  // 新用户（连胜 0）不空着：已诊断/有掌握就给"起步"鼓励——把已有的真实成果当作禀赋起点。
+  const MILESTONES = [7, 30, 100, 365];
+  const nextMs = MILESTONES.find((m) => m > streak) ?? null;
+  const msToNext = nextMs ? nextMs - streak : 0;
+  const msPct = nextMs ? Math.min(1, streak / nextMs) : 1;
+  const companionKey =
+    streak === 0
+      ? mastered > 0
+        ? "streak.coStarted"
+        : "streak.coBegin"
+      : streak < 7
+        ? "streak.coLow"
+        : streak < 30
+          ? "streak.coMid"
+          : "streak.coHigh";
+
   return (
     <div className="streak">
       <header className="streak-hd">
@@ -128,12 +145,17 @@ export function StreakBoard() {
         <p className="streak-lead">{t("streak.lead")}</p>
       </header>
 
-      {/* 连胜横幅 */}
+      {/* 连胜横幅：连胜天数 + 已掌握难点并列（把意义从"打卡"转向真实进步）+ 今日状态 */}
       <div className="streak-banner">
         <Icon name="flame" className={`sb-fl ${streak > 0 ? "on" : ""}`} />
         <div className="sb-num">
           <b>{streak}</b>
           <span>{t("daily.dayUnit")}</span>
+        </div>
+        <span className="sb-div" aria-hidden="true" />
+        <div className="sb-num sb-mastered">
+          <b>{mastered}</b>
+          <span>{t("streak.bannerMastered")}</span>
         </div>
         <span className="sb-div" aria-hidden="true" />
         <div className="sb-state">
@@ -145,6 +167,19 @@ export function StreakBoard() {
             t("daily.remainXp", { n: remain })
           )}
         </div>
+      </div>
+
+      {/* 鼓励区：看板娘陪伴语（情境/正向）+ 距下一连胜里程碑的进度（goal-gradient 接近度） */}
+      <div className="streak-encourage">
+        <p className="se-voice">“{t(companionKey, { n: streak })}”</p>
+        {nextMs && (
+          <div className="se-ms">
+            <div className="se-track" role="img" aria-label={t("streak.toMilestone", { n: msToNext, ms: nextMs })}>
+              <i style={{ width: `${Math.round(msPct * 100)}%` }} />
+            </div>
+            <span className="se-ms-lab">{t("streak.toMilestone", { n: msToNext, ms: nextMs })}</span>
+          </div>
+        )}
       </div>
 
       <div className="streak-grid">
