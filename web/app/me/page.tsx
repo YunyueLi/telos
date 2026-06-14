@@ -16,6 +16,7 @@ import { projectTitle, type Project } from "@/lib/telos/project";
 import { isPro } from "@/lib/telos/billing";
 import { buildCertificate, certSerial } from "@/lib/telos/certificate";
 import { registerCertificate } from "@/lib/telos/derive";
+import { PortraitGallery } from "@/components/portrait-gallery";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -336,6 +337,14 @@ export default function MePage() {
               })
             )
           )}
+        </div>
+
+        {/* 看板娘形象集（陪伴形象 · 关系型激励）：选一个设为当前陪伴，注入首页 hero */}
+        <div className="me-sect">
+          <div className="me-sh">
+            <h3>{t("pt.galleryTitle")}</h3>
+          </div>
+          <PortraitGallery projects={projects} />
         </div>
       </div>
     </AppShell>
