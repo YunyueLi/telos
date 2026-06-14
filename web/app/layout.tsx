@@ -34,8 +34,8 @@ export const metadata: Metadata = {
   manifest: `${BASE}/manifest.webmanifest`,
   appleWebApp: { capable: true, title: "Telos", statusBarStyle: "default" },
   icons: {
-    icon: [{ url: `${BASE}/icon.svg`, type: "image/svg+xml" }],
-    apple: [{ url: `${BASE}/icon.svg` }],
+    icon: [{ url: `${BASE}/icon.svg`, type: "image/svg+xml" }], // 浏览器标签 favicon：罗盘（小尺寸清晰）
+    apple: [{ url: `${BASE}/icon-192.png` }], // iOS 主屏：看板娘头像
   },
 };
 
