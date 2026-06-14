@@ -47,6 +47,7 @@ import {
   getDailyInfo,
   noteDerive,
   setDailyGoal,
+  redeemFreeze,
   type DailyInfo,
 } from "./xp";
 import { useAuth } from "./auth";
@@ -68,9 +69,13 @@ interface ProjectContextValue {
   dailyPct: number; // 今日进度 0..1
   dailyGoalMet: boolean;
   freezes: number; // 可用断签保护
+  spendable: number; // 可花费 XP（兑换断签保护）
+  canRedeem: boolean; // 可兑换断签保护（XP 够 + 未满）
+  freezeCost: number; // 兑换 1 个保护所需 XP
   dailyVersion: number; // 每次学习/改目标自增 → 供月历等重算
   goalNonce: number; // 每次"刚达成今日目标"自增 → 触发庆祝
   setDailyGoal: (g: number) => void;
+  redeemFreeze: () => void;
   composing: boolean; // 正在"新学习"（即使有旧项目也显示引导页）
   deriving: boolean;
   deriveError: string | null;
@@ -191,6 +196,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const updateDailyGoal = useCallback((g: number) => {
     setDailyGoal(g);
+    setDailyVersion((v) => v + 1);
+  }, []);
+
+  const doRedeemFreeze = useCallback(() => {
+    redeemFreeze();
     setDailyVersion((v) => v + 1);
   }, []);
 
@@ -423,9 +433,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     dailyPct: daily?.pct ?? 0,
     dailyGoalMet: daily?.goalMet ?? false,
     freezes: daily?.freezes ?? 0,
+    spendable: daily?.spendable ?? 0,
+    canRedeem: daily?.canRedeem ?? false,
+    freezeCost: daily?.freezeCost ?? 200,
     dailyVersion,
     goalNonce,
     setDailyGoal: updateDailyGoal,
+    redeemFreeze: doRedeemFreeze,
     composing,
     deriving,
     deriveError,

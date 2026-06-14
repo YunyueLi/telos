@@ -813,6 +813,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .daily-freeze .fz-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
 .daily-freeze .fz-txt b{font:600 13px var(--sans);color:var(--ink)}
 .daily-freeze .fz-txt span{font:500 11px var(--mono);color:var(--ink-3);line-height:1.45}
+.daily-freeze .fz-redeem{margin-left:auto;flex:none;font:600 11.5px var(--sans);padding:6px 11px;border-radius:9px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;white-space:nowrap}
+.daily-freeze .fz-redeem:disabled{background:var(--card);color:var(--ink-3);border-color:var(--line-soft);cursor:default}
 .daily-cal{margin-top:0}
 .cal-head,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cal-wd{text-align:center;font:500 9.5px var(--mono);text-transform:uppercase;color:var(--ink-3);padding-bottom:2px}
