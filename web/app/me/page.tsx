@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/icon";
-import { asset } from "@/lib/base";
+import { asset, BASE } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/telos/auth";
 import { useProject } from "@/lib/telos/use-project";
@@ -14,7 +14,8 @@ import { useT } from "@/lib/telos/i18n";
 import { domainLabel } from "@/lib/telos/engine";
 import { projectTitle, type Project } from "@/lib/telos/project";
 import { isPro } from "@/lib/telos/billing";
-import { buildCertificate } from "@/lib/telos/certificate";
+import { buildCertificate, certSerial } from "@/lib/telos/certificate";
+import { registerCertificate } from "@/lib/telos/derive";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -47,20 +48,27 @@ export default function MePage() {
     if (window.confirm(t("me.confirmDelete", { goal }))) removeProject(id);
   };
   // 完课证书（Pro）：项目全部能力点完成后领取——canvas 直绘下载 PNG
-  const getCert = (p: Project) => {
+  const getCert = async (p: Project) => {
     if (!isPro()) {
       router.push("/pro");
       return;
     }
     const name = (window.prompt(t("cert.namePh")) || "").trim() || t("cert.anon");
+    const goal = projectTitle(p);
+    const serial = certSerial(goal, p.id); // 稳定编号：目标 + 项目 id（不随语言/领取时刻变，验真用同一个）
+    const dateISO = new Date().toISOString().slice(0, 10);
+    const verifyUrl = `${window.location.host}${BASE}/cert?no=${serial}`;
+    await registerCertificate({ serial, name, goal, nodes: p.points.length, dateISO }); // 登记到 KV，供 /cert 公开验真
     const canvas = buildCertificate({
       name,
-      goal: projectTitle(p),
+      goal,
       nodes: p.points.length,
       dateText: new Intl.DateTimeFormat(lang).format(new Date()),
       completedText: t("cert.completed", { n: p.points.length }),
       serialLabel: t("cert.serial"),
       brandText: t("ob.tagline"),
+      serial,
+      verifyUrl,
     });
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");

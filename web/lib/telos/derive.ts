@@ -206,6 +206,52 @@ export async function fetchTemplatePoints(id: string): Promise<KnowledgePoint[]>
   return normalize(points) as KnowledgePoint[];
 }
 
+// ---- 完课证书验真：领证时登记（登录），/cert 页凭编号公开核验真伪。base 与倒推端点同源。----
+export function certApiBase(): string {
+  const url = getDeriveUrl();
+  return url ? url.replace(/\/(derive|lesson|probe|title)\/?$/, "") : "";
+}
+export interface CertPayload {
+  serial: string;
+  name: string;
+  goal: string;
+  nodes: number;
+  dateISO: string;
+}
+export async function registerCertificate(p: CertPayload): Promise<boolean> {
+  const base = certApiBase();
+  if (!base || !_hostedToken) return false; // 未配端点 / 未登录 → 不登记（证书仍可下载，只是不可验真）
+  try {
+    const res = await fetch(`${base}/cert/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${_hostedToken}` },
+      body: JSON.stringify(p),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+export interface CertRecord {
+  found: boolean;
+  serial?: string;
+  name?: string;
+  goal?: string;
+  nodes?: number;
+  dateISO?: string;
+}
+export async function verifyCertificate(serial: string): Promise<CertRecord> {
+  const base = certApiBase();
+  if (!base) return { found: false };
+  try {
+    const res = await fetch(`${base}/cert/verify?no=${encodeURIComponent(serial)}`);
+    if (!res.ok) return { found: false };
+    return (await res.json()) as CertRecord;
+  } catch {
+    return { found: false };
+  }
+}
+
 // 托管错误码 → 本地化文案（Worker 返回 {error:"<code>"}）。未识别返回 null 由调用方走通用错误。
 function hostedErrorMessage(code: unknown): string | null {
   switch (String(code || "")) {

@@ -1028,6 +1028,54 @@ async function templateContent(request, env) {
   return json({ id, points }, 200, env);
 }
 
+// ════════════════ 完课证书验真（/cert/register · /cert/verify）════════════════
+// 领取证书时登录登记（写 KV cert:<serial>），生成可验真链接 /app/cert?no=<serial>；
+// 任何人凭编号公开查询真伪 + 证书信息（社交传播素材）。内容永久存 KV，证书不过期。
+const CERT_RE = /^TL-[A-Z0-9]{4,16}$/;
+
+async function certRegister(request, env) {
+  if (!env.TELOS_USAGE || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return json({ error: "NO_HOSTED" }, 503, env);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad json" }, 400, env);
+  }
+  const serial = String(body.serial || "").trim();
+  if (!CERT_RE.test(serial)) return json({ error: "bad serial" }, 400, env);
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const user = await verifyUser(env, token);
+  if (!user) return json({ error: "NEED_LOGIN" }, 401, env);
+  const key = `cert:${serial}`;
+  const existing = await env.TELOS_USAGE.get(key, "json");
+  if (existing) return json({ ok: true, already: true }, 200, env); // 幂等：同一证书已登记
+  const rec = {
+    name: String(body.name || "").slice(0, 60),
+    goal: String(body.goal || "").slice(0, 200),
+    nodes: parseInt(String(body.nodes), 10) || 0,
+    dateISO: String(body.dateISO || "").slice(0, 30),
+    uid: user.id,
+    at: Date.now(),
+  };
+  await env.TELOS_USAGE.put(key, JSON.stringify(rec)); // 永久（证书不过期）
+  return json({ ok: true }, 200, env);
+}
+
+async function certVerify(url, env) {
+  if (!env.TELOS_USAGE) return json({ found: false }, 200, env);
+  const serial = String(url.searchParams.get("no") || "").trim();
+  if (!CERT_RE.test(serial)) return json({ found: false }, 200, env);
+  let rec = null;
+  try {
+    rec = await env.TELOS_USAGE.get(`cert:${serial}`, "json");
+  } catch {
+    rec = null;
+  }
+  if (!rec) return json({ found: false }, 200, env);
+  return json({ found: true, serial, name: rec.name, goal: rec.goal, nodes: rec.nodes, dateISO: rec.dateISO }, 200, env);
+}
+
 // ════════════════ Telos Pro 计费 webhook ════════════════
 // 支付服务商(MoR) → 本端点（验 HMAC 签名）→ 用 service_role 把权益写进 Supabase app_metadata。
 // app_metadata 用户不可自改（区别于 user_metadata），前端 billing.ts 读它解锁 Pro。
@@ -1237,6 +1285,12 @@ export default {
     }
     if (request.method === "POST" && path === "/template") {
       return templateContent(request, env); // 付费模板内容：鉴权后从 KV 下发（内容不在前端）
+    }
+    if (request.method === "POST" && path === "/cert/register") {
+      return certRegister(request, env); // 完课证书登记（登录）
+    }
+    if (request.method === "GET" && path === "/cert/verify") {
+      return certVerify(url, env); // 证书验真（公开）
     }
     // 托管门禁：BYOK 请求（带 X-Telos-Key）原样放行不计量；否则验账号 + 扣配额。
     // gate.commit() 在推理成功后调用——失败的请求不扣次数。
