@@ -15,6 +15,7 @@ import PathView from "@/components/path-view";
 // 引用的旧 chunk 已 404 → 地图永远停在「加载地图…」，需再刷新才好。静态导入后页面 JS 能起，地图必能起。
 import DeriveCanvas from "@/components/canvas";
 import { useProject } from "@/lib/telos/use-project";
+import { useCurrentPortraitFile } from "@/lib/telos/portraits";
 import { useAuth } from "@/lib/telos/auth";
 import { cloudConfigured } from "@/lib/telos/supabase";
 import { domainLabel } from "@/lib/telos/engine";
@@ -111,6 +112,7 @@ function Onboarding({
   const [pro, setPro] = useState(false);
   const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const heroFace = useCurrentPortraitFile(); // 当前陪伴看板娘（形象集里选的）
   // 免费版项目数上限：超限时在输入框下方给事前提示（derive 内还有硬校验兜底）
   const limitReached = mounted && !pro && projectCount >= BILLING.freeProjectLimit;
 
@@ -245,7 +247,7 @@ function Onboarding({
           </svg>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <span className="pcirc">
-            <img src={asset("/portraits/present.png")} alt="Telos 老师" />
+            <img src={asset(`/portraits/${heroFace}.png`)} alt="Telos 老师" />
           </span>
         </aside>
       </div>
