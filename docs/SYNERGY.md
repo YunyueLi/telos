@@ -155,3 +155,14 @@
 4. **#4 岗位库 → 图谱**（最大、最需设计，放最后）
 
 机会 5/6/7 留作中远期（计费栈复用 → Greenroom 变现；BKT 讲熟度；一条龙叙事）。
+
+---
+
+## 落地进展（2026-06-14）
+
+| 方案 | 状态 | 交付物 |
+|---|---|---|
+| **#3A 设计 token** | ✅ 已上线 | `telos/docs/tokens.css`（权威单源）；`globals.css`/`DESIGN.md §1` 标注；Greenroom `index.html` 灰阶+语义色对齐控制台/Telos（`greenroom.html` 核心 token 本就一致）。两 repo 已提交推送。 |
+| **#2 文风铁律 → 微课** | ✅ 已上线 | `_STYLE_RULES`/`STYLE_RULES` 注入 lesson（`llm.py`+`derive.js` 两端）+ probe rationale；Worker 已 `wrangler deploy`（`telos-api.ungetsu.net`）。未跑实时生成（需 key+配额），静态验证：Python 拼接含铁律、`node --check` 通过、parity 8 项全绿。 |
+| **#3B 代理层** | ◑ 部分（按性价比裁剪） | 交付 `workers/check-prompt-parity.mjs`——校验 Python(`llm.py`) 与 Worker(`derive.js`) 的关键 prompt 不变量两端在场（防"改一处忘另一处"）。**chat helper 跨仓库 vendoring 暂缓**：Telos Python 侧已 DRY（`serve.py` import `llm.py`）；Worker 是 JS 必然另写；Greenroom serve.py 是流式 + 零依赖单文件，与 Telos 非流式 JSON 形态不同，强行共享收益低于耦合成本。待有 forcing function 再做。 |
+| **#1 FSRS → 面试复习** | ⏳ 进行中 | 见任务 #4。 |
