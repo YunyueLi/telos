@@ -675,6 +675,14 @@ const LESSON_REQS =
   "worked.steps 给 3-5 步(每步 do+why)；faded 是完成式问题(given 写好前几步、留空最后一步)，hints 提示阶梯 2-3 条由浅入深、最后一条几乎点破但不给答案；retrieve 无脚手架作为掌握闸门；" +
   "按 domain 调整：A 记忆=例子/助记；B 程序=可分步范例；C 创造=范例+rubric；D 动作=分解练习+达标；E 对抗=情境拆解+决策；F 习惯=触发-行为-奖励；";
 
+// 文风铁律：移植自 Greenroom style-zh.md（§II 句式禁令 + §III 升华尾巴）。约束讲解类文本，杜绝 AI 腔。
+// ⚠️ 改这块要同步 core/telos_core/llm.py 的 _STYLE_RULES（check-prompt-parity.mjs 会校验两端在场）。
+const STYLE_RULES =
+  "- 【文风铁律】concept/explain/analogy/reveal/rationale 等讲解文本写成能读出口的人话，不是论文腔：" +
+  "(a) 禁 AI 套路句式『不是…而是 / 而非 / 恰恰 / 这正是 / 不仅…而且 / 值得一提 / 综上 / 与其…不如 / 任何…都』，改成直接的正面陈述；" +
+  "(b) 禁『升华尾巴』——讲完事实别硬加『这说明 / 这背后是 / 这意味着』式拔高，判断要短、具体、可反驳；" +
+  "(c) 破折号每句最多一个，少用『首先/其次』式套话，句子长短不齐像老师当面讲。\n";
+
 // LLM 永远推荐资源(含视频公开课)——不依赖检索；Tavily 在 lesson() 里后置增强(真链前置)，而非替换。
 const LESSON_USER = (name, domain, prereqs, goal) => {
   const head = `知识点：${name}\n所属目标：${goal}\n学习类型(domain)：${domain}\n学习者已掌握的前置：${
@@ -685,6 +693,7 @@ const LESSON_USER = (name, domain, prereqs, goal) => {
     LESSON_STEPS_JSON +
     '"resources":[{"name":"真实存在、口碑最好的公开课/视频名","platform":"YouTube/B站/Coursera/官方文档"}]}\n' +
     LESSON_REQS +
+    STYLE_RULES +
     "resources 给 2-3 个真实存在、口碑最好的优质学习资源，至少包含 1 个视频公开课(YouTube/B站/Coursera/中国大学MOOC 等)；只写课程/视频名+平台，绝不编造 URL。只输出 JSON。"
   );
 };
@@ -829,7 +838,8 @@ const PROBES_USER = (items, goal) =>
   "3) 【靠硬知识定胜负】对错必须取决于一个明确的专业事实/原理/阈值/操作步骤，使『没学过此点但很会做题』的聪明人仅凭选项措辞无法判断、命中率≈瞎猜(25%)；去掉『可能/适当』对『必须/绝不』这类软硬措辞线索。\n" +
   "4) 干扰项＝本领域【真实的高手级误区】(如『过度求稳放弃节奏』『只看自家数据忽视全局』)：是持某种貌似在行却错误的心智模型的进阶者会真心选的，用本领域术语说得专业自信；禁止『问同伴/查资料/多练习』这类放之四海的万能错项与明显荒谬项。\n" +
   "5) 自检：定稿前自问『一个完全不懂此主题的应试高手，能否仅凭选项写法挑出正解？』能则推翻重写。\n" +
-  "6) 恰 4 个选项、answer 为正确项下标(0-3)、唯一正确答案；键必须用给定 id。只输出 JSON。";
+  "6) 恰 4 个选项、answer 为正确项下标(0-3)、唯一正确答案；键必须用给定 id。\n" +
+  "7) rationale 写成人话、讲清为何对与各错项错在哪，禁 AI 腔（『不是…而是 / 恰恰 / 这正是 / 值得一提』）。只输出 JSON。";
 
 async function probes(body, env) {
   const key = env.TELOS_LLM_API_KEY;
