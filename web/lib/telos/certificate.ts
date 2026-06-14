@@ -1,6 +1,9 @@
 // 完课证书（Pro 结果型权益）：项目全部能力点完成后可领取。
 // canvas 直绘横版证书（黑白纸感 · 双线图廓 · 罗盘 mark · 衬线标题 · 编号），下载 PNG 即社交传播素材。
 // 编号 = 内容哈希（目标+完成日），同一完成事实编号稳定；真验真（服务端登记）后续接 Supabase。
+// 右下角印一枚纯黑白二维码（编码验真链接），社交传播时可直接扫码核验真伪。
+
+import { qrMatrix } from "./qr";
 
 function hashCode(s: string): string {
   let h = 5381;
@@ -22,6 +25,7 @@ export function buildCertificate(opts: {
   brandText: string; // 标语
   serial: string; // 稳定编号（外部算；登记与验真用同一个，不随语言/领取时刻变）
   verifyUrl?: string; // 验真链接（印在底部，社交传播可核验真伪）
+  scanLabel?: string; // 二维码上方小字（如"扫码核验"）；空则不画标注
 }): HTMLCanvasElement {
   const W = 1600;
   const H = 1131; // ≈ A4 横版比例
@@ -155,6 +159,39 @@ export function buildCertificate(opts: {
     ctx.fillStyle = INK3;
     ctx.font = '500 15px ui-monospace, "SF Mono", monospace';
     ctx.fillText(opts.verifyUrl, cx, H - 96);
+
+    // 右下角二维码（编码验真链接）：扫码即落 /cert 核验页。失败则静默跳过，不影响其余排版。
+    try {
+      // 链接缺协议时补 https://，确保多数扫码器能直接打开（卡面文字仍按原样展示）。
+      const payload = /^https?:\/\//i.test(opts.verifyUrl) ? opts.verifyUrl : `https://${opts.verifyUrl}`;
+      const mods = qrMatrix(payload);
+      const n = mods.length;
+      const xRight = W - 120; // 与编号同一右边距，右对齐成一列
+      const ms = Math.max(2.5, Math.floor((104 / n) * 2) / 2); // 模块边长取 0.5 的整数倍 → 2x 画布上整像素，扫码清晰
+      const qsize = n * ms;
+      const quiet = 4 * ms; // 标准 4 模块静区
+      const qx = xRight - qsize;
+      const qy = H - 160 - qsize; // 码底约在 H-160，留出与编号的间距
+      // 静区铺纸底（与卡面同色，保证码点四周纯净）
+      ctx.fillStyle = PAPER;
+      ctx.fillRect(qx - quiet, qy - quiet, qsize + quiet * 2, qsize + quiet * 2);
+      // 墨色码点
+      ctx.fillStyle = INK;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (mods[r][c]) ctx.fillRect(qx + c * ms, qy + r * ms, ms, ms);
+        }
+      }
+      // 码上方小字标注（如"扫码核验"）
+      if (opts.scanLabel) {
+        ctx.textAlign = "right";
+        ctx.fillStyle = INK3;
+        ctx.font = '500 14px ui-monospace, "SF Mono", monospace';
+        ctx.fillText(opts.scanLabel, xRight, qy - quiet - 6);
+      }
+    } catch {
+      // QR 生成失败（理论上不会发生）：保持验真链接小字即可
+    }
   }
 
   return canvas;
