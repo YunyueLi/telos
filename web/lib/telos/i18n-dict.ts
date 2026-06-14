@@ -388,6 +388,15 @@ export const DICT: Record<string, Record<Lang, string>> = {
   "ink.what": { "zh-CN": "学习时为你研的墨，可换断签保护与形象装扮（不影响能力与 XP）", "zh-TW": "學習時為你研的墨，可換斷簽保護與形象裝扮（不影響能力與 XP）", en: "Ink you earn by studying — spend it on streak freezes and looks (never ability or XP)", fr: "De l'encre gagnée en étudiant — pour les protections de série et les apparences (jamais la capacité ni l'XP)", ja: "学習で貯まる墨。連続記録の保護や着せ替えに使えます（能力や XP には影響しません）", ko: "학습으로 모은 먹 — 연속 보호와 꾸미기에 쓰여요(능력·XP에는 영향 없음)", es: "Tinta que ganas al estudiar; para protecciones de racha y apariencias (nunca capacidad ni XP)", ru: "Чернила за учёбу — на защиту серии и образы (никогда на способности или XP)", de: "Beim Lernen verdiente Tinte — für Serienschutz und Looks (nie Fähigkeit oder XP)" },
   "ink.earnDaily": { "zh-CN": "每日达标 +{n}", "zh-TW": "每日達標 +{n}", en: "Daily goal +{n}", fr: "Objectif du jour +{n}", ja: "毎日の目標達成 +{n}", ko: "매일 목표 달성 +{n}", es: "Meta diaria +{n}", ru: "Дневная цель +{n}", de: "Tagesziel +{n}" },
   "ink.earnGraph": { "zh-CN": "学完整图 +{n}", "zh-TW": "學完整圖 +{n}", en: "Full map +{n}", fr: "Carte entière +{n}", ja: "マップ完走 +{n}", ko: "지도 완성 +{n}", es: "Mapa completo +{n}", ru: "Вся карта +{n}", de: "Ganze Karte +{n}" },
+
+  // ── 纸张主题（cosmetic 纸色变体）──
+  "theme.pickerTitle": { "zh-CN": "纸张主题", "zh-TW": "紙張主題", en: "Paper theme", fr: "Thème de papier", ja: "紙のテーマ", ko: "종이 테마", es: "Tema de papel", ru: "Тема бумаги", de: "Papier-Thema" },
+  "theme.sub": { "zh-CN": "换一种纸的色温（纯外观，不影响学习）", "zh-TW": "換一種紙的色溫（純外觀，不影響學習）", en: "Switch the paper's tone (looks only, no effect on learning)", fr: "Changer la teinte du papier (apparence seule, sans effet sur l'apprentissage)", ja: "紙の色味を変える（見た目だけ、学習に影響なし）", ko: "종이 색감 변경(외형만, 학습 영향 없음)", es: "Cambia el tono del papel (solo estética, sin efecto en el aprendizaje)", ru: "Сменить тон бумаги (только вид, на учёбу не влияет)", de: "Papierton wechseln (nur Optik, ohne Lerneffekt)" },
+  "theme.su": { "zh-CN": "素白", "zh-TW": "素白", en: "Plain", fr: "Uni", ja: "素白", ko: "소백", es: "Liso", ru: "Простая", de: "Schlicht" },
+  "theme.xuan": { "zh-CN": "宣纸", "zh-TW": "宣紙", en: "Rice paper", fr: "Papier de riz", ja: "宣紙", ko: "선지", es: "Papel de arroz", ru: "Рисовая", de: "Reispapier" },
+  "theme.niupi": { "zh-CN": "牛皮", "zh-TW": "牛皮", en: "Kraft", fr: "Kraft", ja: "クラフト", ko: "크라프트", es: "Kraft", ru: "Крафт", de: "Kraft" },
+  "theme.yuebai": { "zh-CN": "月白", "zh-TW": "月白", en: "Moonlight", fr: "Clair de lune", ja: "月白", ko: "월백", es: "Luz de luna", ru: "Лунная", de: "Mondweiß" },
+  "theme.locked": { "zh-CN": "Pro 解锁", "zh-TW": "Pro 解鎖", en: "Pro", fr: "Pro", ja: "Pro", ko: "Pro", es: "Pro", ru: "Pro", de: "Pro" },
   "daily.frozen": { "zh-CN": "已冻结保护", "zh-TW": "已凍結保護", en: "Streak frozen", fr: "Série gelée", ja: "凍結で保護", ko: "프리즈로 보호됨", es: "Racha congelada", ru: "Серия заморожена", de: "Serie eingefroren" },
   "daily.legendMet": { "zh-CN": "达成", "zh-TW": "達成", en: "Met", fr: "Atteint", ja: "達成", ko: "달성", es: "Cumplido", ru: "Выполнено", de: "Erreicht" },
   "daily.legendPartial": { "zh-CN": "有学习", "zh-TW": "有學習", en: "Studied", fr: "Étudié", ja: "学習あり", ko: "학습함", es: "Estudiado", ru: "Занятие", de: "Gelernt" },

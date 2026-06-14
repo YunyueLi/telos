@@ -11,6 +11,11 @@
   --mono: var(--font-jbmono), ui-monospace, Menlo, monospace;
 }
 
+/* 纸张主题（cosmetic：只调纸墨色温，组件靠变量自适应，守纯黑白纸感）。su=默认走 :root。 */
+html[data-theme="xuan"]{--paper:#F4EFE4;--card:#FEFCF7;--line-soft:#E6DECE;--hatch:#D8CFBA}
+html[data-theme="niupi"]{--paper:#E8E0CF;--card:#F4EDDD;--ink:#211A0E;--ink-2:#5C5340;--ink-3:#948A75;--line:#211A0E;--line-soft:#D6CBB2;--hatch:#C7B99C}
+html[data-theme="yuebai"]{--paper:#ECEEF0;--card:#FFFFFF;--ink:#13161A;--ink-2:#4F555C;--ink-3:#8A9098;--line:#13161A;--line-soft:#DDE1E4;--hatch:#CDD2D7}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-card: var(--card);
@@ -928,6 +933,18 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .stamp.on .stamp-o1{stroke:var(--ink);stroke-width:1.9}
 .stamp.on .stamp-o2{stroke:var(--ink)}
 .stamp.on .stamp-ic{color:var(--ink)}
+/* 纸张主题选择器 */
+.tp{display:flex;gap:13px;flex-wrap:wrap}
+.tp-cell{display:flex;flex-direction:column;align-items:center;gap:7px;border:none;background:none;cursor:pointer;padding:2px}
+.tp-cell.locked{cursor:default}
+.tp-sw{position:relative;width:52px;height:52px;border-radius:13px;border:1.6px solid;display:grid;place-items:center}
+.tp-sw i{width:19px;height:19px;border-radius:50%}
+.tp-cell.on .tp-sw{box-shadow:0 0 0 2.5px var(--paper),0 0 0 4px var(--ink)}
+.tp-lk{position:absolute;width:15px;height:15px;color:var(--ink-2)}
+.tp-cell.locked .tp-sw{opacity:.5}
+.tp-name{font:600 11.5px var(--sans);color:var(--ink-2)}
+.tp-cell.on .tp-name{color:var(--ink)}
+.tp-pro{font:600 9px var(--mono);letter-spacing:.05em;color:var(--ink-3);border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px}
 .streak-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .streak-col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .streak-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:18px}
