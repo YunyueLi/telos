@@ -69,7 +69,6 @@ export default function MePage() {
       brandText: t("ob.tagline"),
       serial,
       verifyUrl,
-      scanLabel: t("cert.scanVerify"),
     });
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
