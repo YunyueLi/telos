@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-/* ============ design tokens ============ */
+/* ============ design tokens ============
+   零彩色核心 + 字体 = Telos × Greenroom 共享单源；权威值见 docs/tokens.css（改动先改那里再同步两端）。
+   Telos 守零彩色：不在此引入语义色，状态走形状/填充/斜纹/虚线（见 docs/DESIGN.md §1 与 §4）。 */
 :root {
   --paper:#F0EEE9; --card:#FFFFFF; --ink:#141310; --ink-2:#56524A; --ink-3:#928E84;
   --line:#141310; --line-soft:#E2DFD7; --hatch:#D5D1C7;

@@ -28,6 +28,8 @@
 
 规则：**不引入任何彩色**（连「正确=绿/错误=红」也不用——见 §4 用形状/填充表达状态）。深色强调用 `--ink` 反白（paper 字）。半透明叠加用 `rgba(20,19,16,.04~.06)`。
 
+> **跨产品共享**：这套零彩色核心 + 字体是 Telos 与 Greenroom 的共享单源，权威值见 [`tokens.css`](tokens.css)。Greenroom 控制台（`app/greenroom.html`）已逐值对齐；其 `--ok/--warn/--live` 是面试场景的语义扩展，**Telos 不采用**（守零彩色）。改 token 先改 `tokens.css` 再同步两端。
+
 ---
 
 ## 2. 字体 — 衬线显赫 + 无衬线干净 + mono 做标签

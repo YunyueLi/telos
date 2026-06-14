@@ -1,0 +1,36 @@
+/* ═══════════════════════════════════════════════════════════════
+   Telos × Greenroom — 共享设计 token（权威单源 / source of truth）
+
+   零彩色核心调色板 + 字体三件套。两个产品镜像这份值；改动先改这里，
+   再同步到下面三处镜像（逐值一致）：
+     · Telos     web/app/globals.css   :root + @theme inline
+     · Greenroom app/greenroom.html    :root（控制台 = 视觉基线）
+     · Greenroom index.html            :root（落地页）
+
+   设计法则见 telos/docs/DESIGN.md §1（零彩色）/ §4（状态走形状·填充·斜纹·虚线，不用颜色）。
+   字体加载机制各自不同：Telos 走 next/font 注入 --font-* 变量，Greenroom 走 Google Fonts <link>；
+   字族与兜底链一致即可。
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  /* —— 核心调色板：只有黑白与暖灰，零彩色（两产品逐值共享）—— */
+  --paper:#F0EEE9;     /* 页面底（暖灰纸） */
+  --card:#FFFFFF;      /* 卡片底 */
+  --ink:#141310;       /* 主文字 / 主描边 / 实心强调 / 深色面板底 */
+  --ink-2:#56524A;     /* 正文次级、说明文字 */
+  --ink-3:#928E84;     /* 弱化标签、占位、mono 注脚 */
+  --line:#141310;      /* 强分隔线（同 ink） */
+  --line-soft:#E2DFD7; /* 常规边框、弱分隔线 */
+  --hatch:#D5D1C7;     /* 斜纹填充（「学习中」状态） */
+
+  /* —— 字体三件套（两产品共享）—— */
+  --serif:"Fraunces",Georgia,serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+
+/* ── Greenroom 专属语义扩展（Telos 不用：Telos 守零彩色）──
+   面试场景需要少量语义强调（口径红线 / 已出口 / 提示），Greenroom 在核心之上加这三色：
+     --ok:   #2f7d4f   成功 / 已锁定
+     --warn: #9a6a2f   提示 / demo 数据
+     --live: #b4453a   告警 / 口径红线 / 实时
+   Telos 若需同类语义，改用形状/填充/斜纹表达，不引入色相。 */
