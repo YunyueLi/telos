@@ -20,6 +20,8 @@ import {
   totalXp,
   type DayCell,
 } from "@/lib/telos/xp";
+import { DAILY_INK, GRAPH_INK } from "@/lib/telos/ink";
+import { Stamp } from "@/components/stamp";
 
 // 进度环：纯 SVG，描边随 pct 收放；达标显对勾，否则显百分比。
 function Ring({ pct, met }: { pct: number; met: boolean }) {
@@ -226,6 +228,26 @@ export function StreakBoard() {
             </div>
           </section>
 
+          {/* 墨：可花软通货（学习赚取，换断签保护/形象装扮）。XP 是不可花的能力刻度 */}
+          <section className="streak-card ink-card">
+            <div className="ink-head">
+              <span className="ink-drop" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 2.5C7.5 9 6 12.6 8 16.6c1.8 3.4 6.2 3.4 8 0 2-4 .5-7.6-4-14.1Z" />
+                </svg>
+              </span>
+              <div className="ink-bal">
+                <b>{spendable}</b>
+                <span>{t("ink.unit")}</span>
+              </div>
+              <p className="ink-what">{t("ink.what")}</p>
+            </div>
+            <div className="ink-earn">
+              <span>{t("ink.earnDaily", { n: DAILY_INK })}</span>
+              <span>{t("ink.earnGraph", { n: GRAPH_INK })}</span>
+            </div>
+          </section>
+
           {/* 断签保护 */}
           <section className="streak-card">
             <div className="daily-freeze">
@@ -361,9 +383,7 @@ export function StreakBoard() {
             const unlocked = a.value >= a.target;
             return (
               <div key={a.id} className={`ach ${unlocked ? "on" : ""}`}>
-                <span className="ach-ic">
-                  <Icon name={a.icon} />
-                </span>
+                <Stamp icon={a.icon} on={unlocked} className="ach-stamp" />
                 <div className="ach-t">
                   <b>{t(`ach.${a.id}`)}</b>
                   <span>{unlocked ? t("streak.unlocked") : `${Math.min(a.value, a.target)} / ${a.target}`}</span>

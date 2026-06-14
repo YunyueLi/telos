@@ -17,6 +17,7 @@ import { isPro } from "@/lib/telos/billing";
 import { buildCertificate, certSerial } from "@/lib/telos/certificate";
 import { registerCertificate } from "@/lib/telos/derive";
 import { PortraitGallery } from "@/components/portrait-gallery";
+import { earnGraphInk } from "@/lib/telos/ink";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -60,6 +61,7 @@ export default function MePage() {
     const dateISO = new Date().toISOString().slice(0, 10);
     const verifyUrl = `${window.location.host}${BASE}/cert?no=${serial}`;
     await registerCertificate({ serial, name, goal, nodes: p.points.length, dateISO }); // 登记到 KV，供 /cert 公开验真
+    earnGraphInk(serial); // 完成整张图谱发墨（幂等，按 serial 去重）
     const canvas = buildCertificate({
       name,
       goal,
