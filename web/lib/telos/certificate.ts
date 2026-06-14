@@ -20,6 +20,8 @@ export function buildCertificate(opts: {
   completedText: string; // "已完成全部 N 个能力点"
   serialLabel: string; // "编号"
   brandText: string; // 标语
+  serial: string; // 稳定编号（外部算；登记与验真用同一个，不随语言/领取时刻变）
+  verifyUrl?: string; // 验真链接（印在底部，社交传播可核验真伪）
 }): HTMLCanvasElement {
   const W = 1600;
   const H = 1131; // ≈ A4 横版比例
@@ -133,7 +135,7 @@ export function buildCertificate(opts: {
   ctx.font = '500 20px ui-monospace, "SF Mono", monospace';
   ctx.fillText(opts.dateText, 120, H - 130);
   ctx.textAlign = "right";
-  ctx.fillText(`${opts.serialLabel} ${certSerial(opts.goal, opts.dateText)}`, W - 120, H - 130);
+  ctx.fillText(`${opts.serialLabel} ${opts.serial}`, W - 120, H - 130);
   // 底部中线印章感圆环
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2;
@@ -148,6 +150,12 @@ export function buildCertificate(opts: {
   ctx.fillText("TELOS", cx, H - 156);
   ctx.font = '500 11px ui-monospace, "SF Mono", monospace';
   ctx.fillText("VERIFIED", cx, H - 138);
+  // 验真链接（社交传播：凭编号在此页核验真伪）
+  if (opts.verifyUrl) {
+    ctx.fillStyle = INK3;
+    ctx.font = '500 15px ui-monospace, "SF Mono", monospace';
+    ctx.fillText(opts.verifyUrl, cx, H - 96);
+  }
 
   return canvas;
 }
