@@ -244,6 +244,7 @@ export default function ProPage() {
                 ["pro.perkProjects", "pro.perkProjectsD", { n: BILLING.freeProjectLimit }],
                 ["pro.perkExport", "pro.perkExportD", undefined],
                 ["pro.perkTpl", "pro.perkTplD", undefined],
+                ["pro.perkStudio", "pro.perkStudioD", undefined],
                 ["pro.perkFuture", "pro.perkFutureD", undefined],
                 ["pro.perkSupport", "pro.perkSupportD", undefined],
               ] as [string, string, Record<string, number> | undefined][]
