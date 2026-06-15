@@ -19,7 +19,7 @@ const TABS: { key: Tab; href: string; icon: IconName; labelKey: string }[] = [
   { key: "map", href: "/", icon: "map", labelKey: "nav.map" },
   { key: "review", href: "/review", icon: "refresh", labelKey: "nav.review" },
   { key: "streak", href: "/streak", icon: "flame", labelKey: "nav.streak" },
-  { key: "studio", href: "/studio", icon: "spark", labelKey: "nav.studio" },
+  { key: "studio", href: "/studio", icon: "studio", labelKey: "nav.studio" },
   { key: "me", href: "/me", icon: "user", labelKey: "nav.me" },
 ];
 

@@ -3,7 +3,7 @@ export type IconName =
   | "gauge" | "play" | "refresh" | "plus" | "spark" | "home" | "map"
   | "user" | "compass" | "settings" | "trash" | "globe"
   | "chevron" | "search" | "x" | "sort" | "mail" | "logout"
-  | "flame" | "shield" | "calendar" | "medal";
+  | "flame" | "shield" | "calendar" | "medal" | "studio";
 
 export function Icon({
   name,
