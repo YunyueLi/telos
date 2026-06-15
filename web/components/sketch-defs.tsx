@@ -41,6 +41,7 @@ export function SketchDefs() {
         <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 2.5v5.6c0 4.6-3 7.6-7 9.4-4-1.8-7-4.8-7-9.4V5.5z" /><path d="M8.8 12.2l2.2 2.2 4.4-4.6" /></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 9.5h16M8.5 3v4M15.5 3v4" /></symbol>
         <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8.5 8.5L6 3M15.5 8.5L18 3" /><circle cx="12" cy="14" r="6" /><path d="M12 11l.85 1.7 1.9.28-1.37 1.34.32 1.88L12 15.4l-1.7.9.32-1.88-1.37-1.34 1.9-.28z" /></symbol>
+        <symbol id="i-studio" viewBox="0 0 24 24"><path d="M3 10.5Q4.3 9.2 6 9.8L12 5.5l6 4.3Q19.7 9.2 21 10.5" /><path d="M6 10.5V19M18 10.5V19M4 19h16" /><path d="M9.5 19v-4.4Q12 12.9 14.5 14.6V19" /></symbol>
       </defs>
     </svg>
   );
