@@ -8,6 +8,7 @@ import styles from "./app.module.css";
 import { AGAIN, GOOD, KnowledgeGraph, type LearnerState, domainLabel } from "@/lib/telos/engine";
 import type { LearnerView } from "@/lib/telos/store";
 import { engineReady, generateLesson, generateProbes, type Lesson, type Probe } from "@/lib/telos/derive";
+import { recordFirstAttempt } from "@/lib/telos/evidence";
 import LessonRunner from "@/components/lesson-runner";
 import { TierText } from "@/components/tier-text";
 import { useT } from "@/lib/telos/i18n";
@@ -115,7 +116,18 @@ export default function NodePanel({
   function submitChallenge() {
     if (chChoice === null || !chProbe) return;
     setChSubmitted(true);
-    onLearned(pid, chChoice === chProbe.answer, chChoice === chProbe.answer ? GOOD : AGAIN);
+    const ok = chChoice === chProbe.answer;
+    // T4 旁路埋点：OLM「我其实会」自评 = 一次首答（前置掌握快照 + 对错）
+    recordFirstAttempt({
+      goal,
+      node: pid,
+      nodeName: node.name,
+      phase: "challenge",
+      correct: ok,
+      options: chProbe.options.length,
+      prereqs: prereqs.map((p) => ({ id: p.id, mastered: p.done })),
+    });
+    onLearned(pid, ok, ok ? GOOD : AGAIN);
   }
 
   // ═══════ 全屏交互式微课 ═══════
@@ -132,6 +144,18 @@ export default function NodePanel({
         drill={drill}
         benchmark={benchmark}
         onGrade={(correct) => onLearned(pid, correct, correct ? GOOD : AGAIN)}
+        onPredict={(correct, options) =>
+          // T4 旁路埋点：微课教学前「predict」首猜 = 接触新节点时的首答（前置已掌握态 + 对错）
+          recordFirstAttempt({
+            goal,
+            node: pid,
+            nodeName: node.name,
+            phase: "predict",
+            correct,
+            options,
+            prereqs: prereqs.map((p) => ({ id: p.id, mastered: p.done })),
+          })
+        }
         onClose={onClose}
       />
     );

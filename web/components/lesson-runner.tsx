@@ -98,6 +98,7 @@ export default function LessonRunner({
   drill,
   benchmark,
   onGrade,
+  onPredict,
   onClose,
 }: {
   lesson: Lesson;
@@ -110,6 +111,7 @@ export default function LessonRunner({
   drill?: string;
   benchmark?: string;
   onGrade: (correct: boolean) => void;
+  onPredict?: (correct: boolean, options: number) => void; // T4 旁路埋点：教学前「predict」首猜对错 + 选项数（不计分、不影响掌握）
   onClose: () => void;
 }) {
   const { t } = useT();
@@ -197,6 +199,7 @@ export default function LessonRunner({
                 nav={nav}
                 isGate={idx === gateIdx}
                 onResolveGate={resolveGate}
+                onPredict={onPredict}
                 gain={{ startPct, masteryPct, unlocks }}
               />
             </div>
@@ -280,12 +283,14 @@ function StepBody({
   nav,
   isGate,
   onResolveGate,
+  onPredict,
   gain,
 }: {
   step: LessonStep;
   nav: Nav;
   isGate: boolean;
   onResolveGate: (correct: boolean) => void;
+  onPredict?: (correct: boolean, options: number) => void;
   gain: { startPct: number; masteryPct: number; unlocks: string[] };
 }) {
   const { t } = useT();
@@ -315,7 +320,7 @@ function StepBody({
   if (step.kind === "worked") {
     return <WorkedStep step={step} nav={nav} />;
   }
-  return <McqStep step={step} nav={nav} isGate={isGate} onResolveGate={onResolveGate} gain={gain} />;
+  return <McqStep step={step} nav={nav} isGate={isGate} onResolveGate={onResolveGate} onPredict={onPredict} gain={gain} />;
 }
 
 function WorkedStep({ step, nav }: { step: Extract<LessonStep, { kind: "worked" }>; nav: Nav }) {
@@ -352,12 +357,14 @@ function McqStep({
   nav,
   isGate,
   onResolveGate,
+  onPredict,
   gain,
 }: {
   step: Extract<LessonStep, { kind: "predict" | "self_explain" | "faded" | "retrieve" }>;
   nav: Nav;
   isGate: boolean;
   onResolveGate: (correct: boolean) => void;
+  onPredict?: (correct: boolean, options: number) => void;
   gain: { startPct: number; masteryPct: number; unlocks: string[] };
 }) {
   const { t } = useT();
@@ -379,6 +386,7 @@ function McqStep({
     if (choice === null || resolved) return;
     if (isPredict) {
       setResolved(true); // 预测不计分：提交即揭示
+      onPredict?.(choice === step.answer, step.options.length); // T4 旁路埋点：教学前首猜对错 + 选项数（不影响掌握/XP）
       return;
     }
     if (choice === step.answer) {
