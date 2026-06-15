@@ -90,6 +90,7 @@ interface ProjectContextValue {
   cloudOn: boolean;
   syncing: boolean;
   lastSync: number | null;
+  syncError: string | null; // 上次同步的真实报错（表没建 / RLS 等）；null=正常
   syncNow: () => Promise<void>;
 }
 
@@ -127,6 +128,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const syncedRef = useRef<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<number | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const cloudOn = cloudConfigured() && !!user;
 
   useEffect(() => {
@@ -209,9 +211,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProjects((prev) => [p, ...prev.filter((x) => x.id !== p.id)].sort(byRecent));
   }, []);
 
-  // 云端推送（已配置且已登录时）——即发即忘，失败不打断本地。
+  // 云端推送（已配置且已登录时）——即发即忘不打断本地，但失败要让用户可见（不再静默吞掉）。
   const pushCloud = useCallback((p: Project) => {
-    if (cloudConfigured() && userIdRef.current) pushProject(p).catch(() => {});
+    if (!cloudConfigured() || !userIdRef.current) return;
+    pushProject(p)
+      .then((res) => setSyncError(res.ok ? null : (res.error ?? "sync-failed")))
+      .catch((e) => setSyncError(String(e?.message ?? e)));
   }, []);
 
   // 拉取远端 + 按 updatedAt 合并（per-project 最后写入者胜）+ 回推本地更新者。
@@ -219,7 +224,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     if (!cloudConfigured() || !userIdRef.current) return;
     setSyncing(true);
     try {
-      const remote = await pullProjects();
+      const { data: remote, error: pullErr } = await pullProjects();
+      if (pullErr) {
+        setSyncError(pullErr); // 表没建 / RLS 拒绝等 → 透出真实原因，且不写 lastSync（不假装「已同步」）
+        return;
+      }
       const m = new Map<string, Project>();
       for (const p of [...remote, ...listProjects()]) {
         const ex = m.get(p.id);
@@ -234,10 +243,19 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       const active = getActiveId();
       if (active) setActiveId(active); // 命中「最近项目」兜底时落盘 telos:active，持久化此选择
       setActive(active);
+      let pushErr: string | null = null;
       for (const p of merged) {
         const r = remote.find((x) => x.id === p.id);
-        if (!r || (p.updatedAt || 0) > (r.updatedAt || 0)) await pushProject(p);
+        if (!r || (p.updatedAt || 0) > (r.updatedAt || 0)) {
+          const res = await pushProject(p);
+          if (!res.ok && !pushErr) pushErr = res.error ?? "sync-failed";
+        }
       }
+      if (pushErr) {
+        setSyncError(pushErr);
+        return;
+      }
+      setSyncError(null); // 全程无错 → 清掉旧错误
       setLastSync(Date.now());
     } finally {
       setSyncing(false);
@@ -454,6 +472,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     cloudOn,
     syncing,
     lastSync,
+    syncError,
     syncNow,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
