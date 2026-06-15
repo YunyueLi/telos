@@ -81,7 +81,26 @@ export const PORTRAITS: Portrait[] = [
   { id: "oops", series: "daily", file: "oops", nameKey: "pt.oops", unlock: { kind: "maxStreak", n: 14 }, voiceKey: "pt.v.oops" },
   // 里程碑成就（重大成就才解锁——"她为你学完一整张图谱而高兴"）
   { id: "hero", series: "milestone", file: "hero", nameKey: "pt.hero", unlock: { kind: "graphs", n: 1 }, voiceKey: "pt.v.hero" },
-  { id: "empty", series: "milestone", file: "empty", nameKey: "pt.empty", unlock: { kind: "level", n: 10 }, voiceKey: "pt.v.empty" },
+  { id: "zongshi", series: "milestone", file: "zongshi", nameKey: "pt.zongshi", unlock: { kind: "level", n: 15 }, voiceKey: "pt.v.zongshi" },
+  // 日常神态（随基础学习里程碑解锁，延续 daily 系列）
+  { id: "nod", series: "daily", file: "nod", nameKey: "pt.nod", unlock: { kind: "streak", n: 5 }, voiceKey: "pt.v.nod" },
+  { id: "ponder", series: "daily", file: "ponder", nameKey: "pt.ponder", unlock: { kind: "mastered", n: 20 }, voiceKey: "pt.v.ponder" },
+  { id: "applaud", series: "daily", file: "applaud", nameKey: "pt.applaud", unlock: { kind: "maxStreak", n: 10 }, voiceKey: "pt.v.applaud" },
+  { id: "lantern", series: "daily", file: "lantern", nameKey: "pt.lantern", unlock: { kind: "maxStreak", n: 21 }, voiceKey: "pt.v.lantern" },
+  // 学科场景
+  { id: "scene-lectern", series: "scene", file: "scene-lectern", nameKey: "pt.lectern", unlock: { kind: "mastered", n: 15 }, voiceKey: "pt.v.lectern" },
+  { id: "scene-nightread", series: "scene", file: "scene-nightread", nameKey: "pt.nightread", unlock: { kind: "maxStreak", n: 7 }, voiceKey: "pt.v.nightread" },
+  { id: "scene-shelves", series: "scene", file: "scene-shelves", nameKey: "pt.shelves", unlock: { kind: "projects", n: 2 }, voiceKey: "pt.v.shelves" },
+  { id: "scene-annotate", series: "scene", file: "scene-annotate", nameKey: "pt.annotate", unlock: { kind: "mastered", n: 40 }, voiceKey: "pt.v.annotate" },
+  { id: "scene-summit", series: "scene", file: "scene-summit", nameKey: "pt.summit", unlock: { kind: "level", n: 8 }, voiceKey: "pt.v.summit" },
+  // 季节限定（当季解锁）
+  { id: "spring", series: "season", file: "spring", nameKey: "pt.spring", unlock: { kind: "season", months: [3, 4, 5] }, voiceKey: "pt.v.spring" },
+  { id: "summer", series: "season", file: "summer", nameKey: "pt.summer", unlock: { kind: "season", months: [6, 7, 8] }, voiceKey: "pt.v.summer" },
+  { id: "autumn", series: "season", file: "autumn", nameKey: "pt.autumn", unlock: { kind: "season", months: [9, 10, 11] }, voiceKey: "pt.v.autumn" },
+  { id: "winter", series: "season", file: "winter", nameKey: "pt.winter", unlock: { kind: "season", months: [12, 1, 2] }, voiceKey: "pt.v.winter" },
+  // 画风主题（Pro 专属，纯审美变体）
+  { id: "xieyi", series: "theme", file: "xieyi", nameKey: "pt.xieyi", unlock: { kind: "paid" }, voiceKey: "pt.v.xieyi", paid: true },
+  { id: "woodcut", series: "theme", file: "woodcut", nameKey: "pt.woodcut", unlock: { kind: "paid" }, voiceKey: "pt.v.woodcut", paid: true },
 ];
 
 export const DEFAULT_PORTRAIT = "present";
