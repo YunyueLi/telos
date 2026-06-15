@@ -111,6 +111,8 @@ export default function ReviewPage() {
             </div>
           </div>
 
+          <p className="rv-wengu">{t("rv.wenguSays")}</p>
+
           {reviewed > 0 && (
             <div className="rv-bar">
               <span className="n">{t("rv.reviewed", { n: reviewed })}</span>
