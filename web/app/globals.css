@@ -971,6 +971,10 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .mh-companion{display:flex;align-items:center;gap:11px;margin:0 0 14px;padding:10px 14px;background:var(--card);border:1.5px solid var(--line-soft);border-radius:13px}
 .mh-companion .pmini{width:38px;height:38px;flex:none}
 .mh-companion p{margin:0;font:italic 500 13.5px/1.5 var(--serif);color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* 时令（二十四节气）条 */
+.streak-solarterm{display:flex;align-items:baseline;gap:15px;margin:0 0 16px;padding:13px 18px;border:1.5px solid var(--line-soft);border-radius:14px;background:var(--card);flex-wrap:wrap}
+.st-name{font:600 26px var(--serif);color:var(--ink);letter-spacing:.1em;flex:none}
+.st-says{margin:0;font:italic 500 13.5px/1.5 var(--serif);color:var(--ink-2)}
 .streak-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .streak-col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .streak-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:18px}

@@ -22,6 +22,7 @@ import {
 } from "@/lib/telos/xp";
 import { DAILY_INK, GRAPH_INK } from "@/lib/telos/ink";
 import { Stamp } from "@/components/stamp";
+import { currentTerm } from "@/lib/telos/solarterm";
 
 // 进度环：纯 SVG，描边随 pct 收放；达标显对勾，否则显百分比。
 function Ring({ pct, met }: { pct: number; met: boolean }) {
@@ -140,6 +141,7 @@ export function StreakBoard() {
         : streak < 30
           ? "streak.coMid"
           : "streak.coHigh";
+  const term = currentTerm(now); // 当前节气（应时而现）
 
   return (
     <div className="streak">
@@ -148,6 +150,12 @@ export function StreakBoard() {
         <h2>{t("nav.streak")}</h2>
         <p className="streak-lead">{t("streak.lead")}</p>
       </header>
+
+      {/* 时令：当前节气（应时而现）+ 看板娘师者应时话 */}
+      <div className="streak-solarterm">
+        <span className="st-name">{term.name}</span>
+        <p className="st-says">{t(`season.${term.season}`)}</p>
+      </div>
 
       {/* 连胜横幅：连胜天数 + 已掌握难点并列（把意义从"打卡"转向真实进步）+ 今日状态 */}
       <div className="streak-banner">
