@@ -60,6 +60,7 @@ export default function RootLayout({
     <html
       lang="zh-CN"
       className={`${fraunces.variable} ${inter.variable} ${jbmono.variable}`}
+      style={{ overflowY: "scroll" }}
     >
       <body>
         <ThemeInit />

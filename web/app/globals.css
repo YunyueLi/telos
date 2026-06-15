@@ -31,6 +31,7 @@ html[data-theme="yuebai"]{--paper:#ECEEF0;--card:#FFFFFF;--ink:#13161A;--ink-2:#
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
+/* overflow-y:scroll 走 layout.tsx 的 <html> 内联 style——Lightning CSS 会静默丢掉 root 的 overflow，内联绕过它，保证滚动条槽恒定（防止内容不满页时宽度突变） */
 html{scroll-behavior:smooth;overscroll-behavior:none;scrollbar-gutter:stable}
 /* 关闭到顶/到底再拖的橡皮筋回弹 + 下拉刷新（这是 App，不需要） */
 body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
