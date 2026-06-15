@@ -42,25 +42,7 @@ export function SketchDefs() {
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 9.5h16M8.5 3v4M15.5 3v4" /></symbol>
         <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8.5 8.5L6 3M15.5 8.5L18 3" /><circle cx="12" cy="14" r="6" /><path d="M12 11l.85 1.7 1.9.28-1.37 1.34.32 1.88L12 15.4l-1.7.9.32-1.88-1.37-1.34 1.9-.28z" /></symbol>
         <symbol id="i-studio" viewBox="0 0 24 24"><path d="M3 10.5Q4.3 9.2 6 9.8L12 5.5l6 4.3Q19.7 9.2 21 10.5" /><path d="M6 10.5V19M18 10.5V19M4 19h16" /><path d="M9.5 19v-4.4Q12 12.9 14.5 14.6V19" /></symbol>
-        {/* 印章（朱红金石印，32x32）：方/圆框 stroke-width 加粗显分量，内部图形意象。组件给 color:var(--seal)。 */}
-        <symbol id="s-qicheng" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M16 9l3.5 7-3.5 7-3.5-7z" /><path d="M16 9v14" /><circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none" /></symbol>
-        <symbol id="s-qinxue" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M10.5 21.5L19.5 12.5" /><path d="M19 11.5l2.5-2.5 2 2-2.5 2.5z" /><path d="M10.5 21.5l-1.3 2.3 2.3-1.3z" fill="currentColor" stroke="none" /></symbol>
-        <symbol id="s-buchuo" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M16 23.5c-4.2-2-3.6-6.3 0-10.5 3.6 4.2 4.2 8.5 0 10.5z" /><path d="M16 21.3c-2-1.2-1.8-3.6 0-5.7 1.8 2.1 2 4.5 0 5.7z" fill="currentColor" stroke="none" /></symbol>
-        <symbol id="s-tongtou" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" strokeWidth="2.2" /><circle cx="16" cy="16" r="6.5" /><circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none" /></symbol>
-        <symbol id="s-dacheng" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M13 8v16M19 8v16M8 13h16M8 19h16" /></symbol>
-        <symbol id="s-boxue" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M16 11v10.5" /><path d="M16 11c-2.2-1.5-5-1.1-6.5 0v9.5c1.5-1.1 4.3-1.5 6.5 0" /><path d="M16 11c2.2-1.5 5-1.1 6.5 0v9.5c-1.5-1.1-4.3-1.5-6.5 0" /></symbol>
-        <symbol id="s-dengfeng" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M8 22l5-8 3 4 4-7 4 11" /><path d="M8 22h16" /></symbol>
-        <symbol id="s-yueke" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" strokeWidth="2.2" /><path d="M19.5 9.5a8 8 0 1 0 0 13 6.4 6.4 0 1 1 0-13z" /><circle cx="12" cy="11.5" r="1" fill="currentColor" stroke="none" /></symbol>
-        <symbol id="s-zhixue" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" rx="3.5" strokeWidth="2.2" /><path d="M9 15q7-6 14 0" /><path d="M11 15v7M21 15v7M9.5 22h13" /><path d="M14 22v-4h4v4" /></symbol>
-        {/* 书斋陈设（墨线文房，32x32）。组件给 color:var(--ink)。 */}
-        <symbol id="d-bitong" viewBox="0 0 32 32"><path d="M11 14h10v10q-5 2-10 0z" /><path d="M11 14q5-2 10 0" /><path d="M14 14V7M16.5 14V5.5M19 14V8" /></symbol>
-        <symbol id="d-zhenzhi" viewBox="0 0 32 32"><rect x="6" y="17" width="20" height="5" rx="2" /><path d="M13 17q3-4 6 0" /></symbol>
-        <symbol id="d-juan" viewBox="0 0 32 32"><path d="M11 10c-2 1-2 11 0 12h10c2-1 2-11 0-12z" /><path d="M11 10c2 1 2 11 0 12" /><path d="M21 10c-2 1-2 11 0 12" /><path d="M14 14h4M14 17h4" /></symbol>
-        <symbol id="d-penjing" viewBox="0 0 32 32"><path d="M10.5 22h11l-1.5 4h-8z" /><path d="M16 22v-7" /><path d="M16 18q-3-1-4-4M16 16q3-1 4-4M16 15.5q0-3 0-5.5" /></symbol>
-        <symbol id="d-xianglu" viewBox="0 0 32 32"><path d="M10 18q0 6 6 6t6-6z" /><path d="M10 18h12" /><path d="M11.5 24l-1.2 2.2M20.5 24l1.2 2.2" /><path d="M14 14q1-2 0-4M18.5 14q1-2 0-4" /></symbol>
-        <symbol id="d-chaju" viewBox="0 0 32 32"><path d="M8 15q0 6 5 6t5-6z" /><path d="M8 15h10" /><path d="M18 16q4 0 3 3.2" /><path d="M10.5 15q2.5-5 5 0" /><path d="M20.5 21q0 3 2.5 3t2.5-3z" /></symbol>
-        <symbol id="d-guqin" viewBox="0 0 32 32"><path d="M5 14c6-1.5 16-1.5 22 0 0 2.5 0 1.5 0 4-6 1.5-16 1.5-22 0 0-2.5 0-1.5 0-4z" /><path d="M8 15.6h16M8 16.9h16" /><circle cx="22" cy="16" r="0.8" fill="currentColor" stroke="none" /></symbol>
-        <symbol id="d-shanshui" viewBox="0 0 32 32"><rect x="9" y="6" width="14" height="20" rx="1" /><path d="M7 6h18M7 26h18" /><path d="M11 20l3-5 2 3 3-5 3 7" /><circle cx="19" cy="11" r="1.6" /></symbol>
+        {/* 印章 / 书斋陈设已改用 public/{seals,decor}/*.png（实拍级朱红拓印 + 写意墨绘，见 studio-seals/room），原 SVG symbol 已移除 */}
       </defs>
     </svg>
   );
