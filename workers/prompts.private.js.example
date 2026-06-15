@@ -1,0 +1,17 @@
+// ⓘ 私有增强 prompt 模板（说明文件，不参与构建）。
+//
+// 背景：workers/prompts.js 是【公开 baseline】——clone/自部署即用、质量稳定，但它已在 git 历史里公开。
+// owner 的持续调优写进【私有增强】prompts.private.js（git-ignored），由 deploy.sh 在部署时临时替换上线、
+// 部署后自动还原——公开仓永远只留 baseline，竞品拿不到你之后的迭代。
+//
+// owner 用法：
+//   1. cp prompts.js prompts.private.js     ← 用当前 baseline 作起点（prompts.private.js 已 git-ignored）
+//   2. 在 prompts.private.js 里持续调优各 prompt（system / 铁律 / 审查重点 / domain 适配 …）
+//   3. 部署：npm run deploy （= bash deploy.sh）← 自动用 prompts.private.js 替换 prompts.js 上线、完后还原
+//
+// 硬性要求（否则部署失败 / 运行缺符号）：
+//   · deploy.sh 是【整文件替换】，所以 prompts.private.js 必须是【完整独立】的一份：
+//     导出与 prompts.js 完全相同的 16 个名字（SYSTEM, USER, BLUEPRINT_SYSTEM … PROBES_USER），
+//     不要用 `import` / `export * from "./prompts.js"`（替换后会变成自引用）。
+//   · 必须保留 prompts.js 的全部「铁律」子串（文风铁律 / 选项铁律 / 中庸即答案 / 同质选项 / 应试高手 …）——
+//     check-prompt-parity.mjs 校验「公开 ⊆ 私有」，丢了铁律就部署失败。

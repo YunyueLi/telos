@@ -21,6 +21,11 @@ dist/
 workers/templates-private.json
 templates-private.json
 
+# prompt 私有增强（owner 持续调优的倒推/微课/诊断 prompt；公开仓只留 prompts.js / prompts.py 的 baseline）
+# 部署时由 deploy.sh 临时替换上线、部署后还原——绝不进公开仓库。
+workers/prompts.private.js
+core/telos_core/prompts_private.py
+
 # logs
 *.log
 npm-debug.log*
