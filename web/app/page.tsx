@@ -348,6 +348,18 @@ function MapHome({
 
   return (
     <div className="mh">
+      {/* 看板娘意义锚定：回扣"你当初说想达成的"+ 进步可见(Agent3 进步原则)。她记得你为何而来 */}
+      <div className="mh-companion">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <span className="pmini">
+          <img src={asset(`/portraits/${fresh ? "welcome" : "point"}.png`)} alt="" />
+        </span>
+        <p>
+          {fresh
+            ? t("home.coFresh", { goal: project.goal })
+            : t("home.coProgress", { goal: project.goal, n: view.mastered, total: view.total })}
+        </p>
+      </div>
       <div className="mh-map">
         {(
           <div className="mh-viewtoggle" role="tablist" aria-label={t("home.viewToggle")}>

@@ -967,6 +967,10 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .pg-coming-chip s{text-decoration:none;font-weight:400;font-size:10.5px;opacity:.75}
 /* 复习页"温故知新"师者话 */
 .rv-wengu{margin:16px 0 0;font:italic 500 14px/1.6 var(--serif);color:var(--ink-2);max-width:540px}
+/* MapHome 看板娘意义锚定 bar（回扣初心 + 进步可见）*/
+.mh-companion{display:flex;align-items:center;gap:11px;margin:0 0 14px;padding:10px 14px;background:var(--card);border:1.5px solid var(--line-soft);border-radius:13px}
+.mh-companion .pmini{width:38px;height:38px;flex:none}
+.mh-companion p{margin:0;font:italic 500 13.5px/1.5 var(--serif);color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .streak-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .streak-col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .streak-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:18px}
