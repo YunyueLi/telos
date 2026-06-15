@@ -17,6 +17,9 @@ import {
 } from "./portraits";
 import { getTheme, applyTheme, DEFAULT_THEME } from "./theme";
 import { getPrefsRev, setPrefsRev } from "./prefs-rev";
+import { getPassState, setPassState } from "./pass";
+import { getSealsState, setSealsState, DEFAULT_SEAL, DEFAULT_TITLE } from "./seals";
+import { getPlaced, setPlaced } from "./studyroom";
 
 const LANG_KEY = "telos:lang";
 const PORTRAIT_KEY = "telos:portrait";
@@ -31,6 +34,9 @@ export interface SyncState {
   theme: string;
   lang: string | null;
   prefsRev: number; // 偏好最后修改时间戳（LWW 用）
+  pass: { claimedFree: number[]; claimedPro: number[] }; // 治学通行证领取：并集（领过即领过）
+  seals: { seal: string; title: string }; // 印章雅号佩戴：偏好 LWW
+  placed: string[]; // 书斋案头摆放：偏好 LWW
 }
 
 function lsGet(key: string): string | null {
@@ -52,6 +58,7 @@ function lsSet(key: string, v: string): void {
 
 const num = (v: unknown, d = 0): number => (typeof v === "number" && isFinite(v) ? v : d);
 const strArr = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+const numArr = (v: unknown): number[] => (Array.isArray(v) ? v.filter((x): x is number => typeof x === "number") : []);
 
 // 读本机当前状态（结构已由各模块 getter 规整）。
 export function collectLocalState(): SyncState {
@@ -64,6 +71,9 @@ export function collectLocalState(): SyncState {
     theme: getTheme(),
     lang: lsGet(LANG_KEY),
     prefsRev: getPrefsRev(),
+    pass: getPassState(),
+    seals: getSealsState(),
+    placed: getPlaced(),
   };
 }
 
@@ -72,6 +82,8 @@ export function normalizeSyncState(raw: unknown): SyncState {
   const o = (raw ?? {}) as Partial<SyncState>;
   const d = (o.daily ?? {}) as Partial<Daily>;
   const i = (o.ink ?? {}) as Partial<Ink>;
+  const p = (o.pass ?? {}) as Partial<SyncState["pass"]>;
+  const sl = (o.seals ?? {}) as Partial<SyncState["seals"]>;
   return {
     daily: {
       days: d.days && typeof d.days === "object" ? { ...d.days } : {},
@@ -88,6 +100,12 @@ export function normalizeSyncState(raw: unknown): SyncState {
     theme: typeof o.theme === "string" ? o.theme : DEFAULT_THEME,
     lang: typeof o.lang === "string" ? o.lang : null,
     prefsRev: num(o.prefsRev),
+    pass: { claimedFree: numArr(p.claimedFree), claimedPro: numArr(p.claimedPro) },
+    seals: {
+      seal: typeof sl.seal === "string" ? sl.seal : DEFAULT_SEAL,
+      title: typeof sl.title === "string" ? sl.title : DEFAULT_TITLE,
+    },
+    placed: strArr(o.placed),
   };
 }
 
@@ -117,6 +135,12 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
     theme: prefWin.theme, // 偏好
     lang: prefWin.lang ?? local.lang ?? remote.lang, // 偏好
     prefsRev: Math.max(local.prefsRev, remote.prefsRev),
+    pass: {
+      claimedFree: [...new Set([...remote.pass.claimedFree, ...local.pass.claimedFree])],
+      claimedPro: [...new Set([...remote.pass.claimedPro, ...local.pass.claimedPro])],
+    },
+    seals: prefWin.seals, // 偏好（整组 LWW）
+    placed: prefWin.placed, // 偏好
   };
 }
 
@@ -130,5 +154,8 @@ export function applyLocalState(s: SyncState): void {
   lsSet(THEME_KEY, s.theme);
   if (s.lang) lsSet(LANG_KEY, s.lang);
   applyTheme(s.theme); // 切 <html data-theme>（纯 DOM，不写 storage、不 bump）
+  setPassState(s.pass);
+  setSealsState(s.seals);
+  setPlaced(s.placed);
   setPrefsRev(s.prefsRev);
 }

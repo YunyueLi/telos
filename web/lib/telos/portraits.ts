@@ -96,8 +96,8 @@ export function portraitById(id: string): Portrait | undefined {
   return PORTRAITS.find((p) => p.id === id);
 }
 
-export function isUnlocked(p: Portrait, s: LearnerStats): boolean {
-  const u = p.unlock;
+// 单条解锁规则判定（印章 / 雅号 / 书斋陈设复用同一套语义，零重复）。
+export function matchUnlock(u: UnlockRule, s: LearnerStats): boolean {
   switch (u.kind) {
     case "always":
       return true;
@@ -121,6 +121,37 @@ export function isUnlocked(p: Portrait, s: LearnerStats): boolean {
       return u.months.includes(s.month);
     case "paid":
       return s.isPro; // 单买解锁后续接 app_metadata.telos_portraits，这里先按 Pro 全解锁
+  }
+}
+
+export function isUnlocked(p: Portrait, s: LearnerStats): boolean {
+  return matchUnlock(p.unlock, s);
+}
+
+// 通用解锁提示（印章 / 雅号 / 书斋陈设共用，措辞中性，不带形象叙事口吻）。
+export function ruleHint(u: UnlockRule): { key: string; vars?: Record<string, number> } {
+  switch (u.kind) {
+    case "always":
+      return { key: "un.always" };
+    case "streak":
+    case "maxStreak":
+      return { key: "un.streak", vars: { n: u.n } };
+    case "level":
+      return { key: "un.level", vars: { n: u.n } };
+    case "xp":
+      return { key: "un.xp", vars: { n: u.n } };
+    case "projects":
+      return { key: "un.projects", vars: { n: u.n } };
+    case "mastered":
+      return { key: "un.mastered", vars: { n: u.n } };
+    case "graphs":
+      return { key: "un.graphs", vars: { n: u.n } };
+    case "diagnosed":
+      return { key: "un.diagnosed" };
+    case "season":
+      return { key: "un.season" };
+    case "paid":
+      return { key: "un.paid" };
   }
 }
 

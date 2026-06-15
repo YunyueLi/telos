@@ -1,30 +1,33 @@
 "use client";
 
-// 书斋：形象经济的一级页。统一承载「她(形象集) · 主题(成套美学)」,并以【锁定页签】预告
-// 后续板块(造型换装 / 书斋装点 / 印章雅号 / 治学通行证)——一眼看全书斋全貌与野心。
-// 现有形象集与主题迁入此处,作为后续所有外观个性化维度的容器。
+// 书斋：形象经济的一级页。统一承载形象 · 画风 · 治学通行证 · 印章雅号 · 书斋装点 · 造型换装，
+// 慢慢经营成你的样子。所有维度纯外观/荣誉，解锁绑真实学习，绝不影响掌握度与 XP。
 import { useState } from "react";
 import { useT } from "@/lib/telos/i18n";
-import { Icon } from "@/components/icon";
 import { useProject } from "@/lib/telos/use-project";
 import { PortraitGallery } from "@/components/portrait-gallery";
 import { ThemePicker } from "@/components/theme-picker";
+import { StudioPass } from "@/components/studio-pass";
+import { StudioSeals } from "@/components/studio-seals";
+import { StudioRoom } from "@/components/studio-room";
+import { StudioDressup } from "@/components/studio-dressup";
+import { passProgress } from "@/lib/telos/pass";
 
-type StudioTab = "portrait" | "theme";
-// 已开板块(on) + 预告板块(locked,灰显不可点)。立绘/功能就绪后把 on 改 true 即转正。
-const TABS: { k: string; label: string; on: boolean }[] = [
-  { k: "portrait", label: "studio.tabPortrait", on: true },
-  { k: "theme", label: "studio.tabTheme", on: true },
-  { k: "dressup", label: "studio.c.dressup", on: false },
-  { k: "studyroom", label: "studio.c.studyroom", on: false },
-  { k: "seal", label: "studio.c.seal", on: false },
-  { k: "pass", label: "studio.c.pass", on: false },
+type StudioTab = "portrait" | "theme" | "pass" | "seal" | "studyroom" | "dressup";
+const TABS: { k: StudioTab; label: string }[] = [
+  { k: "portrait", label: "studio.tabPortrait" },
+  { k: "theme", label: "studio.tabTheme" },
+  { k: "pass", label: "studio.c.pass" },
+  { k: "seal", label: "studio.c.seal" },
+  { k: "studyroom", label: "studio.c.studyroom" },
+  { k: "dressup", label: "studio.c.dressup" },
 ];
 
 export function Studio() {
   const { t } = useT();
   const { projects } = useProject();
   const [tab, setTab] = useState<StudioTab>("portrait");
+  const claimable = passProgress().claimableCount;
 
   return (
     <div className="studio">
@@ -35,24 +38,18 @@ export function Studio() {
       </header>
 
       <div className="studio-tabs" role="tablist">
-        {TABS.map((tb) =>
-          tb.on ? (
-            <button
-              key={tb.k}
-              role="tab"
-              aria-selected={tab === tb.k}
-              className={tab === tb.k ? "on" : ""}
-              onClick={() => setTab(tb.k as StudioTab)}
-            >
-              {t(tb.label)}
-            </button>
-          ) : (
-            <button key={tb.k} className="locked" disabled title={t("studio.comingTitle")}>
-              <Icon name="clock" />
-              {t(tb.label)}
-            </button>
-          ),
-        )}
+        {TABS.map((tb) => (
+          <button
+            key={tb.k}
+            role="tab"
+            aria-selected={tab === tb.k}
+            className={tab === tb.k ? "on" : ""}
+            onClick={() => setTab(tb.k)}
+          >
+            {t(tb.label)}
+            {tb.k === "pass" && claimable > 0 && <i className="studio-dot">{claimable}</i>}
+          </button>
+        ))}
       </div>
 
       <div className="studio-body">
@@ -65,6 +62,10 @@ export function Studio() {
             <ThemePicker />
           </div>
         )}
+        {tab === "pass" && <StudioPass />}
+        {tab === "seal" && <StudioSeals projects={projects} />}
+        {tab === "studyroom" && <StudioRoom projects={projects} />}
+        {tab === "dressup" && <StudioDressup />}
       </div>
     </div>
   );
