@@ -525,6 +525,7 @@ export const DICT: Record<string, Record<Lang, string>> = {
   "decor.chaju": { "zh-CN": "茶具", "zh-TW": "茶具", en: "Tea Set", fr: "Service à Thé", ja: "茶器", ko: "다구", es: "Juego de Té", ru: "Чайный набор", de: "Teeservice" },
   "decor.guqin": { "zh-CN": "古琴", "zh-TW": "古琴", en: "Guqin", fr: "Guqin", ja: "古琴", ko: "고금", es: "Guqin", ru: "Гуцинь", de: "Guqin" },
   "decor.shanshui": { "zh-CN": "山水", "zh-TW": "山水", en: "Landscape", fr: "Paysage", ja: "山水画", ko: "산수화", es: "Paisaje", ru: "Пейзаж", de: "Landschaft" },
+  "room.deskTitle": { "zh-CN": "一方案头", "zh-TW": "一方案頭", en: "Your Desk", fr: "Votre bureau", ja: "わたしの文机", ko: "나의 서안", es: "Tu escritorio", ru: "Ваш стол", de: "Dein Pult" },
   "room.empty": { "zh-CN": "案头空空，去下面摆上几件", "zh-TW": "案頭空空，去下面擺上幾件", en: "Your desk is bare — place a few pieces below", fr: "Votre bureau est vide — placez quelques objets ci-dessous", ja: "机の上は空っぽ。下から少し置いてみましょう", ko: "책상이 비었어요 — 아래에서 몇 개 올려보세요", es: "Tu escritorio está vacío: coloca algunas piezas abajo", ru: "Стол пуст — поставьте что-нибудь снизу", de: "Dein Tisch ist leer — stelle unten ein paar Stücke auf" },
   "room.placedN": { "zh-CN": "案头 {n}/{total}", "zh-TW": "案頭 {n}/{total}", en: "Desk {n}/{total}", fr: "Bureau {n}/{total}", ja: "机 {n}/{total}", ko: "책상 {n}/{total}", es: "Escritorio {n}/{total}", ru: "Стол {n}/{total}", de: "Tisch {n}/{total}" },
   "room.placed": { "zh-CN": "在案", "zh-TW": "在案", en: "On desk", fr: "Sur le bureau", ja: "机上", ko: "책상 위", es: "En mesa", ru: "На столе", de: "Auf dem Tisch" },
