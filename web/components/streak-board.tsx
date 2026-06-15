@@ -120,6 +120,16 @@ export function StreakBoard() {
   const col = (weekday: number) => (weekday + 6) % 7;
   const lead = cells.length ? col(cells[0].weekday) : 0;
 
+  // 当月小结：图例三态各计数（仅历史日，未来格不计）——图例兼月度回顾，顺手填平右栏底。
+  const monthStats = useMemo(
+    () => ({
+      met: cells.filter((c) => !c.future && c.met).length,
+      partial: cells.filter((c) => !c.future && c.partial && !c.met).length,
+      frozen: cells.filter((c) => !c.future && c.frozen).length,
+    }),
+    [cells],
+  );
+
   const goalOpts: MenuOption[] = GOAL_OPTIONS.map((g) => ({ value: String(g), label: t(`daily.tier${g}`) }));
   const remain = Math.max(0, dailyGoal - dailyXp);
 
@@ -258,26 +268,6 @@ export function StreakBoard() {
             </div>
           </section>
 
-          {/* 断签保护 */}
-          <section className="streak-card">
-            <div className="daily-freeze">
-              <span className="fz-ic">
-                <Icon name="shield" className={freezes > 0 ? "on" : ""} />
-              </span>
-              <div className="fz-txt">
-                <b>{t("daily.freezeN", { n: freezes })}</b>
-                <span>{freezes > 0 ? t("daily.freezeOn") : t("daily.freezeOff")}</span>
-              </div>
-              {freezes < 2 && (
-                <button className="fz-redeem" onClick={() => redeemFreeze()} disabled={!canRedeem}>
-                  {canRedeem
-                    ? t("daily.freezeRedeem", { n: freezeCost })
-                    : t("daily.freezeNeed", { n: Math.max(0, freezeCost - spendable) })}
-                </button>
-              )}
-            </div>
-          </section>
-
           {/* 等级 / 段位 / 个人纪录 */}
           <section className="streak-card lvl-card">
             <div className="lvl-top">
@@ -325,65 +315,94 @@ export function StreakBoard() {
           </section>
         </div>
 
-        {/* 打卡日历（月历翻页） */}
-        <section className="streak-card cal-card">
-          <div className="cal-nav">
-            <button type="button" className="cal-navbtn" onClick={prevMonth} aria-label={t("streak.prevMonth")}>
-              <Icon name="arrow" className="flip" />
-            </button>
-            <span className="cal-month">{monthLabel}</span>
-            <button
-              type="button"
-              className="cal-navbtn"
-              onClick={nextMonth}
-              disabled={atCurrent}
-              aria-label={t("streak.nextMonth")}
-            >
-              <Icon name="arrow" />
-            </button>
-          </div>
-          <div className="daily-cal">
-            <div className="cal-head">
-              {weekHead.map((w, i) => (
-                <span key={i} className="cal-wd">
-                  {w}
+        {/* 右栏：日历 + 成就同栏，填满右侧、与左侧四卡等高（宽内容归右栏） */}
+        <div className="streak-col">
+          {/* 打卡日历（月历翻页） */}
+          <section className="streak-card cal-card">
+            <div className="cal-nav">
+              <button type="button" className="cal-navbtn" onClick={prevMonth} aria-label={t("streak.prevMonth")}>
+                <Icon name="arrow" className="flip" />
+              </button>
+              <span className="cal-month">{monthLabel}</span>
+              <button
+                type="button"
+                className="cal-navbtn"
+                onClick={nextMonth}
+                disabled={atCurrent}
+                aria-label={t("streak.nextMonth")}
+              >
+                <Icon name="arrow" />
+              </button>
+            </div>
+            <div className="daily-cal">
+              <div className="cal-head">
+                {weekHead.map((w, i) => (
+                  <span key={i} className="cal-wd">
+                    {w}
+                  </span>
+                ))}
+              </div>
+              <div className="cal-grid">
+                {Array.from({ length: lead }, (_, i) => (
+                  <span key={`b${i}`} className="cal-cell blank" aria-hidden="true" />
+                ))}
+                {cells.map((cell) => (
+                  <span
+                    key={cell.date}
+                    className={`cal-cell ${cell.future ? "future" : cell.met ? "met" : cell.partial ? "partial" : "miss"} ${cell.frozen ? "frozen" : ""} ${cell.today ? "today" : ""}`.trim()}
+                    title={titleOf(cell)}
+                  >
+                    <i className="cal-d">{cell.day}</i>
+                    {cell.frozen && <Icon name="shield" className="cal-fz" />}
+                  </span>
+                ))}
+              </div>
+              {/* 图例 ⊕ 当月小结：色块兼说明，附本月计数（习惯类 App 的月度回顾） */}
+              <div className="cal-stats" role="list">
+                <span className="cal-stat" role="listitem">
+                  <i className="sw met" />
+                  <b>{monthStats.met}</b>
+                  <em>{t("daily.legendMet")}</em>
                 </span>
-              ))}
-            </div>
-            <div className="cal-grid">
-              {Array.from({ length: lead }, (_, i) => (
-                <span key={`b${i}`} className="cal-cell blank" aria-hidden="true" />
-              ))}
-              {cells.map((cell) => (
-                <span
-                  key={cell.date}
-                  className={`cal-cell ${cell.future ? "future" : cell.met ? "met" : cell.partial ? "partial" : "miss"} ${cell.frozen ? "frozen" : ""} ${cell.today ? "today" : ""}`.trim()}
-                  title={titleOf(cell)}
-                >
-                  <i className="cal-d">{cell.day}</i>
-                  {cell.frozen && <Icon name="shield" className="cal-fz" />}
+                <span className="cal-stat" role="listitem">
+                  <i className="sw partial" />
+                  <b>{monthStats.partial}</b>
+                  <em>{t("daily.legendPartial")}</em>
                 </span>
-              ))}
+                <span className="cal-stat" role="listitem">
+                  <i className="sw frozen">
+                    <Icon name="shield" />
+                  </i>
+                  <b>{monthStats.frozen}</b>
+                  <em>{t("daily.legendFrozen")}</em>
+                </span>
+              </div>
             </div>
-            <div className="cal-legend">
-              <span>
-                <i className="sw met" /> {t("daily.legendMet")}
+          </section>
+
+          {/* 断签保护（护连胜：与日历/冻结同组，故置于日历下方） */}
+          <section className="streak-card">
+            <div className="daily-freeze">
+              <span className="fz-ic">
+                <Icon name="shield" className={freezes > 0 ? "on" : ""} />
               </span>
-              <span>
-                <i className="sw partial" /> {t("daily.legendPartial")}
-              </span>
-              <span>
-                <i className="sw frozen">
-                  <Icon name="shield" />
-                </i>{" "}
-                {t("daily.legendFrozen")}
-              </span>
+              <div className="fz-txt">
+                <b>{t("daily.freezeN", { n: freezes })}</b>
+                <span>{freezes > 0 ? t("daily.freezeOn") : t("daily.freezeOff")}</span>
+              </div>
+              {freezes < 2 && (
+                <button className="fz-redeem" onClick={() => redeemFreeze()} disabled={!canRedeem}>
+                  {canRedeem
+                    ? t("daily.freezeRedeem", { n: freezeCost })
+                    : t("daily.freezeNeed", { n: Math.max(0, freezeCost - spendable) })}
+                </button>
+              )}
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
 
-      {/* 成就 */}
+      {/* 成就（全宽页脚，4 列两行） */}
       <section className="streak-ach">
         <div className="sc-h">
           <h3>{t("streak.achievements")}</h3>
