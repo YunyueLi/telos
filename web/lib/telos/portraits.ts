@@ -13,6 +13,7 @@ import { asset } from "@/lib/base";
 import { getStreak, maxStreak, totalXp, levelInfo } from "./xp";
 import type { Project } from "./project";
 import { bumpPrefs } from "./prefs-rev";
+import { getTheme, THEMES } from "./theme";
 
 export type PortraitSeries = "daily" | "season" | "scene" | "milestone" | "theme";
 
@@ -193,7 +194,15 @@ export function setPortraitSeen(ids: string[]): void {
 }
 
 // 解析出"当前应显示的立绘文件名"：选中的若不存在/未解锁则回退默认，保证 hero 永远有图。
+// 当前主题若绑定了看板娘画风(face)且图已入库 → 成套主题里她也换风格；留空则用用户选的形象。
+function themeFaceFile(): string | null {
+  const th = THEMES.find((x) => x.id === getTheme());
+  return th && th.face ? th.face : null;
+}
+
 export function currentPortraitFile(s: LearnerStats | null): string {
+  const themed = themeFaceFile();
+  if (themed) return themed;
   const id = getCurrentPortraitId();
   const p = portraitById(id);
   if (!p) return DEFAULT_PORTRAIT;
@@ -233,6 +242,11 @@ export function collectStats(projects: Project[], pro: boolean): LearnerStats {
 export function useCurrentPortraitFile(): string {
   const [file, setFile] = useState(DEFAULT_PORTRAIT);
   useEffect(() => {
+    const themed = themeFaceFile();
+    if (themed) {
+      setFile(themed);
+      return;
+    }
     const p = portraitById(getCurrentPortraitId());
     if (p) setFile(p.file);
   }, []);

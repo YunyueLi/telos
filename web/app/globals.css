@@ -5,16 +5,16 @@
    Telos 守零彩色：不在此引入语义色，状态走形状/填充/斜纹/虚线（见 docs/DESIGN.md §1 与 §4）。 */
 :root {
   --paper:#F0EEE9; --card:#FFFFFF; --ink:#141310; --ink-2:#56524A; --ink-3:#928E84;
-  --line:#141310; --line-soft:#E2DFD7; --hatch:#D5D1C7; --seal:#B23A2E;
+  --line:#141310; --line-soft:#E2DFD7; --hatch:#D5D1C7; --seal:#B23A2E; --radius-card:16px;
   --serif: var(--font-fraunces), Georgia, serif;
   --sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: var(--font-jbmono), ui-monospace, Menlo, monospace;
 }
 
 /* 纸张主题（cosmetic：只调纸墨色温，组件靠变量自适应，守纯黑白纸感）。su=默认走 :root。 */
-html[data-theme="xuan"]{--paper:#F4EFE4;--card:#FEFCF7;--line-soft:#E6DECE;--hatch:#D8CFBA}
-html[data-theme="niupi"]{--paper:#E8E0CF;--card:#F4EDDD;--ink:#211A0E;--ink-2:#5C5340;--ink-3:#948A75;--line:#211A0E;--line-soft:#D6CBB2;--hatch:#C7B99C}
-html[data-theme="yuebai"]{--paper:#ECEEF0;--card:#FFFFFF;--ink:#13161A;--ink-2:#4F555C;--ink-3:#8A9098;--line:#13161A;--line-soft:#DDE1E4;--hatch:#CDD2D7}
+html[data-theme="xuan"]{--paper:#F4EFE4;--card:#FEFCF7;--line-soft:#E6DECE;--hatch:#D8CFBA;--radius-card:18px}
+html[data-theme="niupi"]{--paper:#E8E0CF;--card:#F4EDDD;--ink:#211A0E;--ink-2:#5C5340;--ink-3:#948A75;--line:#211A0E;--line-soft:#D6CBB2;--hatch:#C7B99C;--radius-card:6px}
+html[data-theme="yuebai"]{--paper:#ECEEF0;--card:#FFFFFF;--ink:#13161A;--ink-2:#4F555C;--ink-3:#8A9098;--line:#13161A;--line-soft:#DDE1E4;--hatch:#CDD2D7;--radius-card:22px}
 
 @theme inline {
   --color-paper: var(--paper);
@@ -128,7 +128,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .acctm-item:hover{background:rgba(20,19,16,.06);color:var(--ink)}
 .acctm-item .ic{width:15px;height:15px;color:var(--ink-3);flex:none}
 /* 「我的」账户行 */
-.me-acct{display:flex;align-items:center;gap:11px;border:1px solid var(--line-soft);border-radius:14px;padding:12px 15px;background:var(--card)}
+.me-acct{display:flex;align-items:center;gap:11px;border:1px solid var(--line-soft);border-radius:var(--radius-card);padding:12px 15px;background:var(--card)}
 .me-acct .dot{width:9px;height:9px;border-radius:50%;flex:none}
 .me-acct-id{display:flex;flex-direction:column;gap:1px;min-width:0}
 .me-acct-id b{font:600 14px var(--sans);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -251,7 +251,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .auth-back{display:inline-flex;align-self:center;align-items:center;gap:6px;margin-top:14px;font:600 12.5px var(--sans);color:var(--ink-2);text-decoration:none}
 .auth-back:hover{color:var(--ink)}
 .auth-back .ic{width:14px;height:14px}
-.auth-synccard{margin-top:18px;border:1px solid var(--line-soft);border-radius:16px;padding:14px 16px;background:var(--card)}
+.auth-synccard{margin-top:18px;border:1px solid var(--line-soft);border-radius:var(--radius-card);padding:14px 16px;background:var(--card)}
 .auth-syncrow{display:flex;align-items:center;gap:12px}
 .auth-syncrow > .ic{width:20px;height:20px;color:var(--ink);flex:none}
 .auth-syncrow .l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -981,7 +981,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .st-says{margin:0;font:italic 500 13.5px/1.5 var(--serif);color:var(--ink-2)}
 .streak-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .streak-col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.streak-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--card);padding:18px}
+.streak-card{border:1px solid var(--line-soft);border-radius:var(--radius-card);background:var(--card);padding:18px}
 .sc-h{display:flex;align-items:center;gap:10px;margin-bottom:15px}
 .sc-h h3{font:400 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)}
 .sc-h .daily-goalsel{margin-left:auto}
