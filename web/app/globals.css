@@ -1033,6 +1033,30 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .pass-item{display:inline-flex;align-items:center;gap:4px;font:600 11.5px var(--sans);color:var(--ink-2)}
 .pass-item .ic{width:17px;height:17px;flex:none}
 .pass-foot{margin:6px 0 0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
+/* 治学通行证 · 横向赛道（桌面/横屏，游戏通行证观感）*/
+.pass-h{margin:0}
+.pass-h-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:12px}
+.pass-h-scroll::-webkit-scrollbar{height:8px}
+.pass-h-scroll::-webkit-scrollbar-thumb{background:var(--hatch);border-radius:999px}
+.pass-h-row{display:flex;align-items:stretch}
+.pass-h-lab{position:sticky;left:0;z-index:3;flex:none;width:62px;display:flex;align-items:center;gap:3px;font:600 9px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);background:var(--paper);padding-right:8px}
+.pass-h-lab .ic{width:10px;height:10px}
+.pass-h-cell{flex:none;width:124px;padding:11px 13px;border-left:1px solid var(--line-soft);display:flex;flex-direction:column;justify-content:center;min-height:60px}
+.pass-h-cell.locked{opacity:.4}
+.pass-h-cell.veil{opacity:.5}
+.pass-h-cell .pass-rw{flex-direction:column;align-items:flex-start;gap:6px}
+.pass-h-rail{margin:3px 0}
+.pass-h-railcell{flex:none;width:124px;position:relative;display:grid;place-items:center;height:42px}
+.pass-h-railcell::before{content:"";position:absolute;top:50%;left:50%;width:100%;height:1.6px;background:var(--line-soft);transform:translateY(-50%);z-index:0}
+.pass-h-railcell:last-child::before{display:none}
+.pass-h-railcell.done::before,.pass-h-railcell.ready::before{background:var(--ink)}
+.pass-h-railcell .pass-node{position:relative;z-index:1;padding:0;cursor:default}
+.pass-h-railcell.ready .pass-node{cursor:pointer}
+.pass-h-railcell.done .pass-node{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.pass-h-railcell.ready .pass-node{border-color:var(--ink);color:var(--ink);border-width:2px}
+.pass-h-railcell.locked .pass-node{border-style:dashed}
+.pass-h-xprow{margin-top:3px}
+.pass-h-xp{flex:none;width:124px;text-align:center;font:600 10px var(--mono);letter-spacing:.03em;color:var(--ink-3)}
 /* 印章雅号 */
 .seals{display:flex;flex-direction:column;gap:22px}
 .seals-now{display:flex;align-items:center;gap:15px;padding:15px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
