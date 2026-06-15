@@ -13,6 +13,7 @@ export const DICT: Record<string, Record<Lang, string>> = {
   "nav.map": { "zh-CN": "地图", "zh-TW": "地圖", en: "Map", fr: "Carte", ja: "マップ", ko: "지도", es: "Mapa", ru: "Карта", de: "Karte" },
   "nav.review": { "zh-CN": "复习", "zh-TW": "複習", en: "Review", fr: "Révision", ja: "復習", ko: "복습", es: "Repaso", ru: "Повтор", de: "Wiederholen" },
   "nav.streak": { "zh-CN": "坚持", "zh-TW": "堅持", en: "Streak", fr: "Série", ja: "継続", ko: "연속", es: "Racha", ru: "Серия", de: "Serie" },
+  "nav.studio": { "zh-CN": "书斋", "zh-TW": "書齋", en: "Study", fr: "Cabinet", ja: "書斎", ko: "서재", es: "Estudio", ru: "Кабинет", de: "Studio" },
   "nav.me": { "zh-CN": "我", "zh-TW": "我", en: "Me", fr: "Moi", ja: "マイ", ko: "나", es: "Yo", ru: "Я", de: "Ich" },
   "shell.goalLabel": { "zh-CN": "目标", "zh-TW": "目標", en: "Goal", fr: "Objectif", ja: "目標", ko: "목표", es: "Meta", ru: "Цель", de: "Ziel" },
   "shell.goalTitle": { "zh-CN": "点击管理 / 换目标", "zh-TW": "點擊管理 / 換目標", en: "Click to manage / switch goal", fr: "Cliquer pour gérer / changer d'objectif", ja: "クリックして管理／目標変更", ko: "클릭하여 관리 / 목표 변경", es: "Clic para gestionar / cambiar meta", ru: "Нажмите, чтобы управлять / сменить цель", de: "Klicken zum Verwalten / Ziel wechseln" },

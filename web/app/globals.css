@@ -31,7 +31,7 @@ html[data-theme="yuebai"]{--paper:#ECEEF0;--card:#FFFFFF;--ink:#13161A;--ink-2:#
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;overscroll-behavior:none}
+html{scroll-behavior:smooth;overscroll-behavior:none;scrollbar-gutter:stable}
 /* 关闭到顶/到底再拖的橡皮筋回弹 + 下拉刷新（这是 App，不需要） */
 body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 /* 自定义滚动条（纸感 · 细窄 · hover 加深）：仅精确指针(桌面/触控板)启用，触屏保持系统原生覆盖式滚动条。

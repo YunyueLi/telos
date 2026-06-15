@@ -12,7 +12,7 @@ export default function StudioPage() {
 
   if (!ready) {
     return (
-      <AppShell active="me">
+      <AppShell active="studio">
         <div className="loadrow" style={{ flex: 1, justifyContent: "center" }}>
           <span className="spinner" /> {t("common.loading")}
         </div>
@@ -21,7 +21,7 @@ export default function StudioPage() {
   }
 
   return (
-    <AppShell active="me">
+    <AppShell active="studio">
       <Studio />
     </AppShell>
   );
