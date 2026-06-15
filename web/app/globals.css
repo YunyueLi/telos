@@ -1095,11 +1095,14 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .seals-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 书斋装点（文房清玩）*/
 .room{display:flex;flex-direction:column;gap:20px}
-.room-desk{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 18px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
-.room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:20px;min-height:50px;flex-wrap:wrap}
-.room-piece{display:grid;place-items:center}
-.room-piece img{width:58px;height:58px;object-fit:contain}
-.room-empty{font:italic 500 13.5px var(--serif);color:var(--ink-3);padding:12px 0}
+.room-desk{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 20px 20px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+.room-deskeyebrow{font:600 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);align-self:flex-start}
+.room-stage{position:relative;width:100%;min-height:120px;display:flex;align-items:flex-end;justify-content:center;padding:6px 4px 18px}
+.room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:30px;flex-wrap:wrap;position:relative;z-index:1}
+.room-piece{display:grid;place-items:end center}
+.room-piece img{width:78px;height:78px;object-fit:contain;filter:drop-shadow(0 5px 4px rgba(20,19,16,.18))}
+.room-surface{position:absolute;left:9%;right:9%;bottom:16px;height:2px;background:var(--ink);border-radius:2px;z-index:0;box-shadow:0 7px 12px -6px rgba(20,19,16,.22)}
+.room-empty{font:italic 500 14px var(--serif);color:var(--ink-3);padding:26px 0;text-align:center}
 .room-count{font:600 10px var(--mono);letter-spacing:.05em;color:var(--ink-3)}
 .room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:11px}
 .room-cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border:1.4px solid var(--line-soft);border-radius:12px;background:var(--paper);cursor:pointer;transition:border-color .15s,transform .12s}

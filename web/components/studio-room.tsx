@@ -28,22 +28,26 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
   return (
     <div className="room">
       <div className="room-desk">
-        {placed.length > 0 ? (
-          <div className="room-shelf">
-            {placed.map((id) => {
-              const d = decorById(id);
-              if (!d) return null;
-              return (
-                <span key={id} className="room-piece" title={t(d.nameKey)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={asset(`/decor/d-${id}.png`)} alt="" />
-                </span>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="room-empty">{t("room.empty")}</div>
-        )}
+        <span className="room-deskeyebrow">{t("room.deskTitle")}</span>
+        <div className="room-stage">
+          {placed.length > 0 ? (
+            <div className="room-shelf">
+              {placed.map((id) => {
+                const d = decorById(id);
+                if (!d) return null;
+                return (
+                  <span key={id} className="room-piece" title={t(d.nameKey)}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={asset(`/decor/d-${id}.png`)} alt="" />
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="room-empty">{t("room.empty")}</div>
+          )}
+          <span className="room-surface" aria-hidden />
+        </div>
         <span className="room-count">{t("room.placedN", { n: placed.length, total: PLACE_MAX })}</span>
       </div>
 
