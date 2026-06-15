@@ -128,8 +128,10 @@ export function StreakBoard() {
   const nextMs = MILESTONES.find((m) => m > streak) ?? null;
   const msToNext = nextMs ? nextMs - streak : 0;
   const msPct = nextMs ? Math.min(1, streak / nextMs) : 1;
-  const companionKey =
-    streak === 0
+  const isMilestone = [7, 30, 100, 365].includes(streak); // 连胜里程碑日 → 看板娘赠治学闲章箴言
+  const companionKey = isMilestone
+    ? "streak.coMilestone"
+    : streak === 0
       ? mastered > 0
         ? "streak.coStarted"
         : "streak.coBegin"
