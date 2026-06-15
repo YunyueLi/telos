@@ -12,24 +12,33 @@ Telos 默认 **本地优先**：不登录也能用，数据存在浏览器里。
 
 ## 2. 建同步表（SQL Editor 执行）
 
-按「每个学习项目一行」存储，受 RLS 保护，仅本人可读写：
+两张表，都受 RLS 保护、仅本人可读写：① `projects` 每个学习项目一行（图谱 + 掌握进度）；② `user_state` 每人一行（连胜 / 打卡 / 墨 / 装扮等账号级状态）。语句幂等，可安全重复执行：
 
 ```sql
-create table public.projects (
+create table if not exists public.projects (
   user_id    uuid        not null default auth.uid(),
   id         text        not null,
   data       jsonb       not null,
   updated_at timestamptz not null default now(),
   primary key (user_id, id)
 );
-
 alter table public.projects enable row level security;
-
+drop policy if exists "own rows" on public.projects;
 create policy "own rows" on public.projects
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists public.user_state (
+  user_id    uuid        primary key default auth.uid(),
+  data       jsonb       not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.user_state enable row level security;
+drop policy if exists "own state" on public.user_state;
+create policy "own state" on public.user_state
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 
-> 合并策略：客户端按 `data.updatedAt` 做 per-project 最后写入者胜（两台设备改不同项目都不丢）。
+> 合并策略：`projects` 按 `data.updatedAt` 做 per-project 最后写入者胜（两台设备改不同项目都不丢）；`user_state` 客户端做**无损合并**——连胜历史 / 打卡 / 墨累计 / 解锁记录并集取大（绝不丢），偏好（语言 / 主题 / 形象 / 目标）按最后修改的设备为准。
 
 ### 2b. 周排行榜表（可选 · 「坚持」Tab 多人周联赛用，暂未接客户端）
 

@@ -51,6 +51,16 @@ const SETUP_SQL = `create table if not exists public.projects (
 alter table public.projects enable row level security;
 drop policy if exists "own rows" on public.projects;
 create policy "own rows" on public.projects
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists public.user_state (
+  user_id    uuid        primary key default auth.uid(),
+  data       jsonb       not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.user_state enable row level security;
+drop policy if exists "own state" on public.user_state;
+create policy "own state" on public.user_state
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
 
 export default function MePage() {

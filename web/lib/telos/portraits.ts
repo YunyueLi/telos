@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { asset } from "@/lib/base";
 import { getStreak, maxStreak, totalXp, levelInfo } from "./xp";
 import type { Project } from "./project";
+import { bumpPrefs } from "./prefs-rev";
 
 export type PortraitSeries = "daily" | "season" | "scene" | "milestone" | "theme";
 
@@ -165,6 +166,27 @@ export function setCurrentPortraitId(id: string): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORE_KEY, id);
+  } catch {
+    /* ignore */
+  }
+  bumpPrefs(); // 当前形象=偏好：跨设备 LWW
+}
+
+// 已解锁形象基线（与 portrait-unlock-toast 同 key）：跨设备取并集，换设备不重复弹解锁庆祝。
+const SEEN_KEY = "telos:portrait-seen";
+export function getPortraitSeen(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+export function setPortraitSeen(ids: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SEEN_KEY, JSON.stringify([...new Set(ids)]));
   } catch {
     /* ignore */
   }

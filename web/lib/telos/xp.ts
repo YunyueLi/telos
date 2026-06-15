@@ -7,6 +7,7 @@
 
 import type { KnowledgeGraph, LearnerState } from "./engine";
 import { earnInk, spendInk, getInk, FREEZE_INK, DAILY_INK } from "./ink";
+import { bumpPrefs } from "./prefs-rev";
 
 // 掌握一个知识点的 XP：越深(前置越多)越值钱；目标点额外加成。
 export function computeXp(g: KnowledgeGraph, state: LearnerState, threshold = 0.8): number {
@@ -136,6 +137,14 @@ function persist(d: Daily): void {
   }
 }
 
+// ---- 跨设备同步用：整体读写原始 Daily（合并后回填）。----
+export function getDaily(): Daily {
+  return readRaw();
+}
+export function applyDaily(d: Daily): void {
+  persist(normalize(d));
+}
+
 function met(d: Daily, date: string): boolean {
   return (d.days[date] ?? 0) >= d.goal;
 }
@@ -250,6 +259,7 @@ export function setDailyGoal(goal: number): void {
   d.goal = goal > 0 ? goal : DEFAULT_GOAL;
   reconcile(d);
   persist(d);
+  bumpPrefs(); // 目标=偏好：跨设备按「最后修改的设备」为准
 }
 
 // 用「墨」兑换 1 个断签保护：花 FREEZE_INK 墨，freezes +1（封顶 MAX_FREEZE）。XP 不参与（纯能力刻度）。
@@ -260,6 +270,7 @@ export function redeemFreeze(): { ok: boolean; freezes: number; spendable: numbe
   d.freezes += 1;
   reconcile(d);
   persist(d);
+  bumpPrefs(); // 冻结数=偏好类（余额型）：跨设备 LWW
   return { ok: true, freezes: d.freezes, spendable: getInk().balance };
 }
 

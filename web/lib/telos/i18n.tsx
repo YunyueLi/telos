@@ -4,6 +4,7 @@
 // 两层：① UI 文案 t(key, vars)；② LLM 输出语言 —— llmName(lang) 注入倒推/微课/诊断 prompt。
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { DICT } from "./i18n-dict";
+import { bumpPrefs } from "./prefs-rev";
 
 export type Lang = "zh-CN" | "zh-TW" | "en" | "fr" | "ja" | "ko" | "es" | "ru" | "de";
 
@@ -74,6 +75,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    bumpPrefs(); // 语言=偏好：跨设备 LWW
   }, []);
 
   useEffect(() => {
