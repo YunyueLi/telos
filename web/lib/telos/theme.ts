@@ -3,6 +3,7 @@
 // 纸张主题：黑白纸感下的纸色/色温变体（cosmetic，纯外观，绝不影响功能/学习）。
 // 免费 2 款（素白·宣纸）+ Pro 全解锁（牛皮·月白）。守纯黑白：只调纸墨色温，不引入彩色、不做深色翻转。
 // 应用：切到 <html data-theme="...">，globals.css 按 data-theme 覆盖纸色变量，所有组件靠变量自适应。
+import { bumpPrefs } from "./prefs-rev";
 
 export interface PaperTheme {
   id: string;
@@ -38,6 +39,7 @@ export function setTheme(id: string): void {
     /* ignore */
   }
   applyTheme(id);
+  bumpPrefs(); // 主题皮=偏好：跨设备 LWW
 }
 
 // 把主题落到 <html data-theme>（默认主题清除属性，走 :root 原值）。

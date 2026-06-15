@@ -58,3 +58,27 @@ export async function deleteRemoteProject(id: string): Promise<void> {
   if (!user_id) return;
   await sb.from(TABLE).delete().eq("user_id", user_id).eq("id", id);
 }
+
+// ---- 账号级单例状态（连胜/打卡/墨/装扮）：表 public.user_state，每人一行 jsonb。----
+const STATE_TABLE = "user_state";
+
+export async function pullState(): Promise<{ data: unknown | null; error: string | null }> {
+  const sb = supabase();
+  if (!sb) return { data: null, error: null };
+  const user_id = await uid();
+  if (!user_id) return { data: null, error: "signed-out" };
+  const { data, error } = await sb.from(STATE_TABLE).select("data").eq("user_id", user_id).maybeSingle();
+  if (error) return { data: null, error: error.message };
+  return { data: (data as { data: unknown } | null)?.data ?? null, error: null };
+}
+
+export async function pushState(data: unknown): Promise<{ ok: boolean; error?: string }> {
+  const sb = supabase();
+  if (!sb) return { ok: false, error: "unconfigured" };
+  const user_id = await uid();
+  if (!user_id) return { ok: false, error: "signed-out" };
+  const { error } = await sb
+    .from(STATE_TABLE)
+    .upsert({ user_id, data, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  return error ? { ok: false, error: error.message } : { ok: true };
+}

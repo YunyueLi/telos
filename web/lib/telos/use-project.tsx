@@ -54,7 +54,8 @@ import { useAuth } from "./auth";
 import { cloudConfigured, supabase } from "./supabase";
 import { clearEntitlement, isPro, refreshEntitlement } from "./billing";
 import { BILLING } from "./billing-config";
-import { deleteRemoteProject, pullProjects, pushProject } from "./cloud";
+import { deleteRemoteProject, pullProjects, pushProject, pullState, pushState } from "./cloud";
+import { applyLocalState, collectLocalState, mergeState, normalizeSyncState } from "./sync-state";
 
 interface ProjectContextValue {
   ready: boolean;
@@ -255,6 +256,24 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setSyncError(pushErr);
         return;
       }
+
+      // —— 账号级状态（连胜/打卡/墨/装扮）：拉取 → 无损合并 → 回写本机 → 回推 ——
+      const { data: remoteStateRaw, error: statePullErr } = await pullState();
+      if (statePullErr) {
+        setSyncError(statePullErr);
+        return;
+      }
+      const mergedState = remoteStateRaw
+        ? mergeState(collectLocalState(), normalizeSyncState(remoteStateRaw))
+        : collectLocalState();
+      applyLocalState(mergedState);
+      const statePush = await pushState(mergedState);
+      if (!statePush.ok) {
+        setSyncError(statePush.error ?? "sync-failed");
+        return;
+      }
+      setDailyVersion((v) => v + 1); // 刷新坚持页 / 墨 / 解锁判定
+
       setSyncError(null); // 全程无错 → 清掉旧错误
       setLastSync(Date.now());
     } finally {

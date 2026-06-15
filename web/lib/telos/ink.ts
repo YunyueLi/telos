@@ -93,3 +93,30 @@ export function earnGraphInk(graphKey: string): boolean {
     return false;
   }
 }
+
+// ---- 跨设备同步用：整体读写（合并后回填）。balance 始终 = earned - spent。----
+export function setInk(i: Ink): void {
+  const earned = Math.max(0, i.earned || 0);
+  const spent = Math.max(0, i.spent || 0);
+  write({ earned, spent, balance: Math.max(0, earned - spent) });
+}
+
+// 已发墨的整图 key 集合（同步取并集，换设备不重复领、也不漏判）。
+export function getInkGraphs(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(GRAPH_DONE_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setInkGraphs(keys: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(GRAPH_DONE_KEY, JSON.stringify([...new Set(keys)]));
+  } catch {
+    /* ignore */
+  }
+}
