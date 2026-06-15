@@ -1,7 +1,7 @@
 # Telos · 交接文档（续作必读）
 
 > 给下一个会话/设备：先读这份，再读 `README.md` / `CLAUDE.md` / `SUPABASE.md` / `docs/STRATEGY.md`。
-> 本版覆盖到「账号系统上线 + 顶栏/账户 IA 重构」之后（commit `b118659`）。
+> 本版覆盖到**形象经济 / 书斋 + 商业化（托管 AI / 模板店 / 证书 / Anki）+ Greenroom 协同 + 自定义域迁移**之后（截至 2026-06-15，HEAD `921c0ce`）。形象经济总览见 **§0b**；当前真实 TODO 见 **§7**。
 
 ---
 
@@ -32,6 +32,21 @@
 > **已端到端验证（用户真实浏览器）**：①三张接入卡 = 已连接·deepseek-v4-pro / 已启用·Tavily / 已登录；②真实倒推「学会冲泡手冲咖啡」走完整 pipeline（蓝图→展开→汇编）产 **41 节点 6 模块**的图、渲染正常、节点名是动宾短语；③残留 localhost 覆盖已被自动清除、脏 base 已规整。**「连不上」彻底消失**。
 >
 > **遗留小事**：验证时创建的测试项目「手冲咖啡入门」可能还在用户项目列表（自动化删除时删「当前项目」会让 CDP 渲染卡住、没删成；用户正常点两下即可删，或留着也无害）。**根因若复发**（如用户换到能直连 Worker 的网络又退化）：记住 workers.dev 在中国不可达是常态，长久解法是给 Worker 挂**自有域名**（见 P2，需买域名），但有 BYOK 直连后 Worker 已非必需。
+
+## 0b. 形象经济 / 书斋（本程新增 · 2026-06）
+
+「书斋」`/studio` 升为一级导航（坚持↔我之间），形象经济独立成页，六板块：**形象集 · 画风主题 · 治学通行证 · 印章雅号 · 书斋装点 · 造型换装**。
+- 引擎 `lib/telos/{pass,seals,studyroom}.ts`；解锁语义统一复用 `portraits.matchUnlock` / `ruleHint`（零重复）；跨设备同步走 `sync-state.ts`（领取=并集、佩戴/案头=偏好 LWW）。
+- **治学通行证**（`studio-pass.tsx`）：12 阶按累计 XP 解锁，免费/治学双轨；治学轨独占物按「领取时是否 Pro」分账（`claimedPro`），非 Pro 不白嫖、升级可补领；横向赛道(≥760)/竖向长卷(手机)双布局；领取幂等发墨。**红线**：进度只能靠学、不可买跳级、无倒计时胁迫。
+- **印章雅号**（`studio-seals.tsx`+`seals.ts`）：9 朱红金石印(SVG)+10 学者雅号；当前印钤完课证书、当前雅号上「我」页头部。
+- **书斋装点**（`studio-room.tsx`+`studyroom.ts`）：8 件墨线文房清玩，案头上限 4。
+- **造型换装**：诚实预览（真换装依赖逐套立绘，待出图，不交假功能）。
+- **看板娘立绘**：本程接入 **16 张**（画风 2 Pro / 季节 4 / 学科场景 5 / 日常神态 4 / 里程碑 1），注册进 `portraits.ts`、绑学习里程碑解锁、补 9 语言名+台词。**待重做 4 张**（嘉许=合十非鼓掌 / 宗师=缺大师气度 / 执灯=灯被圆形缩略图裁掉 / 木刻=刀痕弱）；**文房 8 + 印章 9 待出图**。
+- **画风主题成套**（`theme.ts`）：纸色 + 卡片圆角协同（`data-theme`：su/xuan/niupi/yuebai），Pro 全解锁。
+- **Pro 权益**：已补「书斋治学轨 · 全画风」（`/pro` 权益列表 + CLAUDE.md 同步）。
+- **红线**：纯外观/荣誉、**绝不影响学习与 XP**；墨只赚不卖、无开箱抽卡。
+- **出图母版**：`docs/IMAGE-PROMPTS.md`（全部素材 prompt + 是否需 hero + 生成进度 + 需重做标注）。
+- **坑**：Lightning CSS 静默丢 root 的 `overflow` → 写在 `globals.css` 不生效，改 `layout.tsx` 的 `<html>` 内联 style 绕过（memory `lightning-css-drops-root-overflow`）。
 
 ## 1. 怎么跑（本地）
 
@@ -126,13 +141,17 @@ npm --prefix web run build   # 生产构建（静态导出）；改完务必过
 | 2 | GitHub 登录（魔法链接 + Google 已开） | P1 | 用户 GitHub+Supabase | 剩 GitHub（建 OAuth App，回调 `…supabase.co/auth/v1/callback`，填进 Supabase provider，开了即生效；GitHub 同意页天然显示「Telos」） |
 | 3 | 多人周联赛 ⑤（全局周榜） | P1 | 用户建表 → 我接客户端 | 方案+SQL 就绪（SUPABASE.md §2b），待建表 |
 | 4 | 老项目「重新倒推」入口 | P2 | **我（可独立）** | 未开始 |
-| 5 | 跨设备连胜/激励同步（`user_meta` 或 user_metadata） | P2 | 我（可仿 BYOK 同步做） | 可选；连胜目前仅本地 |
+| 5 | ~~跨设备连胜/激励同步~~ | ~~P2~~ | — | ✅ **已完成**（`6c4d054`：连胜/打卡/墨/装扮无损合并，`sync-state.ts`；形象经济领取/佩戴/案头同程接入）|
+| 10 | **图谱准确性 T4 经验闭环埋点**（护城河 · 用户最在意） | **P1** | **我（独立）** | 进行中（记录「掌握前置后做新节点的首答正确率」，数据从现在攒；见 §7 验证路线 T4）|
+| 11 | 形象经济出图接入（重做 4 张 + 文房 8/印章 9） | P1 | 用户出图 → 我接 | 待素材；prompt 见 `docs/IMAGE-PROMPTS.md` |
 | 6 | 文档继续扫（STRATEGY/ROADMAP 过时项） | P2 | **我（可独立）** | README/DERIVE 本程已扫 |
 | 7 | Supabase 邮件模板本地化 · README 截图GIF · 删测试账号 | P2 | 我 / 用户 | 杂项 |
 | 8 | **开通付费（Telos Pro）** | P1 | **用户外部动作** | 代码全就绪（webhook/权益/定价页/水印/项目上限）。剩：① 注册支付服务商(MoR)并建 3 个产品（月/年/买断）+ 2 个加油包（SKU 用 `pack_d10`/`pack_l200` 传 plan）；② 把 checkout 链接 + customer portal 填进 `web/lib/telos/billing-config.ts`（plans + packs）；③ 服务商后台 webhook 指到 `https://telos-api.ungetsu.net/billing/webhook`（自定义域；原 *.workers.dev 已禁用）；④ `cd workers && npx wrangler secret put BILLING_WEBHOOK_SECRET && npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY && npx wrangler deploy`；⑤ 沙盒买一单验证 `/pro` 自动解锁 |
 | 9 | **激活托管 AI（开箱即用 · 商业化主引擎）** | P1 | **用户外部动作** | 代码全就绪（Worker 计量门禁 `hostedGate`/试用/月度配额/加油包 KV、客户端 token 注入与错误文案、/pro 用量条、引导页「登录免费试用」CTA）。**本程已做**：✅ KV `TELOS_USAGE` 建+绑+灌付费模板；✅ Worker deploy（含 `/template` 鉴权下发）；✅ 自定义域 `telos-api.ungetsu.net`（CF 代理·国内可达）+ 前端端点 gh variable 已切（根治 workers.dev 被墙）。**唯剩开托管 AI**（产生 LLM 成本·商业决策）：`cd workers && npx wrangler secret put TELOS_LLM_API_KEY`（+可选 `TELOS_SEARCH_API_KEY`）+ `npx wrangler deploy` → `curl https://telos-api.ungetsu.net/health` 应 `hosted:true`。**付费模板下发已凭 KV+Supabase 独立生效，不依赖此 key。** |
 
-> 助手**可完全独立**：#4（重新倒推入口）、#6（扫文档）、#5（同步代码）。卡用户外部动作：#2 GitHub、#3 建表。
+> **助手可完全独立**：#10（图谱 T4 埋点 · 护城河 · 进行中）、#4（重新倒推入口）、文档校准（本程已刷）。
+> **卡用户外部动作**：#2 GitHub · #3 周联赛建表 · #8 Pro 收银台 · #9 托管 AI · #11 形象经济出图（你出图→我接）。
+> 已完成：#5 跨设备激励同步（`6c4d054`）、#6 文档扫。
 
 ### 连接排查清单（#0 已解决，留作回归参考）
 **先分清两种红字**：① **「连不上」=`cantConnect`**＝fetch 抛错；② **「已连通·缺 key」=`conn.noKey`**＝通了但没 key。卡片「未连接」＝`status.ok=false`。

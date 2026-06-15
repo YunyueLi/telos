@@ -9,8 +9,8 @@
 
 **Telos = 逆向设计学习引擎**：说目标 → LLM 倒推出带前置依赖的能力图谱(DAG) → 诊断起点 → 交互式微课只教缺的、边教边验证 → FSRS 间隔复习。已是**单一真实产品**（不再有 demo 宇宙 / mockup 框架）。
 
-### 产品形态（web，Next.js 16 静态导出，部署到 GitHub Pages /telos/app/）
-- 路由：`/`（Hub：无项目→全屏引导 onboarding；有项目→地图主页 map-home）· `/diagnose`（CBM 起点诊断，全屏接管）· `/review`（FSRS 复习）· `/me`（资料+项目库+设置+备份）。
+### 产品形态（web，Next.js 16 静态导出 · 自定义域 `telos.ungetsu.net`：landing `/`、app `/app/`；旧 github.io 自动 301）
+- 路由：`/`（Hub）· `/diagnose`（CBM 诊断）· `/review`（FSRS 复习）· `/streak`（坚持/激励）· `/studio`（书斋/形象经济）· `/me`（档案+项目+账户）· `/settings`（配置）· `/account`（登录）· `/pro`（定价）· `/store`（模板店）· `/cert`（证书验真）· `/privacy` · `/terms`。微课/节点详情是全屏接管/sheet（静态导出无动态路由）。
 - 微课 & 节点详情是**全屏接管 / sheet 覆盖层**，不是路由（静态导出无法用动态 id 路由）。
 - 外壳 `components/app-shell.tsx`：顶栏(品牌/当前目标/新学习/连胜/XP/头像) + 移动底部三 Tab(地图/复习/我)。
 
@@ -77,6 +77,8 @@ cd web  && npm run dev               # :3000
 ---
 
 ## 2. 待办 backlog（按建议顺序）
+
+> ⚠️ **本节多为早期已完成项（历史留存）**。账号/云同步/激励/形象经济/商业化（托管 AI·模板店·证书）均已远超本表。**当前真实 TODO 以 `docs/HANDOFF.md` §7 为准**（含图谱准确性 T4 埋点=护城河、Pro 收银台、托管 AI、形象经济出图接入）。
 
 - ~~**#10 简化 API 配置**~~ ✅ 已完成：新建共用组件 `components/endpoint-config.tsx`（onboarding 与「我」共用）——预设 chip（本地 serve.py / 线上 Worker / 自定义）一键填 + 单字段 + **「测试连接」**（打 `/health` 即时 ✓ 已连接·模型·key 就绪 / ✗ 原因）+ 保存。`derive.ts` 加 `LOCAL_ENDPOINT` + `getDeriveUrl()` 在 localhost 零配置默认指向本地 serve.py + `getHealthUrl()`/`testEndpoint()`。已实测：本地自动绿、chip 切换预填、假地址红。key 仍只在服务端。
 - **#6 一屏 + 移动端**（task #31）：核心已完成 —— 移动端地图主页用 `.mh-rail{display:contents}` + `order` 重排为**「推荐下一步 + 开始学习」置顶可立即行动 → 路径全展开（不再 62vh 裁切隐藏后半截）→ 进度/诊断/复习/连胜**。已实测 375×812：CTA 在首屏内(y≈153)、`.apptabs` 固定底栏、/review 空态正好一屏。桌面本就一屏(`.mh max-height`)。**剩余可选打磨**：onboarding/诊断窄屏细调；/me 是设置中枢（2020px，滚动可接受，如要更紧可折叠分区）。
