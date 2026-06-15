@@ -17,7 +17,6 @@ import { isPro } from "@/lib/telos/billing";
 import { buildCertificate, certSerial } from "@/lib/telos/certificate";
 import { registerCertificate } from "@/lib/telos/derive";
 import { earnGraphInk } from "@/lib/telos/ink";
-import { useCurrentPortraitFile } from "@/lib/telos/portraits";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -38,7 +37,6 @@ export default function MePage() {
   const { ready, project, projects, graph, view, xp, streak, syncing, lastSync, syncError, syncNow, switchProject, removeProject, startNew } =
     useProject();
   const { configured, user, signOut } = useAuth();
-  const studioFace = useCurrentPortraitFile();
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [openStage, setOpenStage] = useState<string | null>(null); // 掌握进度：展开的阶段（手风琴）
   const PROJECT_CAP = 6; // 默认最多 2 行（桌面 3 列）；多的折叠
@@ -345,21 +343,6 @@ export default function MePage() {
               })
             )
           )}
-        </div>
-
-        {/* 书斋入口：形象 · 画风 · 装扮统一收纳的一级页 */}
-        <div className="me-sect">
-          <Link href="/studio" className="me-studio">
-            <span className="me-studio-face">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset(`/portraits/${studioFace}.png`)} alt="" />
-            </span>
-            <div className="me-studio-tx">
-              <b>{t("studio.entryTitle")}</b>
-              <span>{t("studio.entrySub")}</span>
-            </div>
-            <Icon name="arrow" className="me-studio-arrow" />
-          </Link>
         </div>
       </div>
     </AppShell>
