@@ -3,6 +3,29 @@
 > 工具：**GPT img-2（gpt-image-1）**。每条 prompt **独立完整、复制即用，无需拼接**。
 > 建议同组在一个会话里连续生成，风格最连贯。
 
+## 生成进度（你已生成 16 张 · 2026-06-15）
+
+✅ **已生成**——看板娘需 hero 的几组都齐了，还额外做了神态与里程碑：
+
+| 组 | 你的文件 | 状态 |
+|---|---|---|
+| 画风 | `泼墨写意 · theme-xieyi` · `木刻版画 · theme-woodcut` | ✅ 2 |
+| 季节 | `spring` · `summer` · `autumn` · `winter` | ✅ 4 |
+| 场景 | `scene-nightread` · `scene-lectern` · `scene-shelves` · `scene-annotate` · `scene-summit` | ✅ 5 |
+| 日常神态（额外，归 daily 系列） | `ponder` · `applaud` · `nod` · `lantern` | ✅ 4 |
+| 里程碑（额外，归 milestone 系列） | `zongshi`（宗师） | ✅ 1 |
+
+⬜ **还没生成**（这两组是静物、**不需** hero）：
+- 文房清玩 8 张（下方第四组）
+- 印章 9 张（下方第五组）
+
+➕ **可补充 / 我接代码时会对齐**：
+- 命名以你的为准，我接代码时统一成 ASCII（如 `泼墨写意 · theme-xieyi.png` → `face-xieyi.png`，`scene-lectern.png` 去掉前导空格），不用你改。
+- 我原列的场景「临窗 / 茶歇 / 漫思」你用 lectern / shelves / annotate / summit 替代了，已经够；想要更多场景随时加。
+- `ponder / applaud / nod / lantern` 4 张神态 + `zongshi` 是额外做的，很好——我会注册进形象集对应系列，照旧绑真实学习里程碑解锁。
+
+---
+
 ## 是否需要上传 hero.png？
 
 | 组 | 数量 | 上传 hero.png？ | 落地位置 | 用途 |
