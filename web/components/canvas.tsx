@@ -225,7 +225,8 @@ export default function DeriveCanvas({
     // 与「下一步」相连的边始终加粗实墨；指向未解锁节点的边一律减淡。
     const es: Edge[] = layout.edges.map((e) => {
       const locked = view.visual[e.to] === "lock";
-      const strong = e.to === view.next?.id || e.from === view.next?.id;
+      // 高亮"通往下一步"的路径；但不强调指向未解锁节点的边（否则粗黑线诡异地指着你还学不了的节点）
+      const strong = (e.to === view.next?.id || e.from === view.next?.id) && !locked;
       const style = strong
         ? { stroke: "#141310", strokeWidth: 2.2 }
         : e.main
