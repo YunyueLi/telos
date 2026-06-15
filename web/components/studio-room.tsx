@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useT } from "@/lib/telos/i18n";
 import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
 import { isPro } from "@/lib/telos/billing";
 import { collectStats } from "@/lib/telos/portraits";
 import { getPassGranted } from "@/lib/telos/pass";
@@ -34,9 +35,8 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
               if (!d) return null;
               return (
                 <span key={id} className="room-piece" title={t(d.nameKey)}>
-                  <svg className="ic" aria-hidden>
-                    <use href={`#d-${id}`} />
-                  </svg>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={asset(`/decor/d-${id}.png`)} alt="" />
                 </span>
               );
             })}
@@ -63,9 +63,8 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
               aria-label={label}
             >
               <span className="room-thumb">
-                <svg className="ic" aria-hidden style={{ color: ok ? "var(--ink)" : "var(--ink-3)" }}>
-                  <use href={`#d-${d.id}`} />
-                </svg>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={asset(`/decor/d-${d.id}.png`)} alt="" />
                 {!ok && (
                   <span className="room-veil">
                     <Icon name="lock" />

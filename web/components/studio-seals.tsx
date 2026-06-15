@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useT } from "@/lib/telos/i18n";
 import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
 import { isPro } from "@/lib/telos/billing";
 import { collectStats } from "@/lib/telos/portraits";
 import { getPassGranted } from "@/lib/telos/pass";
@@ -51,9 +52,8 @@ export function StudioSeals({ projects }: { projects: Project[] }) {
     <div className="seals">
       <div className="seals-now">
         <span className="seals-now-mark">
-          <svg className="ic" aria-hidden style={{ color: "var(--seal)" }}>
-            <use href={`#s-${sealOk ? curSeal!.id : "qicheng"}`} />
-          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={asset(`/seals/s-${sealOk ? curSeal!.id : "qicheng"}.png`)} alt="" />
         </span>
         <div className="seals-now-info">
           <span className="eyebrow">{t("seal.current")}</span>
@@ -110,9 +110,8 @@ export function StudioSeals({ projects }: { projects: Project[] }) {
                 aria-label={label}
               >
                 <span className="seal-stamp">
-                  <svg className="ic" aria-hidden style={{ color: ok ? "var(--seal)" : "var(--ink-3)" }}>
-                    <use href={`#s-${it.id}`} />
-                  </svg>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={asset(`/seals/s-${it.id}.png`)} alt="" />
                   {!ok && (
                     <span className="seal-veil">
                       <Icon name="lock" />
