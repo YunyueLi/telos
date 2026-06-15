@@ -271,6 +271,9 @@ export default function MePage() {
               </Link>
             )}
           </div>
+          {project && graph && view && view.modules.length > 0 && (
+            <p className="me-note" style={{ margin: "-2px 0 12px", fontStyle: "italic" }}>{t("me.inkScale")}</p>
+          )}
           {!project || !graph || !view ? (
             <p className="me-note">{t("me.noProjectYet")}</p>
           ) : (
