@@ -17,6 +17,9 @@ import { isPro } from "@/lib/telos/billing";
 import { buildCertificate, certSerial } from "@/lib/telos/certificate";
 import { registerCertificate } from "@/lib/telos/derive";
 import { earnGraphInk } from "@/lib/telos/ink";
+import { collectStats } from "@/lib/telos/portraits";
+import { currentTitle, currentSeal } from "@/lib/telos/seals";
+import { getPassGranted } from "@/lib/telos/pass";
 
 function progressOf(p: Project): { mastered: number; total: number } {
   const total = p.points.length;
@@ -90,6 +93,12 @@ export default function MePage() {
     );
   }
 
+  // 当前佩戴雅号 + 常用印：书斋经营成果在身份页露出（点击进书斋）。
+  const honorStats = collectStats(projects, isPro());
+  const honorGranted = getPassGranted();
+  const honorTitle = currentTitle(honorStats, honorGranted);
+  const honorSeal = currentSeal(honorStats, honorGranted);
+
   return (
     <AppShell active="me">
       <div className="me">
@@ -101,6 +110,12 @@ export default function MePage() {
           <div className="info">
             <div className="eyebrow">{t("me.eyebrow")}</div>
             <h2>{t("me.title")}</h2>
+            <Link href="/studio" className="me-honor" title={t("seal.openStudio")}>
+              <svg className="ic" aria-hidden style={{ color: "var(--seal)" }}>
+                <use href={`#s-${honorSeal.id}`} />
+              </svg>
+              <span>{t(honorTitle.nameKey)}</span>
+            </Link>
             {project ? (
               <p className="me-goal">{t("me.goalLabel", { goal: project.goal })}</p>
             ) : (

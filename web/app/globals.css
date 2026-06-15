@@ -980,15 +980,133 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .studio-tabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .studio-tabs button.locked{opacity:.55;cursor:default;color:var(--ink-3)}
 .studio-tabs button.locked .ic{width:12px;height:12px}
-/* 书斋入口卡（「我」页） */
-.me-studio{display:flex;align-items:center;gap:14px;border:1px solid var(--line-soft);border-radius:var(--radius-card);padding:14px 16px;background:var(--card);cursor:pointer;transition:border-color .15s,transform .12s;text-decoration:none;color:inherit}
-.me-studio:hover{border-color:var(--ink-3);transform:translateY(-1px)}
-.me-studio-face{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;border:1.5px solid var(--ink);background:var(--paper)}
-.me-studio-face img{width:100%;height:100%;object-fit:cover;object-position:top center}
-.me-studio-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.me-studio-tx b{font:500 16px var(--serif);color:var(--ink)}
-.me-studio-tx span{font:500 11.5px var(--mono);color:var(--ink-3)}
-.me-studio-arrow{width:18px;height:18px;color:var(--ink-3);flex:none}
+/* ───────── 书斋 · 形象经济 ───────── */
+/* 「我」页雅号徽（点击进书斋）*/
+.me-honor{display:inline-flex;align-items:center;gap:6px;margin-top:9px;padding:4px 11px 4px 8px;border:1px solid var(--line-soft);border-radius:999px;font:600 12px var(--sans);color:var(--ink-2);text-decoration:none;width:fit-content;transition:.15s}
+.me-honor:hover{border-color:var(--ink-3);color:var(--ink)}
+.me-honor .ic{width:16px;height:16px;flex:none}
+/* 通行证 tab 红点 */
+.studio-dot{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;margin-left:5px;padding:0 4px;font:600 9px var(--mono);background:var(--ink);color:var(--paper);border-radius:999px;vertical-align:1px}
+/* 治学通行证 */
+.pass{display:flex;flex-direction:column;gap:18px}
+.pass-hero{display:flex;flex-direction:column;gap:12px;padding:18px 20px;border:1.5px solid var(--ink);border-radius:var(--radius-card);background:var(--card)}
+.pass-hero .eyebrow{margin:0}
+.pass-prog{display:flex;flex-direction:column;gap:7px}
+.pass-prog-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pass-prog-top b{font:500 19px var(--serif);color:var(--ink)}
+.pass-prog-top span{font:600 11.5px var(--mono);color:var(--ink-3);text-align:right}
+.pass-bar{height:8px;border-radius:999px;background:var(--paper);border:1px solid var(--line-soft);overflow:hidden}
+.pass-bar i{display:block;height:100%;background:var(--ink);border-radius:999px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.pass-meta{font:600 10.5px var(--mono);letter-spacing:.04em;color:var(--ink-3)}
+.pass-claimall{display:inline-flex;align-items:center;justify-content:center;gap:7px;font:600 13px var(--sans);color:var(--paper);background:var(--ink);border:0;border-radius:11px;padding:11px;cursor:pointer;transition:.15s}
+.pass-claimall:hover{background:#000}
+.pass-claimall .ic{width:15px;height:15px}
+.pass-upsell{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font:600 12.5px var(--sans);color:var(--ink-2);text-decoration:none}
+.pass-upsell:hover{color:var(--ink)}
+.pass-upsell .ic{width:14px;height:14px}
+.pass-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.pass-step{position:relative;display:flex;gap:14px}
+.pass-node{position:relative;flex:none;width:30px;height:30px;border-radius:50%;border:1.6px solid var(--line-soft);background:var(--card);display:grid;place-items:center;font:600 12px var(--mono);color:var(--ink-3);z-index:1}
+.pass-node .ic{width:15px;height:15px}
+.pass-node::after{content:"";position:absolute;top:30px;left:50%;width:1.6px;height:calc(100% - 30px);transform:translateX(-50%);background:var(--line-soft)}
+.pass-step:last-child .pass-node::after{display:none}
+.pass-step.done .pass-node{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.pass-step.ready .pass-node{border-color:var(--ink);color:var(--ink);border-width:2px}
+.pass-step.locked .pass-node{border-style:dashed}
+.pass-step.done .pass-node::after{background:var(--ink-3)}
+.pass-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;padding-bottom:20px}
+.pass-body-top{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:30px}
+.pass-th{font:600 12px var(--mono);color:var(--ink);letter-spacing:.03em}
+.pass-step.locked .pass-th{color:var(--ink-3)}
+.pass-claim{font:600 11.5px var(--sans);color:var(--paper);background:var(--ink);border:0;border-radius:8px;padding:6px 14px;cursor:pointer;transition:.15s}
+.pass-claim:hover{background:#000}
+.pass-state{font:600 10.5px var(--mono);letter-spacing:.04em;color:var(--ink-3);display:inline-flex;align-items:center;gap:4px}
+.pass-state.done{color:var(--ink-2)}
+.pass-state .ic{width:13px;height:13px}
+.pass-track{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pass-tk{display:inline-flex;align-items:center;gap:4px;font:600 9px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);border:1px solid var(--line-soft);border-radius:5px;padding:2px 6px;flex:none;min-width:52px;justify-content:center}
+.pass-track.pro .pass-tk{border-color:var(--ink-2);color:var(--ink-2)}
+.pass-tk .ic{width:10px;height:10px}
+.pass-track.veil{opacity:.5}
+.pass-rw{display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pass-ink{font:600 12px var(--sans);color:var(--ink)}
+.pass-item{display:inline-flex;align-items:center;gap:4px;font:600 11.5px var(--sans);color:var(--ink-2)}
+.pass-item .ic{width:17px;height:17px;flex:none}
+.pass-foot{margin:6px 0 0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
+/* 印章雅号 */
+.seals{display:flex;flex-direction:column;gap:22px}
+.seals-now{display:flex;align-items:center;gap:15px;padding:15px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+.seals-now-mark{flex:none;width:60px;height:60px;border-radius:13px;border:1.6px solid var(--seal);display:grid;place-items:center;background:var(--paper)}
+.seals-now-mark .ic{width:38px;height:38px}
+.seals-now-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.seals-now-info .eyebrow{margin:0}
+.seals-now-info b{font:600 19px var(--serif);color:var(--ink)}
+.seals-now-sub{font:600 11px var(--mono);color:var(--ink-3)}
+.seals-sect{display:flex;flex-direction:column;gap:12px}
+.seals-sh{display:flex;align-items:baseline;gap:9px}
+.seals-sh b{font:600 13.5px var(--sans);color:var(--ink)}
+.seals-sh span{font:600 10.5px var(--mono);color:var(--ink-3)}
+.seals-titles{display:flex;flex-wrap:wrap;gap:9px}
+.seal-title{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--sans);padding:8px 14px;border-radius:999px;border:1.4px solid var(--line-soft);background:var(--card);color:var(--ink);cursor:pointer;transition:.15s}
+.seal-title.ok:hover{border-color:var(--ink-3)}
+.seal-title.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.seal-title.locked{border-style:dashed;border-color:var(--hatch);color:var(--ink-3);cursor:default;font-weight:500;font-size:11px}
+.seal-title .ic{width:13px;height:13px}
+.seal-pro{font:600 8.5px var(--mono);letter-spacing:.05em;border:1px solid currentColor;border-radius:4px;padding:0 4px;opacity:.7}
+.seals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:11px}
+.seal-cell{display:flex;flex-direction:column;align-items:center;gap:8px;padding:11px 4px 10px;border:1.4px solid var(--line-soft);border-radius:12px;background:var(--paper);cursor:pointer;transition:border-color .15s,transform .12s}
+.seal-cell.ok:hover{border-color:var(--seal);transform:translateY(-1px)}
+.seal-cell.on{border-color:var(--seal);box-shadow:inset 0 0 0 1px var(--seal)}
+.seal-cell.locked{cursor:default}
+.seal-stamp{position:relative;width:48px;height:48px;display:grid;place-items:center}
+.seal-stamp > .ic{width:42px;height:42px}
+.seal-cell.locked .seal-stamp > .ic{opacity:.38}
+.seal-veil{position:absolute;inset:0;display:grid;place-items:center}
+.seal-veil .ic{width:16px;height:16px;color:var(--ink-3)}
+.seal-on{position:absolute;right:-2px;bottom:-2px;width:19px;height:19px;border-radius:50%;background:var(--seal);display:grid;place-items:center;border:2px solid var(--paper)}
+.seal-on .ic{width:11px;height:11px;color:#fff}
+.seal-name{font:600 11px var(--sans);text-align:center;line-height:1.25;color:var(--ink-2)}
+.seal-cell.locked .seal-name{font-weight:400;font-size:10px;color:var(--ink-3)}
+.seals-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
+/* 书斋装点（文房清玩）*/
+.room{display:flex;flex-direction:column;gap:20px}
+.room-desk{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 18px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+.room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:20px;min-height:50px;flex-wrap:wrap}
+.room-piece{display:grid;place-items:center}
+.room-piece .ic{width:46px;height:46px;color:var(--ink)}
+.room-empty{font:italic 500 13.5px var(--serif);color:var(--ink-3);padding:12px 0}
+.room-count{font:600 10px var(--mono);letter-spacing:.05em;color:var(--ink-3)}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:11px}
+.room-cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border:1.4px solid var(--line-soft);border-radius:12px;background:var(--paper);cursor:pointer;transition:border-color .15s,transform .12s}
+.room-cell.ok:hover{border-color:var(--ink);transform:translateY(-1px)}
+.room-cell.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.room-cell.locked{cursor:default}
+.room-thumb{position:relative;width:46px;height:46px;display:grid;place-items:center}
+.room-thumb > .ic{width:42px;height:42px}
+.room-cell.locked .room-thumb > .ic{opacity:.4}
+.room-veil{position:absolute;inset:0;display:grid;place-items:center}
+.room-veil .ic{width:15px;height:15px;color:var(--ink-3)}
+.room-on{position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:var(--ink);display:grid;place-items:center;border:2px solid var(--paper)}
+.room-on .ic{width:10px;height:10px;color:var(--paper)}
+.room-name{font:600 11px var(--sans);color:var(--ink-2);text-align:center}
+.room-cell.locked .room-name{font-weight:400;font-size:10px;color:var(--ink-3)}
+.room-act{font:600 9px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+.room-cell.on .room-act{color:var(--ink)}
+.room-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
+/* 造型换装（诚实预览）*/
+.dressup{display:flex;flex-direction:column;gap:18px}
+.dressup-lead{display:flex;gap:13px;align-items:flex-start;padding:16px 18px;border:1.5px solid var(--line-soft);border-radius:14px;background:var(--card)}
+.dressup-badge{flex:none;width:38px;height:38px;border-radius:11px;border:1.5px solid var(--ink-3);display:grid;place-items:center;color:var(--ink-2)}
+.dressup-badge .ic{width:19px;height:19px}
+.dressup-lead b{font:500 17px var(--serif);color:var(--ink)}
+.dressup-lead p{margin:4px 0 0;font:400 13px/1.55 var(--sans);color:var(--ink-2)}
+.dressup-sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+.dressup-set{display:flex;flex-direction:column;gap:3px;padding:14px;border:1px dashed var(--line-soft);border-radius:12px;background:var(--paper)}
+.dressup-set b{font:600 14px var(--sans);color:var(--ink-2)}
+.dressup-set > span{font:400 11.5px var(--sans);color:var(--ink-3)}
+.dressup-wip{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font:600 9.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-style:normal}
+.dressup-wip .ic{width:11px;height:11px}
+.dressup-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 复习页"温故知新"师者话 */
 .rv-wengu{margin:16px 0 0;font:italic 500 14px/1.6 var(--serif);color:var(--ink-2);max-width:540px}
 /* MapHome 看板娘意义锚定 bar（回扣初心 + 进步可见）*/
