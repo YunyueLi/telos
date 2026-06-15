@@ -5,7 +5,7 @@
    Telos 守零彩色：不在此引入语义色，状态走形状/填充/斜纹/虚线（见 docs/DESIGN.md §1 与 §4）。 */
 :root {
   --paper:#F0EEE9; --card:#FFFFFF; --ink:#141310; --ink-2:#56524A; --ink-3:#928E84;
-  --line:#141310; --line-soft:#E2DFD7; --hatch:#D5D1C7;
+  --line:#141310; --line-soft:#E2DFD7; --hatch:#D5D1C7; --seal:#B23A2E;
   --serif: var(--font-fraunces), Georgia, serif;
   --sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: var(--font-jbmono), ui-monospace, Menlo, monospace;
@@ -930,9 +930,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .stamp-o1,.stamp-o2{fill:none;stroke:var(--line-soft);stroke-width:1.5}
 .stamp-ic{position:relative;z-index:1;width:20px;height:20px;color:var(--ink-3)}
 .stamp.on{transform:rotate(-4deg)}
-.stamp.on .stamp-o1{stroke:var(--ink);stroke-width:1.9}
-.stamp.on .stamp-o2{stroke:var(--ink)}
-.stamp.on .stamp-ic{color:var(--ink)}
+.stamp.on .stamp-o1{stroke:var(--seal);stroke-width:1.9}
+.stamp.on .stamp-o2{stroke:var(--seal)}
+.stamp.on .stamp-ic{color:var(--seal)}
 /* 纸张主题选择器 */
 .tp{display:flex;gap:13px;flex-wrap:wrap}
 .tp-cell{display:flex;flex-direction:column;align-items:center;gap:7px;border:none;background:none;cursor:pointer;padding:2px}

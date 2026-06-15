@@ -166,6 +166,7 @@ export function buildCertificate(opts: {
   const INK3 = "#928E84";
   const PAPER = "#F7F5F0";
   const LINE = "#E2DFD7";
+  const SEAL = "#B23A2E"; // 朱砂/印泥红：唯一彩色 accent，仅证书钤印（学成封存仪式）
   const cx = W / 2;
   const SERIF = 'Fraunces, Georgia, "Songti SC", serif';
   const SANS = 'Inter, -apple-system, "PingFang SC", sans-serif';
@@ -319,9 +320,9 @@ export function buildCertificate(opts: {
   ctx.lineTo(W - 150, footY + 28);
   ctx.stroke();
 
-  // 印章（环绕文字 + 双环 + 中心小罗盘）
+  // 朱红钤印（环绕文字 + 双环 + 中心小罗盘）：唯一彩色，学成封存的钤印仪式
   const sy = footY - 2;
-  ctx.strokeStyle = INK;
+  ctx.strokeStyle = SEAL;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, sy, 56, 0, Math.PI * 2);
@@ -330,9 +331,9 @@ export function buildCertificate(opts: {
   ctx.beginPath();
   ctx.arc(cx, sy, 47, 0, Math.PI * 2);
   ctx.stroke();
-  arcText(ctx, opts.sealText || "TELOS · 完课认证 · CERTIFIED", cx, sy, 51, `600 11px ${MONO}`, INK);
+  arcText(ctx, opts.sealText || "TELOS · 完课认证 · CERTIFIED", cx, sy, 51, `600 11px ${MONO}`, SEAL);
   // 中心小罗盘
-  ctx.fillStyle = INK;
+  ctx.fillStyle = SEAL;
   ctx.beginPath();
   ctx.moveTo(cx, sy - 16);
   ctx.lineTo(cx + 7, sy);
@@ -340,7 +341,7 @@ export function buildCertificate(opts: {
   ctx.lineTo(cx - 7, sy);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = INK;
+  ctx.strokeStyle = SEAL;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.arc(cx, sy, 22, 0, Math.PI * 2);
