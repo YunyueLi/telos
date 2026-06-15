@@ -259,13 +259,6 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .auth-syncrow .l span{font:500 11.5px var(--mono);color:var(--ink-3)}
 .auth-synccard .btn{padding:8px 14px;font-size:12.5px;flex:none}
 .auth-synccard.has-err{border-color:var(--ink-3)}
-.sync-fix{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
-.sync-fix-lead{margin:0 0 9px;font:500 12px/1.55 var(--sans);color:var(--ink-2)}
-.sync-sql{margin:0;padding:11px 12px;background:var(--paper);border:1px dashed var(--ink-3);border-radius:9px;font:500 10.5px/1.6 var(--mono);color:var(--ink-2);white-space:pre;overflow-x:auto;-webkit-user-select:all;user-select:all}
-.sync-fix-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.sync-fix-actions .btn{padding:8px 14px;font-size:12.5px}
-.sync-steps{margin:9px 0 0;font:500 11px/1.5 var(--mono);color:var(--ink-3)}
-.sync-localnote{margin:11px 0 0;font:500 10.5px/1.5 var(--mono);color:var(--ink-3)}
 .auth-signout{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;font:600 13px var(--sans);color:var(--ink-2);background:none;border:1px solid var(--line-soft);border-radius:11px;padding:11px;cursor:pointer}
 .auth-signout:hover{border-color:var(--ink);color:var(--ink)}
 .auth-signout .ic{width:15px;height:15px}

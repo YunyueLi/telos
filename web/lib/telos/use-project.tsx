@@ -212,12 +212,19 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setProjects((prev) => [p, ...prev.filter((x) => x.id !== p.id)].sort(byRecent));
   }, []);
 
-  // 云端推送（已配置且已登录时）——即发即忘不打断本地，但失败要让用户可见（不再静默吞掉）。
+  // 同步失败：真实原因只写 console（供部署者 F12 排查）；UI 一律走友好提示——
+  // 绝不把 SQL / 后台 / 技术细节抛给学习者看（建表是部署者一次性运维，归 SUPABASE.md）。
+  const reportSyncError = useCallback((msg: string | null) => {
+    if (msg) console.warn("[telos] 同步失败：", msg);
+    setSyncError(msg);
+  }, []);
+
+  // 云端推送（已配置且已登录时）——即发即忘不打断本地，失败仅记录、不打扰用户。
   const pushCloud = useCallback((p: Project) => {
     if (!cloudConfigured() || !userIdRef.current) return;
     pushProject(p)
-      .then((res) => setSyncError(res.ok ? null : (res.error ?? "sync-failed")))
-      .catch((e) => setSyncError(String(e?.message ?? e)));
+      .then((res) => reportSyncError(res.ok ? null : (res.error ?? "sync-failed")))
+      .catch((e) => reportSyncError(String(e?.message ?? e)));
   }, []);
 
   // 拉取远端 + 按 updatedAt 合并（per-project 最后写入者胜）+ 回推本地更新者。
@@ -227,7 +234,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: remote, error: pullErr } = await pullProjects();
       if (pullErr) {
-        setSyncError(pullErr); // 表没建 / RLS 拒绝等 → 透出真实原因，且不写 lastSync（不假装「已同步」）
+        reportSyncError(pullErr); // 真实原因写 console；UI 只显示「同步暂不可用 + 数据已安全」，不写 lastSync
         return;
       }
       const m = new Map<string, Project>();
@@ -253,14 +260,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         }
       }
       if (pushErr) {
-        setSyncError(pushErr);
+        reportSyncError(pushErr);
         return;
       }
 
       // —— 账号级状态（连胜/打卡/墨/装扮）：拉取 → 无损合并 → 回写本机 → 回推 ——
       const { data: remoteStateRaw, error: statePullErr } = await pullState();
       if (statePullErr) {
-        setSyncError(statePullErr);
+        reportSyncError(statePullErr);
         return;
       }
       const mergedState = remoteStateRaw
@@ -269,12 +276,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       applyLocalState(mergedState);
       const statePush = await pushState(mergedState);
       if (!statePush.ok) {
-        setSyncError(statePush.error ?? "sync-failed");
+        reportSyncError(statePush.error ?? "sync-failed");
         return;
       }
       setDailyVersion((v) => v + 1); // 刷新坚持页 / 墨 / 解锁判定
 
-      setSyncError(null); // 全程无错 → 清掉旧错误
+      reportSyncError(null); // 全程无错 → 清掉旧错误
       setLastSync(Date.now());
     } finally {
       setSyncing(false);
