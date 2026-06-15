@@ -33,11 +33,42 @@ const GROUPS = [
   { key: "lock", titleKey: "group.lock" },
 ] as const;
 
+// 同步失败分两类：「表/RLS 没建」(可一键修) vs 其它(网络等)。按 PostgREST 报错关键词识别。
+function syncErrKind(err: string): "setup" | "other" {
+  const e = err.toLowerCase();
+  const setup = ["schema cache", "does not exist", "could not find the table", "pgrst205", "42p01", "row-level security", "permission denied", "42501", "pgrst301"];
+  return setup.some((k) => e.includes(k)) ? "setup" : "other";
+}
+
+// 幂等建表 + RLS（重复跑安全）：表没建 / 策略缺失都靠这一段一次修好。与 SUPABASE.md 保持一致。
+const SETUP_SQL = `create table if not exists public.projects (
+  user_id    uuid        not null default auth.uid(),
+  id         text        not null,
+  data       jsonb       not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
+alter table public.projects enable row level security;
+drop policy if exists "own rows" on public.projects;
+create policy "own rows" on public.projects
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
+
 export default function MePage() {
   const { t, lang } = useT();
   const router = useRouter();
-  const { ready, project, projects, graph, view, xp, streak, syncing, lastSync, syncNow, switchProject, removeProject, startNew } =
+  const { ready, project, projects, graph, view, xp, streak, syncing, lastSync, syncError, syncNow, switchProject, removeProject, startNew } =
     useProject();
+  const [copiedSql, setCopiedSql] = useState(false);
+  const errKind = syncError ? syncErrKind(syncError) : null;
+  const copySetupSql = async () => {
+    try {
+      await navigator.clipboard.writeText(SETUP_SQL);
+      setCopiedSql(true);
+      window.setTimeout(() => setCopiedSql(false), 2000);
+    } catch {
+      /* 剪贴板不可用 → 用户可手动选中下方代码框复制 */
+    }
+  };
   const { configured, user, signOut } = useAuth();
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [openStage, setOpenStage] = useState<string | null>(null); // 掌握进度：展开的阶段（手风琴）
@@ -154,23 +185,45 @@ export default function MePage() {
                   <span>{t("auth.signedIn")}</span>
                 </div>
               </div>
-              <div className="auth-synccard" style={{ marginTop: 12 }}>
+              <div className={`auth-synccard ${syncError ? "has-err" : ""}`.trim()} style={{ marginTop: 12 }}>
                 <div className="auth-syncrow">
                   <Icon name="refresh" className="ic" />
                   <div className="l">
-                    <b>{t("auth.syncOn")}</b>
+                    <b>{syncError ? t("auth.syncFail") : t("auth.syncOn")}</b>
                     <span>
                       {syncing
                         ? t("auth.syncing")
-                        : lastSync
-                          ? t("auth.lastSync", { t: new Date(lastSync).toLocaleTimeString(lang) })
-                          : t("auth.never")}
+                        : syncError
+                          ? errKind === "setup"
+                            ? t("auth.errNoTable")
+                            : syncError
+                          : lastSync
+                            ? `${t("auth.syncedN", { n: projects.length })} · ${t("auth.lastSync", { t: new Date(lastSync).toLocaleTimeString(lang) })}`
+                            : t("auth.never")}
                     </span>
                   </div>
                   <button className="btn btn-line" onClick={() => void syncNow()} disabled={syncing}>
                     {syncing ? t("auth.syncing") : t("auth.syncNow")}
                   </button>
                 </div>
+
+                {syncError && errKind === "setup" && (
+                  <div className="sync-fix">
+                    <p className="sync-fix-lead">{t("auth.fixNeedTable")}</p>
+                    <pre className="sync-sql">{SETUP_SQL}</pre>
+                    <div className="sync-fix-actions">
+                      <button className="btn btn-line" onClick={() => void copySetupSql()}>
+                        {copiedSql && <Icon name="check" />} {copiedSql ? t("auth.copied") : t("auth.copySql")}
+                      </button>
+                      <a className="btn btn-line" href="https://supabase.com/dashboard/projects" target="_blank" rel="noreferrer">
+                        {t("auth.openSupabase")} <Icon name="arrow" />
+                      </a>
+                    </div>
+                    <p className="sync-steps">{t("auth.fixSteps")}</p>
+                  </div>
+                )}
+
+                <p className="sync-localnote">{t("auth.localOnly")}</p>
               </div>
               <button className="auth-signout" onClick={() => void signOut()}>
                 <Icon name="logout" /> {t("auth.signOut")}

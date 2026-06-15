@@ -21,13 +21,16 @@ async function uid(): Promise<string | null> {
   return data.session?.user.id ?? null;
 }
 
-export async function pullProjects(): Promise<Project[]> {
+// 返回 {data, error}：error 非空时把 Supabase 原始报错透出（表没建 / RLS 拒绝等），
+// 交给上层显示给用户——绝不再静默吞错、假装「已同步」。
+export async function pullProjects(): Promise<{ data: Project[]; error: string | null }> {
   const sb = supabase();
-  if (!sb) return [];
+  if (!sb) return { data: [], error: null };
   const { data, error } = await sb.from(TABLE).select("data");
-  if (error || !data) return [];
+  if (error) return { data: [], error: error.message };
   // 补全 state（云端可能存着旧格式/残缺数据）→ 同步进 React state 渲染时不白屏。
-  return data.map((r) => (r as { data: unknown }).data).filter(valid).map(normalizeProject);
+  const list = (data ?? []).map((r) => (r as { data: unknown }).data).filter(valid).map(normalizeProject);
+  return { data: list, error: null };
 }
 
 export async function pushProject(p: Project): Promise<{ ok: boolean; error?: string }> {
