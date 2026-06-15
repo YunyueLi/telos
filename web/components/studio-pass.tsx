@@ -1,12 +1,12 @@
 "use client";
 
 // 治学通行证页签：季节进度长卷 + 免费/治学双轨奖励 + 领取。进度只读真实累计 XP，靠学推进。
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "@/lib/telos/i18n";
 import { Icon } from "@/components/icon";
 import { BASE } from "@/lib/base";
 import { isPro } from "@/lib/telos/billing";
-import { passProgress, claimStep, claimAll, type PassReward, type PassStepView } from "@/lib/telos/pass";
+import { passProgress, claimStep, claimAll, type PassProgress, type PassReward, type PassStepView } from "@/lib/telos/pass";
 import { sealById, titleById } from "@/lib/telos/seals";
 import { decorById } from "@/lib/telos/studyroom";
 
@@ -87,11 +87,73 @@ function Step({ st, pro, onClaim }: { st: PassStepView; pro: boolean; onClaim: (
   );
 }
 
+// 横向赛道（桌面/横屏）：免费轨一行 · 节点轨道贯穿 · 治学轨一行，横向滚动——游戏通行证观感。
+function HTrack({ prog, pro, onClaim }: { prog: PassProgress; pro: boolean; onClaim: (i: number) => void }) {
+  const { t } = useT();
+  const cls = (st: PassStepView) => (!st.unlocked ? "locked" : st.claimable ? "ready" : "done");
+  return (
+    <div className="pass-h">
+      <div className="pass-h-scroll">
+        <div className="pass-h-row">
+          <span className="pass-h-lab">{t("pass.free")}</span>
+          {prog.steps.map((st) => (
+            <div key={st.i} className={`pass-h-cell ${cls(st)}`}>
+              <Rewards r={st.free} />
+            </div>
+          ))}
+        </div>
+        <div className="pass-h-row pass-h-rail">
+          <span className="pass-h-lab" aria-hidden />
+          {prog.steps.map((st) => (
+            <div key={st.i} className={`pass-h-railcell ${cls(st)}`}>
+              <button
+                className="pass-node"
+                disabled={!st.claimable}
+                onClick={() => st.claimable && onClaim(st.i)}
+                title={st.claimable ? t("pass.claim") : st.unlocked ? t("pass.claimed") : `${st.xp} XP`}
+              >
+                {st.unlocked && !st.claimable ? <Icon name="check" /> : st.i + 1}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="pass-h-row">
+          <span className="pass-h-lab">
+            {t("pass.pro")}
+            {!pro && <Icon name="lock" />}
+          </span>
+          {prog.steps.map((st) => (
+            <div key={st.i} className={`pass-h-cell ${cls(st)} ${!pro ? "veil" : ""}`}>
+              <Rewards r={st.pro} />
+            </div>
+          ))}
+        </div>
+        <div className="pass-h-row pass-h-xprow">
+          <span className="pass-h-lab" aria-hidden />
+          {prog.steps.map((st) => (
+            <div key={st.i} className="pass-h-xp">
+              {st.xp === 0 ? t("pass.start") : `${st.xp} XP`}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StudioPass() {
   const { t } = useT();
   const [, force] = useState(0);
+  const [wide, setWide] = useState(false);
   const prog = passProgress();
   const pro = isPro();
+  // 横屏/桌面走横向赛道，竖屏走竖向长卷（mount + resize/旋转时按视口宽度切换，避免 SSR 不一致）。
+  useEffect(() => {
+    const check = () => setWide(window.innerWidth >= 760);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const claim = (i: number) => {
     claimStep(i);
     force((n) => n + 1);
@@ -131,11 +193,15 @@ export function StudioPass() {
         )}
       </div>
 
-      <ol className="pass-steps">
-        {prog.steps.map((st) => (
-          <Step key={st.i} st={st} pro={pro} onClaim={claim} />
-        ))}
-      </ol>
+      {wide ? (
+        <HTrack prog={prog} pro={pro} onClaim={claim} />
+      ) : (
+        <ol className="pass-steps">
+          {prog.steps.map((st) => (
+            <Step key={st.i} st={st} pro={pro} onClaim={claim} />
+          ))}
+        </ol>
+      )}
 
       <p className="pass-foot">{t("pass.foot")}</p>
     </div>
