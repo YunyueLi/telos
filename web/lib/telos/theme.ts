@@ -10,6 +10,7 @@ export interface PaperTheme {
   nameKey: string;
   paid: boolean;
   swatch: { paper: string; ink: string }; // 选择器小样
+  face?: string; // 该主题绑定的看板娘画风立绘文件名（public/portraits/<face>.png）；留空=用标准墨线。
 }
 
 export const THEMES: PaperTheme[] = [
