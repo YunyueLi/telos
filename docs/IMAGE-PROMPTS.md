@@ -26,6 +26,39 @@
 
 ---
 
+## ⚠️ 需重做 / 优化（逐张审查后 · 重新生成覆盖同名文件即可，我不用改代码）
+
+其余 12 张合格；以下 4 张要重做。每条都**需上传 hero.png**，沿用本文件的看板娘模板、风格统一。
+
+| 文件 | 问题 |
+|---|---|
+| `applaud.png` | 现在是双手合十（像祈愿/感谢），不是「嘉许」该有的鼓掌赞许，所以显得没劲 |
+| `zongshi.png` | 只是普通职业抱臂、和别的形象一样年轻，缺「宗师」的大师气度 |
+| `lantern.png` | 其实画了马灯，但灯在手部偏下，形象集圆形缩略图（只取上半张脸）把灯裁掉了 → 看着像没灯；要把灯举高到脸侧 |
+| `woodcut.png`（可选） | 偏钢笔细排线，木刻的强黑白对比 / 刀痕分量不够 |
+
+**嘉许 → 覆盖 `applaud.png`**
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide: a black-and-white hand-drawn ink-line illustration of the SAME young female teacher — keep her face, hairstyle, glasses, line style and gentle scholarly demeanor identical to the reference. She is applauding warmly, both hands clapping at chest height with a bright proud smile, an uplifting and encouraging mood — NOT hands pressed together as if praying, NOT a tired or melancholic look. Clean confident ink linework, warm mood, transparent background, no color. Half-body framing, centered, square 1:1, high resolution.
+```
+
+**宗师 → 覆盖 `zongshi.png`**
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide: a black-and-white hand-drawn ink-line illustration of the SAME young female teacher — keep her recognizable (face, hairstyle, glasses) but render her with the gravitas of a seasoned grandmaster: a dignified, composed bearing — standing tall with hands clasped behind her back, or holding a closed book against her chest, a calm and authoritative gaze, an aura of deep accumulated wisdom and quiet command. A touch more mature and commanding than her everyday look, while staying the same person. Clean confident ink linework, dignified mood, transparent background, no color. Three-quarter or half-body framing, centered, square 1:1, high resolution.
+```
+
+**执灯 → 覆盖 `lantern.png`**
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide: a black-and-white hand-drawn ink-line illustration of the SAME young female teacher — keep her face, hairstyle, glasses, line style and gentle scholarly demeanor identical to the reference. She holds up a glowing oil lantern beside her face at eye level, the lantern large, clearly visible and prominent in the UPPER half of the frame (so it stays in view even when cropped to a circle), warm light catching her face, a calm guiding expression. Clean confident ink linework, transparent background, no color. Half-body framing, centered, square 1:1, high resolution.
+```
+
+**木刻（可选加强）→ 覆盖 `woodcut.png`**
+```
+Using the uploaded reference image (hero.png) to keep the SAME young woman recognizable (her face shape, hairstyle and glasses), re-imagine her half-body portrait as a BOLD black-and-white woodcut / woodblock print: strong high-contrast masses of solid black and solid white, thick decisive carved gouge marks, dramatic chiaroscuro and graphic heft — NOT fine even pen hatching, NOT thin gray lines. Pure black ink on a fully transparent background, no color. Centered, square 1:1, high resolution.
+```
+
+---
+
 ## 是否需要上传 hero.png？
 
 | 组 | 数量 | 上传 hero.png？ | 落地位置 | 用途 |
