@@ -985,7 +985,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 /* 「我」页雅号徽（点击进书斋）*/
 .me-honor{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 8px;border:1px solid var(--line-soft);border-radius:999px;font:600 12px var(--sans);color:var(--ink-2);text-decoration:none;width:fit-content;transition:.15s}
 .me-honor:hover{border-color:var(--ink-3);color:var(--ink)}
-.me-honor .ic{width:16px;height:16px;flex:none}
+.me-honor img{width:18px;height:18px;object-fit:contain;flex:none}
 /* 通行证 tab 红点 */
 .studio-dot{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;margin-left:5px;padding:0 4px;font:600 9px var(--mono);background:var(--ink);color:var(--paper);border-radius:999px;vertical-align:1px}
 /* 治学通行证 */
@@ -1061,8 +1061,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 /* 印章雅号 */
 .seals{display:flex;flex-direction:column;gap:22px}
 .seals-now{display:flex;align-items:center;gap:15px;padding:15px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
-.seals-now-mark{flex:none;width:60px;height:60px;border-radius:13px;border:1.6px solid var(--seal);display:grid;place-items:center;background:var(--paper)}
-.seals-now-mark .ic{width:38px;height:38px}
+.seals-now-mark{flex:none;width:60px;height:60px;border-radius:13px;border:1.4px solid var(--line);display:grid;place-items:center;background:var(--paper)}
+.seals-now-mark img{width:50px;height:50px;object-fit:contain}
 .seals-now-info{display:flex;flex-direction:column;gap:2px;min-width:0}
 .seals-now-info .eyebrow{margin:0}
 .seals-now-info b{font:600 19px var(--serif);color:var(--ink)}
@@ -1084,8 +1084,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .seal-cell.on{border-color:var(--seal);box-shadow:inset 0 0 0 1px var(--seal)}
 .seal-cell.locked{cursor:default}
 .seal-stamp{position:relative;width:48px;height:48px;display:grid;place-items:center}
-.seal-stamp > .ic{width:42px;height:42px}
-.seal-cell.locked .seal-stamp > .ic{opacity:.38}
+.seal-stamp > img{width:46px;height:46px;object-fit:contain}
+.seal-cell.locked .seal-stamp > img{filter:grayscale(1);opacity:.3}
 .seal-veil{position:absolute;inset:0;display:grid;place-items:center}
 .seal-veil .ic{width:16px;height:16px;color:var(--ink-3)}
 .seal-on{position:absolute;right:-2px;bottom:-2px;width:19px;height:19px;border-radius:50%;background:var(--seal);display:grid;place-items:center;border:2px solid var(--paper)}
@@ -1098,7 +1098,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .room-desk{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 18px 16px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
 .room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:20px;min-height:50px;flex-wrap:wrap}
 .room-piece{display:grid;place-items:center}
-.room-piece .ic{width:46px;height:46px;color:var(--ink)}
+.room-piece img{width:58px;height:58px;object-fit:contain}
 .room-empty{font:italic 500 13.5px var(--serif);color:var(--ink-3);padding:12px 0}
 .room-count{font:600 10px var(--mono);letter-spacing:.05em;color:var(--ink-3)}
 .room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:11px}
@@ -1107,8 +1107,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .room-cell.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .room-cell.locked{cursor:default}
 .room-thumb{position:relative;width:46px;height:46px;display:grid;place-items:center}
-.room-thumb > .ic{width:42px;height:42px}
-.room-cell.locked .room-thumb > .ic{opacity:.4}
+.room-thumb > img{width:44px;height:44px;object-fit:contain}
+.room-cell.locked .room-thumb > img{filter:grayscale(1);opacity:.34}
 .room-veil{position:absolute;inset:0;display:grid;place-items:center}
 .room-veil .ic{width:15px;height:15px;color:var(--ink-3)}
 .room-on{position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:var(--ink);display:grid;place-items:center;border:2px solid var(--paper)}

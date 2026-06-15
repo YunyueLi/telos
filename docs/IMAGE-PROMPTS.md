@@ -3,32 +3,27 @@
 > 工具：**GPT img-2（gpt-image-1）**。每条 prompt **独立完整、复制即用，无需拼接**。
 > 建议同组在一个会话里连续生成，风格最连贯。
 
-## 生成进度（你已生成 16 张 · 2026-06-15）
+## 生成进度（全部完成 + 已接入代码 · 2026-06-15）
 
-✅ **已生成**——看板娘需 hero 的几组都齐了，还额外做了神态与里程碑：
+✅ **全部生成并接线完毕**，无待办。形象集已达 **32 张**（日常 14 + 里程碑 2 + 场景 10 + 季节 4 + 画风 2）。
 
-| 组 | 你的文件 | 状态 |
-|---|---|---|
-| 画风 | `泼墨写意 · theme-xieyi` · `木刻版画 · theme-woodcut` | ✅ 2 |
-| 季节 | `spring` · `summer` · `autumn` · `winter` | ✅ 4 |
-| 场景 | `scene-nightread` · `scene-lectern` · `scene-shelves` · `scene-annotate` · `scene-summit` | ✅ 5 |
-| 日常神态（额外，归 daily 系列） | `ponder` · `applaud` · `nod` · `lantern` | ✅ 4 |
-| 里程碑（额外，归 milestone 系列） | `zongshi`（宗师） | ✅ 1 |
+| 组 | 文件 | 接入位置 | 状态 |
+|---|---|---|---|
+| 画风（Pro 主题） | `face-ink`（泼墨飞白）· `woodcut`（强对比重做版） | `portraits.ts` theme 系列 | ✅ 2 |
+| 季节 | `season-spring/summer/autumn/winter` | season 系列（`id` 不变，`file` 指到 season-*） | ✅ 4 |
+| 场景 | 旧 5 `scene-lectern/nightread/shelves/annotate/summit` + 新 5 `scene-desk/window/tea/night(秉烛)/stroll` | scene 系列，各绑不同学习里程碑 | ✅ 10 |
+| 日常神态 | `ponder/nod` + 重做 `applaud`（鼓掌）`lantern`（举灯） | daily 系列 | ✅ |
+| 里程碑 | 重做 `zongshi`（抱卷·大师气度） | milestone 系列 | ✅ |
+| 文房清玩 | `d-bitong/zhenzhi/juan/penjing/xianglu/chaju/guqin/shanshui` | `studio-room.tsx` SVG→PNG | ✅ 8 |
+| 印章 | `s-qicheng/qinxue/buchuo/tongtou/dacheng/boxue/dengfeng/yueke/zhixue` | `studio-seals.tsx` + `me` 荣誉徽 SVG→PNG | ✅ 9 |
 
-⬜ **还没生成**（这两组是静物、**不需** hero）：
-- 文房清玩 8 张（下方第四组）
-- 印章 9 张（下方第五组）
-
-➕ **可补充 / 我接代码时会对齐**：
-- 命名以你的为准，我接代码时统一成 ASCII（如 `泼墨写意 · theme-xieyi.png` → `face-xieyi.png`，`scene-lectern.png` 去掉前导空格），不用你改。
-- 我原列的场景「临窗 / 茶歇 / 漫思」你用 lectern / shelves / annotate / summit 替代了，已经够；想要更多场景随时加。
-- `ponder / applaud / nod / lantern` 4 张神态 + `zongshi` 是额外做的，很好——我会注册进形象集对应系列，照旧绑真实学习里程碑解锁。
+> 说明：`face-cut`（细线木刻）已留作备用，木刻主题最终用了更有刀感的 `woodcut`。所有立绘解锁照旧绑真实学习里程碑，纯外观零学习侧优势。
 
 ---
 
-## ⚠️ 需重做 / 优化（逐张审查后 · 重新生成覆盖同名文件即可，我不用改代码）
+## ✅ 已重做完成（applaud / zongshi / lantern / woodcut · 2026-06-15）
 
-其余 12 张合格；以下 4 张要重做。每条都**需上传 hero.png**，沿用本文件的看板娘模板、风格统一。
+下面 4 张已按重做 prompt 重新生成并覆盖到位、确认合格（鼓掌 / 抱卷大师气度 / 举灯到脸侧 / 强刀感木刻）。prompt 留作日后微调参考。每条都**需上传 hero.png**，沿用本文件看板娘模板、风格统一。
 
 | 文件 | 问题 |
 |---|---|

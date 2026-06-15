@@ -111,9 +111,8 @@ export default function MePage() {
             <div className="eyebrow">{t("me.eyebrow")}</div>
             <h2>{t("me.title")}</h2>
             <Link href="/studio" className="me-honor" title={t("seal.openStudio")}>
-              <svg className="ic" aria-hidden style={{ color: "var(--seal)" }}>
-                <use href={`#s-${honorSeal.id}`} />
-              </svg>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={asset(`/seals/s-${honorSeal.id}.png`)} alt="" />
               <span>{t(honorTitle.nameKey)}</span>
             </Link>
             {project ? (
