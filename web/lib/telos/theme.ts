@@ -1,6 +1,7 @@
 "use client";
 
-// 纸张主题：黑白纸感下的纸色/色温变体（cosmetic，纯外观，绝不影响功能/学习）。
+// 纸色（旧称「画风主题」）：整个 App 黑白纸感下的纸色/色温变体（cosmetic，纯外观，绝不影响功能/学习）。
+// 注意：这是「纸」不是「她」——与看板娘的「画风」(portraits.ts theme 系列：泼墨/木刻) 是两个域，勿混。
 // 免费 2 款（素白·宣纸）+ Pro 全解锁（牛皮·月白）。守纯黑白：只调纸墨色温，不引入彩色、不做深色翻转。
 // 应用：切到 <html data-theme="...">，globals.css 按 data-theme 覆盖纸色变量，所有组件靠变量自适应。
 import { bumpPrefs } from "./prefs-rev";

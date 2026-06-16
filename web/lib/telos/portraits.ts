@@ -105,7 +105,7 @@ export const PORTRAITS: Portrait[] = [
   { id: "summer", series: "season", file: "season-summer", nameKey: "pt.summer", unlock: { kind: "season", months: [6, 7, 8] }, voiceKey: "pt.v.summer" },
   { id: "autumn", series: "season", file: "season-autumn", nameKey: "pt.autumn", unlock: { kind: "season", months: [9, 10, 11] }, voiceKey: "pt.v.autumn" },
   { id: "winter", series: "season", file: "season-winter", nameKey: "pt.winter", unlock: { kind: "season", months: [12, 1, 2] }, voiceKey: "pt.v.winter" },
-  // 画风主题（Pro 专属，纯审美变体）——泼墨用飞白立绘 face-ink，木刻用强对比 woodcut
+  // 画风（Pro 专属）——她被怎么画的笔法墨韵变体；泼墨用飞白立绘 face-ink，木刻用强对比 woodcut。与「纸色」(theme.ts) 是两回事。
   { id: "xieyi", series: "theme", file: "face-ink", nameKey: "pt.xieyi", unlock: { kind: "paid" }, voiceKey: "pt.v.xieyi", paid: true },
   { id: "woodcut", series: "theme", file: "woodcut", nameKey: "pt.woodcut", unlock: { kind: "paid" }, voiceKey: "pt.v.woodcut", paid: true },
   // 造型换装 · 衣橱套装（纯外观；花墨买断 / 季节·里程碑限定）。签名站姿一致、只换衣；立绘逐套入库后置 ready:true。
@@ -277,7 +277,7 @@ export function setPortraitSeen(ids: string[]): void {
 }
 
 // 解析出"当前应显示的立绘文件名"：选中的若不存在/未解锁则回退默认，保证 hero 永远有图。
-// 当前主题若绑定了看板娘画风(face)且图已入库 → 成套主题里她也换风格；留空则用用户选的形象。
+// 可选「成套联动」钩子：某纸色主题若绑定了她的画风立绘(face) → 用它；当前 4 款纸色均未绑，故恒走用户自选形象。
 function themeFaceFile(): string | null {
   const th = THEMES.find((x) => x.id === getTheme());
   return th && th.face ? th.face : null;
