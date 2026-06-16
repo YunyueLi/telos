@@ -116,6 +116,7 @@ function Onboarding({
   const manualFace = useCurrentPortraitFile(); // 形象集里手动选的陪伴形象
   // 情境神态：无项目→迎新；有项目→用手动选的（她还会随场景说话——"活的"陪伴，不只一张死图）
   const heroMood: Mood = projectCount > 0 ? "idle" : "welcome";
+  const returning = projectCount > 0; // 回头客（已有项目）→ 压缩头、直奔输入；新人 → 完整 hero 讲清楚
   const heroFace = moodFace(heroMood)?.file ?? manualFace;
   const heroBubbleKey = heroMood === "welcome" ? "mood.welcome" : "mood.idle";
   // 免费版项目数上限：超限时在输入框下方给事前提示（derive 内还有硬校验兜底）
@@ -174,16 +175,16 @@ function Onboarding({
   const phaseKey = (PHASES.filter((p) => sec >= p.at).pop() ?? PHASES[0]).key;
 
   return (
-    <div className="ob">
+    <div className={returning ? "ob ob-compact" : "ob"}>
       <div className="ob-hero">
         <div className="ob-hero-main">
-          <div className="eyebrow">{t("ob.eyebrow")}</div>
+          {!returning && <div className="eyebrow">{t("ob.eyebrow")}</div>}
           <h1>
             {t("ob.h1line1")}
             <br />
             {t("ob.h1line2")}
           </h1>
-          <p className="ob-lead">{t("ob.lead")}</p>
+          {!returning && <p className="ob-lead">{t("ob.lead")}</p>}
 
           <div className="ob-box">
             <textarea
