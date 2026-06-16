@@ -163,7 +163,7 @@ export default function LessonRunner({
           </svg>
           <span className={`pcirc ${styles.lheadPortrait}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={asset("/portraits/teach.png")} alt="Telos 老师" />
+            <img src={asset("/portraits/teach.webp")} alt="Telos 老师" />
           </span>
           <div className={styles.lheadText}>
             <div className={styles.lm}>{t("lr.headEyebrow", { domain: domainText })}</div>
@@ -303,7 +303,7 @@ function StepBody({
           <div className={styles.analogy}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className={`pmini ${styles.analogyPic}`}>
-              <img src={asset("/portraits/think.png")} alt="" />
+              <img src={asset("/portraits/think.webp")} alt="" />
             </span>
             <div>
               <div className={styles.analogyL}>{t("lr.analogyLabel")}</div>

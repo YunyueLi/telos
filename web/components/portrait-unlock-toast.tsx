@@ -63,7 +63,7 @@ export function PortraitUnlockToast() {
       <div className="puc-card">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <span className="pcirc puc-face">
-          <img src={asset(`/portraits/${show.file}.png`)} alt="" />
+          <img src={asset(`/portraits/${show.file}.webp`)} alt="" />
         </span>
         <div className="puc-txt">
           <span className="eyebrow">{t("unlock.eyebrow")}</span>

@@ -53,7 +53,7 @@ export function StudioSeals({ projects }: { projects: Project[] }) {
       <div className="seals-now">
         <span className="seals-now-mark">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={asset(`/seals/s-${sealOk ? curSeal!.id : "qicheng"}.png`)} alt="" />
+          <img src={asset(`/seals/s-${sealOk ? curSeal!.id : "qicheng"}.webp`)} alt="" />
         </span>
         <div className="seals-now-info">
           <span className="eyebrow">{t("seal.current")}</span>
@@ -111,7 +111,7 @@ export function StudioSeals({ projects }: { projects: Project[] }) {
               >
                 <span className="seal-stamp">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={asset(`/seals/s-${it.id}.png`)} alt="" />
+                  <img src={asset(`/seals/s-${it.id}.webp`)} alt="" loading="lazy" decoding="async" />
                   {!ok && (
                     <span className="seal-veil">
                       <Icon name="lock" />

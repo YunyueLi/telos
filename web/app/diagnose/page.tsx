@@ -167,7 +167,7 @@ export default function DiagnosePage() {
           <div className="dx-intro">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pcirc">
-              <img src={asset("/portraits/think.png")} alt="Telos 老师" />
+              <img src={asset("/portraits/think.webp")} alt="Telos 老师" />
             </span>
             <h2>{t("dx.introTitle")}</h2>
             <p>{t("dx.introP1")}</p>
@@ -238,7 +238,7 @@ export default function DiagnosePage() {
           <div className="dx-result">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pcirc">
-              <img src={asset("/portraits/point.png")} alt="Telos 老师" />
+              <img src={asset("/portraits/point.webp")} alt="Telos 老师" />
             </span>
             <h2>{t("dx.resultTitle")}</h2>
             <p>

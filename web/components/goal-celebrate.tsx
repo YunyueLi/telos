@@ -37,7 +37,7 @@ export function GoalCelebrate() {
       <div className="celebrate-card">
         <span className="pcirc celebrate-portrait">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={asset("/portraits/cheer.png")} alt="" />
+          <img src={asset("/portraits/cheer.webp")} alt="" />
         </span>
         <div className="celebrate-spark" aria-hidden="true">
           <Icon name="flame" />

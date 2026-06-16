@@ -253,7 +253,7 @@ function Onboarding({
           <div className="ob-bubble" role="status">{t(heroBubbleKey)}</div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <span className="pcirc">
-            <img src={asset(`/portraits/${heroFace}.png`)} alt="Telos 老师" />
+            <img src={asset(`/portraits/${heroFace}.webp`)} alt="Telos 老师" />
           </span>
         </aside>
       </div>
@@ -382,7 +382,7 @@ function MapHome({
           <div className="mh-companion">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pmini">
-              <img src={asset("/portraits/point.png")} alt="" />
+              <img src={asset("/portraits/point.webp")} alt="" />
             </span>
             <p>{t("home.coProgress", { goal: project.goal, n: view.mastered, total: view.total })}</p>
           </div>

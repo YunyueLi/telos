@@ -48,7 +48,7 @@ export function PortraitGallery({ projects }: { projects: Project[] }) {
       <div className="pg-now">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <span className="pcirc pg-now-face">
-          <img src={asset(`/portraits/${cur.file}.png`)} alt="" />
+          <img src={asset(`/portraits/${cur.file}.webp`)} alt="" />
         </span>
         <div className="pg-now-info">
           <span className="eyebrow">{t("pt.current")}</span>
@@ -81,7 +81,7 @@ export function PortraitGallery({ projects }: { projects: Project[] }) {
                 >
                   <span className="pg-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={asset(`/portraits/${p.file}.png`)} alt="" />
+                    <img src={asset(`/portraits/${p.file}.webp`)} alt="" loading="lazy" decoding="async" />
                     {!ok && (
                       <span className="pg-veil">
                         <Icon name="lock" />

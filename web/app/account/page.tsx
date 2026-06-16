@@ -123,7 +123,7 @@ export default function AccountPage() {
           <div className="auth-head">
             <span className="pcirc auth-portrait">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset("/portraits/think.png")} alt="" />
+              <img src={asset("/portraits/think.webp")} alt="" />
             </span>
             <div className="eyebrow">{t("auth.eyebrow")}</div>
             <h2>{t("auth.notConfigured")}</h2>
@@ -158,7 +158,7 @@ export default function AccountPage() {
         <div className="auth-head">
           <span className="pcirc auth-portrait">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={asset("/portraits/think.png")} alt="" />
+            <img src={asset("/portraits/think.webp")} alt="" />
           </span>
           <div className="eyebrow">{t("auth.eyebrow")}</div>
           <h2>{mode === "signin" ? t("auth.signIn") : t("auth.signUp")}</h2>

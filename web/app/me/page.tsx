@@ -105,14 +105,14 @@ export default function MePage() {
         <div className="me-head">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <span className="pcirc">
-            <img src={asset("/portraits/reading.png")} alt="" />
+            <img src={asset("/portraits/reading.webp")} alt="" />
           </span>
           <div className="info">
             <div className="eyebrow">{t("me.eyebrow")}</div>
             <h2>{t("me.title")}</h2>
             <Link href="/studio" className="me-honor" title={t("seal.openStudio")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset(`/seals/s-${honorSeal.id}.png`)} alt="" />
+              <img src={asset(`/seals/s-${honorSeal.id}.webp`)} alt="" />
               <span>{t(honorTitle.nameKey)}</span>
             </Link>
             {project ? (
