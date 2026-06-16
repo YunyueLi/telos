@@ -46,7 +46,6 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
           ) : (
             <div className="room-empty">{t("room.empty")}</div>
           )}
-          <span className="room-board" aria-hidden />
         </div>
         <span className="room-count">{t("room.placedN", { n: placed.length, total: PLACE_MAX })}</span>
       </div>
