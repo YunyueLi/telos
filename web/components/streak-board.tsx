@@ -155,10 +155,6 @@ export function StreakBoard() {
 
   return (
     <div className="streak">
-      <header className="streak-hd">
-        <h2>{t("nav.streak")}</h2>
-      </header>
-
       {/* 时令：当前节气（应时而现）+ 看板娘师者应时话 */}
       <div className="streak-solarterm">
         <span className="st-name">{term.name}</span>
