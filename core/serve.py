@@ -105,8 +105,33 @@ class Handler(BaseHTTPRequestHandler):
             if not goal:
                 self._json(400, {"error": "goal 不能为空"})
                 return
+            lang = str(data.get("lang", ""))
+            # 流式（NDJSON）：客户端带 Accept: application/x-ndjson → 按真实里程碑逐行吐进度，
+            # 末行 {"t":"done", ...图谱...}。不带该头 → 原单发 JSON（向后兼容）。
+            if "application/x-ndjson" in self.headers.get("Accept", ""):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("X-Accel-Buffering", "no")  # 关掉中间层缓冲，保证逐行下发
+                self.send_header("Connection", "close")
+                self._cors()
+                self.end_headers()
+
+                def emit(ev: dict) -> None:
+                    try:
+                        self.wfile.write((json.dumps(ev, ensure_ascii=False) + "\n").encode("utf-8"))
+                        self.wfile.flush()
+                    except Exception:  # noqa: BLE001 — 客户端断开等
+                        pass
+
+                try:
+                    g = llm.derive_graph(goal, lang=lang, emit=emit)
+                    emit({"t": "done", **_graph_to_json(goal, g)})
+                except Exception as e:  # noqa: BLE001
+                    emit({"t": "error", "message": str(e)})
+                return
             try:
-                g = llm.derive_graph(goal, lang=str(data.get("lang", "")))
+                g = llm.derive_graph(goal, lang=lang)
             except Exception as e:  # noqa: BLE001
                 self._json(502, {"error": str(e)})
                 return

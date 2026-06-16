@@ -8,6 +8,8 @@
 // 三段式层级倒推：蓝图 → 并行展开模块 → 汇编/断环。改编排请三处同步。
 "use client";
 
+import type { DeriveProgress } from "./derive"; // 仅类型（运行时擦除）→ 与 derive.ts 无循环依赖
+
 // 直连配置：base 已由调用方（derive.ts）规整为合法 URL 或 undefined；这里给默认 DeepSeek。
 export interface DirectCfg {
   key?: string;
@@ -322,8 +324,17 @@ async function expandModule(goal: string, bp: Blueprint, module: Module, cfg: Di
   return arr(spec.nodes) as Json[];
 }
 
-async function parallelExpand(goal: string, bp: Blueprint, cfg: DirectCfg, lang: string, signal?: AbortSignal): Promise<Record<string, Json[]>> {
+async function parallelExpand(
+  goal: string,
+  bp: Blueprint,
+  cfg: DirectCfg,
+  lang: string,
+  signal?: AbortSignal,
+  onProgress?: (p: DeriveProgress) => void,
+): Promise<Record<string, Json[]>> {
   const out: Record<string, Json[]> = {};
+  const total = bp.modules.length;
+  let done = 0;
   await Promise.all(
     bp.modules.map(async (m) => {
       try {
@@ -331,6 +342,8 @@ async function parallelExpand(goal: string, bp: Blueprint, cfg: DirectCfg, lang:
       } catch {
         out[m.id] = [];
       }
+      done++;
+      onProgress?.({ phase: "expand", modulesTotal: total, modulesDone: done, doneId: String(m.id) });
     }),
   );
   return out;
@@ -769,16 +782,27 @@ export async function deriveDirect(
   lang: string,
   cfg: DirectCfg,
   signal?: AbortSignal,
+  onProgress?: (p: DeriveProgress) => void,
 ): Promise<{ goal: string; title: string; points: RawPoint[] }> {
   if (!(cfg.key || "").trim()) throw new Error("NO_KEY");
+  onProgress?.({ phase: "search" });
   const ctx = await deriveContext(goal, cfg);
   let title = "";
   let points: RawPoint[] | null = null;
   try {
+    onProgress?.({ phase: "blueprint" });
     const bp = await blueprint(goal, ctx, cfg, lang, signal);
-    const expansions = await parallelExpand(goal, bp, cfg, lang, signal);
+    const mods = bp.modules || [];
+    onProgress?.({
+      phase: "expand",
+      modulesTotal: mods.length,
+      modulesDone: 0,
+      modules: mods.map((m) => ({ id: String(m.id), title: String(m.title || "") })),
+    });
+    const expansions = await parallelExpand(goal, bp, cfg, lang, signal, onProgress);
     const total = Object.values(expansions).reduce((s, a) => s + a.length, 0);
     if (total >= 6) {
+      onProgress?.({ phase: "assemble" });
       const cand = assemble(goal, bp, expansions);
       if (cand.points.length >= 6) {
         points = cand.points;
@@ -789,12 +813,14 @@ export async function deriveDirect(
     points = null;
   }
   if (!points) {
+    onProgress?.({ phase: "single" });
     const g = toGraph(await deriveSingleSpec(goal, ctx, cfg, lang, signal), goal);
     points = g.points;
     title = g.title;
   }
   // 对抗式专家审查 + 自动修补（非破坏：失败/改崩则回退）
   try {
+    onProgress?.({ phase: "critique" });
     points = await critiqueAndRepair(goal, points, cfg, lang, signal);
   } catch {
     /* keep */
