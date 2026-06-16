@@ -29,7 +29,7 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
     <div className="room">
       <div className="room-desk">
         <span className="room-deskeyebrow">{t("room.deskTitle")}</span>
-        <div className="room-stage">
+        <div className="room-stage" style={{ backgroundImage: `url(${asset("/decor/_studio.webp")})` }}>
           {placed.length > 0 ? (
             <div className="room-shelf">
               {placed.map((id) => {
