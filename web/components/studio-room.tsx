@@ -28,7 +28,6 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
   return (
     <div className="room">
       <div className="room-desk">
-        <span className="room-deskeyebrow">{t("room.deskTitle")}</span>
         <div className="room-stage" style={{ backgroundImage: `url(${asset("/decor/_studio.webp")})` }}>
           {placed.length > 0 ? (
             <div className="room-shelf">
@@ -47,7 +46,7 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
             <div className="room-empty">{t("room.empty")}</div>
           )}
         </div>
-        <span className="room-count">{t("room.placedN", { n: placed.length, total: PLACE_MAX })}</span>
+        <span className="room-count">{t("room.deskTitle")} {placed.length}/{PLACE_MAX}</span>
       </div>
 
       <div className="room-grid">
