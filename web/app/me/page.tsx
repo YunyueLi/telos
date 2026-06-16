@@ -128,7 +128,7 @@ export default function MePage() {
             <div className="me-stat">
               <span className="num">
                 {view.mastered}
-                <span style={{ fontSize: 16, color: "var(--ink-3)" }}>/{view.total}</span>
+                <span className="num-sub">/{view.total}</span>
               </span>
               <span className="lab">{t("me.statMastered")}</span>
             </div>
