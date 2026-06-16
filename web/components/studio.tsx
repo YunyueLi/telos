@@ -107,10 +107,6 @@ export function Studio() {
 
   return (
     <div className="studio">
-      <header className="studio-hd">
-        <h2>{t("studio.title")}</h2>
-      </header>
-
       <StudioHero projects={projects} />
 
       <div className="studio-tabs" role="tablist">
