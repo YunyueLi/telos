@@ -697,6 +697,10 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 @media(max-width:480px){.rv-grades{grid-template-columns:repeat(2,1fr)}}
 .rv-gradelab{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
 .rv-done{text-align:center;padding:48px 22px;max-width:520px;margin:0 auto}
+/* 空 / 今日已清空态：在视口内上下居中（margin-block:auto，内容超高时自动退化为靠顶可滚）。
+   上下内边距对称（基础 .rv 下 60 上 30 会让居中偏上 15px）*/
+.rv-center{padding-block:30px}
+.rv-center .rv-done{margin-block:auto}
 .rv-done .pcirc{width:120px;height:120px;margin:0 auto 22px}
 .rv-done h2{font-family:var(--serif);font-weight:500;font-size:32px;letter-spacing:-.02em;margin:10px 0 12px}
 .rv-done p{font-size:15px;color:var(--ink-2);line-height:1.6;margin-bottom:24px}

@@ -50,7 +50,7 @@ export default function ReviewPage() {
   if (!project) {
     return (
       <AppShell active="review">
-        <div className="rv">
+        <div className="rv rv-center">
           <div className="rv-done">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pcirc">
@@ -74,7 +74,7 @@ export default function ReviewPage() {
     const didSome = reviewed > 0;
     return (
       <AppShell active="review">
-        <div className="rv">
+        <div className="rv rv-center">
           <div className="rv-done">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pcirc">
