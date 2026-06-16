@@ -35,6 +35,7 @@ import {
   cleanBaseUrl,
   cleanupStaleEndpointOverride,
   deriveGraph,
+  type DeriveProgress,
   generateTitle,
   getLlmConfig,
   setKeyActive,
@@ -80,6 +81,7 @@ interface ProjectContextValue {
   composing: boolean; // 正在"新学习"（即使有旧项目也显示引导页）
   deriving: boolean;
   deriveError: string | null;
+  deriveProgress: DeriveProgress | null; // 倒推真实进度（流式/直连共用）→ 真进度条
   derive: (goal: string) => Promise<boolean>;
   record: (id: string, correct: boolean, grade?: number) => void;
   reviewCard: (id: string, grade: number) => void;
@@ -124,6 +126,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [deriving, setDeriving] = useState(false);
   const projectsRef = useRef<Project[]>([]); // 与 projects 同步，供 mutateActive 同步读取算 XP delta
   const [deriveError, setDeriveError] = useState<string | null>(null);
+  const [deriveProgress, setDeriveProgress] = useState<DeriveProgress | null>(null);
   const { user, ready: authReady } = useAuth();
   const userIdRef = useRef<string | null>(null);
   const syncedRef = useRef<string | null>(null);
@@ -355,8 +358,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       }
       setDeriving(true);
       setDeriveError(null);
+      setDeriveProgress(null);
       try {
-        const res = await deriveGraph(g);
+        const res = await deriveGraph(g, undefined, setDeriveProgress);
         const now = Date.now();
         const p: Project = {
           id: genId(),
@@ -377,6 +381,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setDailyVersion((v) => v + 1);
         if (r.justMetGoal) setGoalNonce((n) => n + 1);
         setDeriving(false);
+        setDeriveProgress(null);
         return true;
       } catch (e) {
         const msg = e instanceof Error ? e.message : t("err.deriveFailedShort");
@@ -388,6 +393,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
               : msg,
         );
         setDeriving(false);
+        setDeriveProgress(null);
         return false;
       }
     },
@@ -487,6 +493,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     composing,
     deriving,
     deriveError,
+    deriveProgress,
     derive,
     record,
     reviewCard,

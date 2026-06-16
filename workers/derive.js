@@ -231,8 +231,10 @@ async function expandModule(goal, bp, module, env, lang) {
   return Array.isArray(spec?.nodes) ? spec.nodes : [];
 }
 
-async function parallelExpand(goal, bp, env, lang) {
+async function parallelExpand(goal, bp, env, lang, emit) {
   const out = {};
+  const total = bp.modules.length;
+  let done = 0;
   await Promise.all(
     bp.modules.map(async (m) => {
       try {
@@ -240,6 +242,8 @@ async function parallelExpand(goal, bp, env, lang) {
       } catch {
         out[m.id] = [];
       }
+      done++;
+      emit?.({ t: "module", id: String(m.id), done, total }); // 每个模块完成即吐真实进度
     }),
   );
   return out;
@@ -474,25 +478,35 @@ async function critiqueAndRepair(goal, points, env, lang) {
   return result;
 }
 
-async function derive(goal, env, lang) {
+async function derive(goal, env, lang, emit) {
+  const ev = (o) => { try { emit?.(o); } catch { /* emit 失败绝不影响倒推 */ } };
   const key = env.TELOS_LLM_API_KEY;
   if (!key) throw new Error("Worker 未配置 TELOS_LLM_API_KEY（用 wrangler secret put 设置）");
+  ev({ t: "phase", phase: "search" });
   const ctx = await deriveContext(goal, env);
   let spec = null;
   try {
+    ev({ t: "phase", phase: "blueprint" });
     const bp = await blueprint(goal, ctx, env, lang);
-    const expansions = await parallelExpand(goal, bp, env, lang);
+    const mods = bp.modules || [];
+    ev({ t: "blueprint", total: mods.length, modules: mods.map((m) => ({ id: String(m.id), title: String(m.title || "") })) });
+    const expansions = await parallelExpand(goal, bp, env, lang, ev);
     const total = Object.values(expansions).reduce((s, a) => s + a.length, 0);
     if (total >= 6) {
+      ev({ t: "phase", phase: "assemble" });
       const cand = assemble(goal, bp, expansions);
       if (cand.points.length >= 6) spec = cand;
     }
   } catch {
     spec = null;
   }
-  if (!spec) spec = await deriveSingleSpec(goal, ctx, env, lang);
+  if (!spec) {
+    ev({ t: "phase", phase: "single" });
+    spec = await deriveSingleSpec(goal, ctx, env, lang);
+  }
   const graph = toGraph(spec, goal);
   try {
+    ev({ t: "phase", phase: "critique" });
     graph.points = await critiqueAndRepair(goal, graph.points, env, lang);
   } catch {
     /* 非破坏：审查异常则保留原图 */
@@ -1214,6 +1228,29 @@ export default {
       if (!goal) return json({ error: "goal 不能为空" }, 400, env);
       if (goal.length > 200) return json({ error: "goal 过长" }, 400, env);
       if (!eenv.TELOS_LLM_API_KEY) return json({ error: "NO_KEY" }, 401, env);
+      // 流式（NDJSON）：客户端带 Accept: application/x-ndjson → 按真实里程碑逐行吐进度，末行 {"t":"done",...图谱}。
+      // 不带该头 → 原单发 JSON（向后兼容）。
+      if ((request.headers.get("accept") || "").includes("application/x-ndjson")) {
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        const enc = new TextEncoder();
+        const emit = (o) => writer.write(enc.encode(JSON.stringify(o) + "\n"));
+        (async () => {
+          try {
+            const out = await derive(goal, eenv, lang, emit);
+            if (hostedCommit) await hostedCommit(); // 成功才扣配额
+            await emit({ t: "done", goal: out.goal ?? goal, title: out.title, points: out.points });
+          } catch (e) {
+            await emit({ t: "error", message: String(e.message || e) });
+          } finally {
+            await writer.close();
+          }
+        })();
+        return new Response(readable, {
+          status: 200,
+          headers: { ...corsHeaders(env), "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" },
+        });
+      }
       try {
         const out = await derive(goal, eenv, lang);
         if (hostedCommit) await hostedCommit(); // 成功才扣配额

@@ -386,6 +386,15 @@ export interface DerivedGraph {
   points: DerivedPoint[];
 }
 
+// 倒推真实进度（流式 / 直连共用）：按管线里程碑上报，前端据此画真进度条 + 模块清单。
+export interface DeriveProgress {
+  phase: "search" | "blueprint" | "expand" | "assemble" | "critique" | "single";
+  modulesTotal?: number; // 蓝图判定的模块数（expand 阶段已知）
+  modulesDone?: number; // 已完成展开的模块数
+  modules?: { id: string; title: string }[]; // 模块清单（蓝图就绪时一次性给）
+  doneId?: string; // 刚完成的模块 id
+}
+
 // 把端点返回的 points 规整成前端 engine.ts 能直接吃的形状（容错老式 snake_case 字段）。
 function normalize(points: unknown[]): DerivedPoint[] {
   return points.map((raw) => {
@@ -410,14 +419,30 @@ function normalize(points: unknown[]): DerivedPoint[] {
   });
 }
 
-export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<DerivedGraph> {
+const NO_STREAM = "__NO_STREAM__"; // 哨兵：传输层不支持流式 → 回退单发 JSON（非倒推错误）
+
+export async function deriveGraph(
+  goal: string,
+  signal?: AbortSignal,
+  onProgress?: (p: DeriveProgress) => void,
+): Promise<DerivedGraph> {
   if (directMode()) {
-    const raw = await deriveDirect(goal, outputLang(), directCfg(), signal);
+    // BYOK 直连：管线在浏览器跑，onProgress 直接回调（无需传输层）。
+    const raw = await deriveDirect(goal, outputLang(), directCfg(), signal, onProgress);
     if (!Array.isArray(raw.points) || raw.points.length === 0) throw new Error(tStatic("err.noPoints"));
     return { goal: String(raw.goal ?? goal), title: String(raw.title ?? "").trim() || undefined, points: normalize(raw.points) };
   }
   const url = getDeriveUrl();
   if (!url) throw new Error("NO_ENDPOINT");
+  // 有进度回调 → 走 NDJSON 流式；仅当传输层不支持（无 body）时才回退单发。
+  if (onProgress) {
+    try {
+      return await deriveGraphStream(url, goal, signal, onProgress);
+    } catch (e) {
+      if (!(e instanceof Error) || e.message !== NO_STREAM) throw e; // 真实错误：直接抛
+      // 否则落到下面单发 JSON
+    }
+  }
   let res: Response;
   try {
     res = await fetch(url, {
@@ -439,6 +464,80 @@ export async function deriveGraph(goal: string, signal?: AbortSignal): Promise<D
     title: String(data.title ?? "").trim() || undefined,
     points: normalize(points),
   };
+}
+
+// 流式倒推：按行读 NDJSON，phase/blueprint/module 事件 → onProgress，末行 {"t":"done",...} → 图谱。
+// 兼容老后端（忽略 Accept、直接回整张图 JSON）：识别「有 points 无 t」的行当作最终图。
+async function deriveGraphStream(
+  url: string,
+  goal: string,
+  signal: AbortSignal | undefined,
+  onProgress: (p: DeriveProgress) => void,
+): Promise<DerivedGraph> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { ...llmHeaders(), Accept: "application/x-ndjson" },
+      body: JSON.stringify({ goal, lang: outputLang() }),
+      signal,
+    });
+  } catch {
+    throw new Error(tStatic("err.cantReachDerive"));
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    throw new Error(hostedErrorMessage(data.error) || String(data.error || tStatic("err.httpStatus", { status: res.status })));
+  }
+  if (!res.body) throw new Error(NO_STREAM); // 环境不支持流式读 → 回退单发
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  let result: DerivedGraph | null = null;
+  let total = 0;
+
+  const handle = (line: string) => {
+    const s = line.trim();
+    if (!s) return;
+    let ev: Record<string, unknown>;
+    try {
+      ev = JSON.parse(s) as Record<string, unknown>;
+    } catch {
+      return; // 半行/噪声：忽略
+    }
+    const t = ev.t as string | undefined;
+    if (t === "phase") {
+      onProgress({ phase: (ev.phase as DeriveProgress["phase"]) || "search" });
+    } else if (t === "blueprint") {
+      total = Number(ev.total) || (Array.isArray(ev.modules) ? (ev.modules as unknown[]).length : 0);
+      onProgress({ phase: "expand", modulesTotal: total, modulesDone: 0, modules: (ev.modules as DeriveProgress["modules"]) || [] });
+    } else if (t === "module") {
+      onProgress({ phase: "expand", modulesTotal: Number(ev.total) || total, modulesDone: Number(ev.done) || 0, doneId: String(ev.id ?? "") });
+    } else if (t === "error") {
+      throw new Error(hostedErrorMessage(ev.message) || String(ev.message || tStatic("err.deriveFailedShort")));
+    } else if (t === "done" || (Array.isArray(ev.points) && !t)) {
+      const pts = ev.points;
+      if (Array.isArray(pts) && pts.length) {
+        result = { goal: String(ev.goal ?? goal), title: String(ev.title ?? "").trim() || undefined, points: normalize(pts) };
+      }
+    }
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) {
+      buf += dec.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        handle(buf.slice(0, nl));
+        buf = buf.slice(nl + 1);
+      }
+    }
+    if (done) break;
+  }
+  if (buf.trim()) handle(buf); // 收尾残行
+  if (!result) throw new Error(NO_STREAM); // 没收到终态 → 回退单发
+  return result;
 }
 
 // ---- 按需微课 ----

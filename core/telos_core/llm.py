@@ -261,17 +261,26 @@ def _expand_module(goal: str, bp: dict, module: dict, lang: str, timeout: float 
     return nodes if isinstance(nodes, list) else []
 
 
-def _parallel_expand(goal: str, bp: dict, lang: str) -> dict:
+def _parallel_expand(goal: str, bp: dict, lang: str, emit=None) -> dict:
     mods = bp["modules"]
     out: dict = {}
+    total = len(mods)
+    done = 0
     with ThreadPoolExecutor(max_workers=min(8, max(1, len(mods)))) as ex:
         futs = {ex.submit(_expand_module, goal, bp, m, lang): m["id"] for m in mods}
+        # as_completed 在主线程逐个 yield → 在这里 emit 进度是线程安全的（无需加锁）。
         for fut in as_completed(futs):
             mid = futs[fut]
             try:
                 out[mid] = fut.result()
             except Exception:  # noqa: BLE001 — 单模块失败不拖垮整体
                 out[mid] = []
+            done += 1
+            if emit:
+                try:
+                    emit({"t": "module", "id": str(mid), "done": done, "total": total})
+                except Exception:  # noqa: BLE001 — emit 失败不影响倒推
+                    pass
     return out
 
 
@@ -643,25 +652,44 @@ def _critique_and_repair(goal: str, spec: dict, lang: str, timeout: float) -> di
     return spec
 
 
-def derive_graph(goal: str, timeout: float = 60.0, lang: str = "") -> KnowledgeGraph:
-    """层级化倒推：蓝图 → 并行模块展开 → 合并/断环。失败优雅回退到单发倒推。"""
+def derive_graph(goal: str, timeout: float = 60.0, lang: str = "", emit=None) -> KnowledgeGraph:
+    """层级化倒推：蓝图 → 并行模块展开 → 合并/断环。失败优雅回退到单发倒推。
+    emit(dict)：可选进度回调，按真实里程碑吐 search/blueprint/module/assemble/critique 事件（流式用）。"""
+    def _emit(ev: dict) -> None:
+        if emit:
+            try:
+                emit(ev)
+            except Exception:  # noqa: BLE001 — emit 失败绝不影响倒推
+                pass
+
     key, _, _ = _config()
     if not key:
         raise RuntimeError("未配置 LLM API key。请在 core/.env 设置 TELOS_LLM_API_KEY（见 core/.env.example）。")
+    _emit({"t": "phase", "phase": "search"})
     ctx = _derive_context(goal)
     spec = None
     try:
+        _emit({"t": "phase", "phase": "blueprint"})
         bp = _blueprint(goal, ctx, lang)
-        expansions = _parallel_expand(goal, bp, lang)
+        mods = bp.get("modules") or []
+        _emit({
+            "t": "blueprint",
+            "total": len(mods),
+            "modules": [{"id": str(m.get("id", "")), "title": str(m.get("title", ""))} for m in mods],
+        })
+        expansions = _parallel_expand(goal, bp, lang, emit=_emit)
         if sum(len(v) for v in expansions.values()) >= 6:
+            _emit({"t": "phase", "phase": "assemble"})
             cand = _assemble(goal, bp, expansions)
             if len(cand.get("points", [])) >= 6:
                 spec = cand
     except Exception:  # noqa: BLE001 — 多段失败回退单发
         spec = None
     if spec is None:
+        _emit({"t": "phase", "phase": "single"})
         spec = _derive_single_spec(goal, ctx, lang, timeout)
     try:
+        _emit({"t": "phase", "phase": "critique"})
         spec = _critique_and_repair(goal, spec, lang, timeout)
     except Exception:  # noqa: BLE001 — 非破坏：审查异常则保留原图
         pass

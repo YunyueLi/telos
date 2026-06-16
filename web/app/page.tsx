@@ -20,7 +20,7 @@ import { moodFace, type Mood } from "@/lib/telos/mood";
 import { useAuth } from "@/lib/telos/auth";
 import { cloudConfigured } from "@/lib/telos/supabase";
 import { domainLabel } from "@/lib/telos/engine";
-import { engineReady, LLM_EVENT } from "@/lib/telos/derive";
+import { engineReady, LLM_EVENT, type DeriveProgress } from "@/lib/telos/derive";
 import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
 import { BILLING } from "@/lib/telos/billing-config";
 import { useT } from "@/lib/telos/i18n";
@@ -45,6 +45,7 @@ export default function HubPage() {
     derive,
     deriving,
     deriveError,
+    deriveProgress,
     record,
     composing,
     projects,
@@ -66,7 +67,7 @@ export default function HubPage() {
   if (!project || !graph || !view || composing) {
     return (
       <AppShell active="map">
-        <Onboarding derive={derive} deriving={deriving} deriveError={deriveError} projectCount={projects.length} />
+        <Onboarding derive={derive} deriving={deriving} deriveError={deriveError} progress={deriveProgress} projectCount={projects.length} />
       </AppShell>
     );
   }
@@ -93,16 +94,46 @@ export default function HubPage() {
   );
 }
 
+// 倒推真实进度 → 进度段（floor/ceil/tau/文案）。里程碑给 floor，floor→ceil 间按本段用时缓爬，
+// 绝不越过下一个真实里程碑（诚实）；各段 ceil=下段 floor，全程单调不回退。
+function progressSeg(p: DeriveProgress | null): { floor: number; ceil: number; tau: number; key: string } {
+  switch (p?.phase) {
+    case "search":
+      return { floor: 6, ceil: 18, tau: 6, key: "ob.phUnderstand" };
+    case "blueprint":
+      return { floor: 18, ceil: 24, tau: 12, key: "ob.phBlueprint" };
+    case "expand": {
+      const t = p.modulesTotal || 0;
+      const d = p.modulesDone || 0;
+      const lo = 24;
+      const hi = 84;
+      const f = t > 0 ? lo + (hi - lo) * (d / t) : lo;
+      const c = t > 0 ? lo + (hi - lo) * ((d + 1) / t) : hi;
+      return { floor: f, ceil: Math.min(hi, c), tau: 7, key: "ob.phExpand" };
+    }
+    case "assemble":
+      return { floor: 84, ceil: 90, tau: 2, key: "ob.phAssemble" };
+    case "single":
+      return { floor: 30, ceil: 82, tau: 40, key: "ob.phExpand" };
+    case "critique":
+      return { floor: 90, ceil: 99, tau: 16, key: "ob.phCritique" };
+    default:
+      return { floor: 0, ceil: 8, tau: 6, key: "ob.phUnderstand" }; // 还没收到事件
+  }
+}
+
 // ─────────────────────────── 引导 / 目标输入 ───────────────────────────
 function Onboarding({
   derive,
   deriving,
   deriveError,
+  progress,
   projectCount,
 }: {
   derive: (g: string) => Promise<boolean>;
   deriving: boolean;
   deriveError: string | null;
+  progress: DeriveProgress | null;
   projectCount: number;
 }) {
   const { t } = useT();
@@ -165,14 +196,19 @@ function Onboarding({
 
   // 倒推进度：缓动逼近 92%（永不假装完成，成功即切到地图），阶段=流水线真实步骤、按经验时间推进。
   const sec = Math.floor(ms / 1000);
-  const progPct = Math.round(92 * (1 - Math.exp(-ms / 22000)));
-  const PHASES: { at: number; key: string }[] = [
-    { at: 0, key: "ob.phUnderstand" },
-    { at: 6, key: "ob.phBlueprint" },
-    { at: 18, key: "ob.phExpand" },
-    { at: 52, key: "ob.phAssemble" },
-  ];
-  const phaseKey = (PHASES.filter((p) => sec >= p.at).pop() ?? PHASES[0]).key;
+  // 真实进度：按 deriveProgress 的里程碑算 floor/ceil，本段内按用时缓爬（绝不越过下一个真实里程碑）。
+  const seg = progressSeg(progress);
+  const segSig = `${progress?.phase ?? "wait"}:${progress?.modulesDone ?? 0}`;
+  const segStartRef = useRef(0);
+  const segSigRef = useRef("");
+  useEffect(() => {
+    segSigRef.current = segSig;
+    segStartRef.current = ms;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segSig]);
+  const segDt = segSigRef.current === segSig ? Math.max(0, ms - segStartRef.current) : 0;
+  const progPct = Math.round(seg.floor + (seg.ceil - seg.floor) * (1 - Math.exp(-segDt / (seg.tau * 1000))));
+  const phaseKey = seg.key;
 
   return (
     <div className={returning ? "ob ob-compact" : "ob"}>
@@ -230,6 +266,11 @@ function Onboarding({
               <div className="ob-prog-row">
                 <span className="ob-prog-phase">
                   {t(phaseKey)}
+                  {progress?.phase === "expand" && progress.modulesTotal ? (
+                    <span className="ob-prog-mods">
+                      {t("ob.modules", { done: progress.modulesDone ?? 0, total: progress.modulesTotal })}
+                    </span>
+                  ) : null}
                   <span className="ob-dots" aria-hidden="true">
                     <i />
                     <i />
