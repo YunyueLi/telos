@@ -269,8 +269,49 @@ A traditional Chinese xieyi (写意) freehand ink-wash painting used as a faint,
 
 ---
 
+## 七、造型换装 · 套装 〔需上传 hero.png〕
+
+衣橱里给看板娘换的**整套着装**。铁律：**所有套装用同一个签名姿势，只换衣服**——这样既是真「换装」(同一个她、换装感强)，二期还能在签名姿上叠配饰(团扇/书卷/发簪)做 mix-match。给我原图，我缩放+抠透明+转 WebP 接入(命名 `outfit-<id>`)，绑墨价/解锁。
+
+**签名姿(每张都照此，务必一致)**：半身、身体微侧 3/4、双手在身前轻轻交叠、平和浅笑、目视前方——和 hero 同一姿态，只有衣着不同。黑白墨线、透明底、1:1。
+
+> 默认「教师装」用现有立绘(present/hero)，**无需生成**。下面 6 套按需生成，先做哪套都行。
+
+**1 — 汉服·宋制 → `outfit-songhanfu`**
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide — keep her face, hairstyle, glasses, gentle scholarly demeanor and black-and-white hand-drawn ink-line style identical. Signature pose: half-body, body turned slightly three-quarter, both hands lightly clasped in front, calm soft smile, looking forward. She is wearing an elegant restrained Song-dynasty hanfu — a long slim 褙子 (open-front overrobe) over an inner garment and long skirt, simple refined scholarly cut, no loud patterns. Clean confident ink linework, transparent background, no color. Square 1:1, high resolution.
+```
+
+**2 — 唐风 → `outfit-tang`**
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide — keep her face, hairstyle, glasses, demeanor and black-and-white ink-line style identical. Signature pose: half-body, slight three-quarter turn, both hands lightly clasped in front, calm soft smile. She is wearing a graceful Tang-style 襦裙 (ruqun) with gently flowing wide sleeves and a high-waisted long skirt, soft draping, dignified and airy. Clean confident ink linework, transparent background, no color. Square 1:1, high resolution.
+```
+
+**3 — 便装·针织 → `outfit-knit`**
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide — keep her face, hairstyle, glasses, demeanor and black-and-white ink-line style identical. Signature pose: half-body, slight three-quarter turn, both hands lightly clasped in front, calm soft smile. She is wearing a cozy relaxed everyday outfit — a soft oversized chunky-knit cardigan over a simple collared shirt, casual and warm. Clean confident ink linework, transparent background, no color. Square 1:1, high resolution.
+```
+
+**4 — 学位袍 → `outfit-gown`**（里程碑：学完 1 张图谱解锁）
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide — keep her face, hairstyle, glasses, demeanor and black-and-white ink-line style identical. Signature pose: half-body, slight three-quarter turn, both hands lightly clasped in front, a quietly proud calm smile. She is wearing an academic graduation gown with draped open front and a hood/stole over the shoulders, dignified and ceremonial. Clean confident ink linework, transparent background, no color. Square 1:1, high resolution.
+```
+
+**5 — 冬·氅衣 → `outfit-cloak`**（季节：冬季限定）
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide — keep her face, hairstyle, glasses, demeanor and black-and-white ink-line style identical. Signature pose: half-body, slight three-quarter turn, both hands lightly clasped in front, calm soft smile. She is wearing a heavy winter 氅衣 / long wrapped cloak with a soft fur-trimmed collar, draped warm over her shoulders, a few faint snowflakes suggested. Clean confident ink linework, transparent background, no color. Square 1:1, high resolution.
+```
+
+**6 — 节庆·华服 → `outfit-festive`**（季节/节庆限定）
+```
+Using the uploaded reference image (hero.png) as the exact character and style guide — keep her face, hairstyle, glasses, demeanor and black-and-white ink-line style identical. Signature pose: half-body, slight three-quarter turn, both hands lightly clasped in front, a bright gentle festive smile. She is wearing an ornate festive formal robe with delicate auspicious patterning and fuller decorative sleeves, celebratory yet tasteful. Pure black-and-white ink only (no color, no red). Clean confident ink linework, transparent background. Square 1:1, high resolution.
+```
+
+---
+
 ## 接入约定（出图后我来做）
 
+- **造型换装**：套装原图丢给我（第七组），我抠透明+转 WebP 存 `web/public/portraits/outfit-<id>.webp` + 注册进衣橱（绑墨价/解锁），上架即可花墨换上。
 - **案头背景**：1 张丢给我（第六组），我缩放/转 WebP 存 `web/public/decor/_studio.webp` + 接入 `.room-stage`，并按实际微调高度/渐隐。
 - **文房**：8 张丢进 `web/public/decor/`，我把书斋装点从 SVG 切成图片 + 放大案头展示。
 - **印章**：9 张丢进 `web/public/seals/`，我把印章雅号从 SVG 切成图片（保留朱红仪式色）。

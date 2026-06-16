@@ -65,7 +65,7 @@ export function Studio() {
         {tab === "pass" && <StudioPass />}
         {tab === "seal" && <StudioSeals projects={projects} />}
         {tab === "studyroom" && <StudioRoom projects={projects} />}
-        {tab === "dressup" && <StudioDressup />}
+        {tab === "dressup" && <StudioDressup projects={projects} />}
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ import type { Project } from "./project";
 import { bumpPrefs } from "./prefs-rev";
 import { getTheme, THEMES } from "./theme";
 
-export type PortraitSeries = "daily" | "season" | "scene" | "milestone" | "theme";
+export type PortraitSeries = "daily" | "season" | "scene" | "milestone" | "theme" | "attire";
 
 // 解锁条件（数据驱动）。新增一种规则才需要动 isUnlocked / unlockHint。
 export type UnlockRule =
@@ -29,6 +29,7 @@ export type UnlockRule =
   | { kind: "graphs"; n: number } // 完成的图谱数（整张学完）≥ n
   | { kind: "diagnosed" } // 完成过一次起点诊断
   | { kind: "season"; months: number[] } // 当前自然月 ∈ months（1..12）
+  | { kind: "ink"; n: number } // 衣橱套装：花 n 墨买断（确定性，非抽卡）
   | { kind: "paid" }; // 主题皮：Pro 或单买
 
 export interface Portrait {
@@ -39,6 +40,7 @@ export interface Portrait {
   unlock: UnlockRule;
   voiceKey?: string; // i18n：解锁时看板娘的一句话（陪伴/欣慰/见证）
   paid?: boolean; // theme 系列：cosmetic 付费（永不影响学习）
+  ready?: boolean; // 立绘是否已入库（衣橱套装：未入库显示"绘制中"，不可换上）
 }
 
 // 解锁判定的输入：把分散在 xp.ts / use-project 的真实学习信号聚合成一个快照。
@@ -106,6 +108,13 @@ export const PORTRAITS: Portrait[] = [
   // 画风主题（Pro 专属，纯审美变体）——泼墨用飞白立绘 face-ink，木刻用强对比 woodcut
   { id: "xieyi", series: "theme", file: "face-ink", nameKey: "pt.xieyi", unlock: { kind: "paid" }, voiceKey: "pt.v.xieyi", paid: true },
   { id: "woodcut", series: "theme", file: "woodcut", nameKey: "pt.woodcut", unlock: { kind: "paid" }, voiceKey: "pt.v.woodcut", paid: true },
+  // 造型换装 · 衣橱套装（纯外观；花墨买断 / 季节·里程碑限定）。签名站姿一致、只换衣；立绘逐套入库后置 ready:true。
+  { id: "outfit-knit", series: "attire", file: "outfit-knit", nameKey: "dress.knit", unlock: { kind: "ink", n: 120 }, voiceKey: "dress.v.knit" },
+  { id: "outfit-songhanfu", series: "attire", file: "outfit-songhanfu", nameKey: "dress.songhanfu", unlock: { kind: "ink", n: 200 }, voiceKey: "dress.v.songhanfu" },
+  { id: "outfit-tang", series: "attire", file: "outfit-tang", nameKey: "dress.tang", unlock: { kind: "ink", n: 240 }, voiceKey: "dress.v.tang" },
+  { id: "outfit-gown", series: "attire", file: "outfit-gown", nameKey: "dress.gown", unlock: { kind: "graphs", n: 1 }, voiceKey: "dress.v.gown" },
+  { id: "outfit-cloak", series: "attire", file: "outfit-cloak", nameKey: "dress.cloak", unlock: { kind: "season", months: [12, 1, 2] }, voiceKey: "dress.v.cloak" },
+  { id: "outfit-festive", series: "attire", file: "outfit-festive", nameKey: "dress.festive", unlock: { kind: "season", months: [1, 2] }, voiceKey: "dress.v.festive" },
 ];
 
 export const DEFAULT_PORTRAIT = "present";
@@ -143,12 +152,27 @@ export function matchUnlock(u: UnlockRule, s: LearnerStats): boolean {
       return s.diagnosed;
     case "season":
       return u.months.includes(s.month);
+    case "ink":
+      return false; // 由 isUnlocked 用买断记录拦截判定（matchUnlock 无 id，给个保底）
     case "paid":
       return s.isPro; // 单买解锁后续接 app_metadata.telos_portraits，这里先按 Pro 全解锁
   }
 }
 
+// 衣橱已买断套装 id（花墨买断永久；与 wardrobe.ts 同 localStorage key，避免循环依赖在此内联读）。
+const WARDROBE_KEY = "telos:wardrobe";
+export function ownedOutfitIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const o = JSON.parse(window.localStorage.getItem(WARDROBE_KEY) || "{}") as { bought?: string[] };
+    return Array.isArray(o.bought) ? o.bought : [];
+  } catch {
+    return [];
+  }
+}
+
 export function isUnlocked(p: Portrait, s: LearnerStats): boolean {
+  if (p.unlock.kind === "ink") return ownedOutfitIds().includes(p.id); // 套装：买断即解锁
   return matchUnlock(p.unlock, s);
 }
 
@@ -174,6 +198,8 @@ export function ruleHint(u: UnlockRule): { key: string; vars?: Record<string, nu
       return { key: "un.diagnosed" };
     case "season":
       return { key: "un.season" };
+    case "ink":
+      return { key: "un.ink", vars: { n: u.n } };
     case "paid":
       return { key: "un.paid" };
   }
@@ -203,6 +229,8 @@ export function unlockHint(p: Portrait): { key: string; vars?: Record<string, nu
       return { key: "pt.u.diagnosed" };
     case "season":
       return { key: "pt.u.season" };
+    case "ink":
+      return { key: "pt.u.ink", vars: { n: u.n } };
     case "paid":
       return { key: "pt.u.paid" };
   }
