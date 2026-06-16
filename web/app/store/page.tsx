@@ -100,7 +100,6 @@ export default function StorePage() {
             <Icon name="map" style={{ width: 26, height: 26 }} />
           </span>
           <div className="info">
-            <div className="eyebrow">{t("store.eyebrow")}</div>
             <h2>{t("store.title")}</h2>
             <p className="me-goal">{t("store.lead")}</p>
           </div>
