@@ -1104,9 +1104,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 /* 陈设：单排不换行，clamp 自适应，4 件在手机也放得下 */
 .room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:clamp(12px,5vw,40px);flex-wrap:nowrap;position:relative;z-index:2;max-width:100%}
 .room-piece{display:grid;place-items:end center;min-width:0}
-.room-piece img{width:clamp(54px,15vw,86px);height:clamp(54px,15vw,86px);object-fit:contain;filter:drop-shadow(0 6px 5px rgba(20,19,16,.22))}
-/* 几案：墨线托面（纸色面 + 加厚前沿 + 落地投影），陈设坐落其上 */
-.room-board{position:absolute;left:6%;right:6%;bottom:14px;height:12px;z-index:1;background:var(--paper);border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:3px;box-shadow:0 10px 16px -10px rgba(20,19,16,.35)}
+/* 陈设直接落在窗下淡墨地面上，靠跟随物件轮廓的柔和接地投影坐实，不画硬几案 */
+.room-piece img{width:clamp(54px,15vw,86px);height:clamp(54px,15vw,86px);object-fit:contain;filter:drop-shadow(0 4px 3px rgba(20,19,16,.28)) drop-shadow(0 10px 9px rgba(20,19,16,.13))}
 .room-empty{font:italic 500 13.5px var(--serif);color:var(--ink-3);padding:8px 4px 18px;text-align:center;position:relative;z-index:2}
 .room-count{font:600 10px var(--mono);letter-spacing:.05em;color:var(--ink-3)}
 .room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:11px}
