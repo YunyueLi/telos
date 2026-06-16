@@ -84,7 +84,7 @@ function CertInner() {
         </Link>
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="cert-portrait" src={asset("/portraits/cheer.png")} alt="" aria-hidden="true" />
+      <img className="cert-portrait" src={asset("/portraits/cheer.webp")} alt="" aria-hidden="true" />
     </div>
   );
 }

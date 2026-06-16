@@ -38,7 +38,7 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
                 return (
                   <span key={id} className="room-piece" title={t(d.nameKey)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={asset(`/decor/d-${id}.png`)} alt="" />
+                    <img src={asset(`/decor/d-${id}.webp`)} alt="" />
                   </span>
                 );
               })}
@@ -68,7 +68,7 @@ export function StudioRoom({ projects }: { projects: Project[] }) {
             >
               <span className="room-thumb">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={asset(`/decor/d-${d.id}.png`)} alt="" />
+                <img src={asset(`/decor/d-${d.id}.webp`)} alt="" loading="lazy" decoding="async" />
                 {!ok && (
                   <span className="room-veil">
                     <Icon name="lock" />

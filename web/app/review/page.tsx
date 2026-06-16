@@ -54,7 +54,7 @@ export default function ReviewPage() {
           <div className="rv-done">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pcirc">
-              <img src={asset("/portraits/empty.png")} alt="Telos 老师" />
+              <img src={asset("/portraits/empty.webp")} alt="Telos 老师" />
             </span>
             <h2>{t("rv.emptyTitle")}</h2>
             <p>{t("rv.emptyP")}</p>
@@ -78,7 +78,7 @@ export default function ReviewPage() {
           <div className="rv-done">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pcirc">
-              <img src={asset(didSome ? "/portraits/cheer.png" : "/portraits/empty.png")} alt="Telos 老师" />
+              <img src={asset(didSome ? "/portraits/cheer.webp" : "/portraits/empty.webp")} alt="Telos 老师" />
             </span>
             <h2>{didSome ? t("rv.doneTitle") : t("rv.clearedTitle")}</h2>
             <p>{didSome ? t("rv.doneP", { n: reviewed }) : t("rv.clearedP")}</p>
@@ -100,7 +100,7 @@ export default function ReviewPage() {
           <div className="rv-lead">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <span className="pmini">
-              <img src={asset("/portraits/notify.png")} alt="" />
+              <img src={asset("/portraits/notify.webp")} alt="" />
             </span>
             <div className="lt">
               <span className="big">{due.length}</span>

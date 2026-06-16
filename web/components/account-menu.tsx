@@ -59,7 +59,7 @@ export function AccountMenu() {
         onClick={() => (open ? setOpen(false) : openMenu())}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={asset("/portraits/avatar.png")} alt="" />
+        <img src={asset("/portraits/avatar.webp")} alt="" />
       </button>
 
       {open &&

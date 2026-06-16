@@ -69,7 +69,7 @@ export default function SettingsPage() {
         <div className="me-head">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <span className="pcirc">
-            <img src={asset("/portraits/think.png")} alt="" />
+            <img src={asset("/portraits/think.webp")} alt="" />
           </span>
           <div className="info">
             <div className="eyebrow">{t("set.eyebrow")}</div>

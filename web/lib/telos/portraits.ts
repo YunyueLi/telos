@@ -34,7 +34,7 @@ export type UnlockRule =
 export interface Portrait {
   id: string; // 稳定 id（= 立绘文件名，无扩展名）
   series: PortraitSeries;
-  file: string; // public/portraits/<file>.png
+  file: string; // public/portraits/<file>.webp
   nameKey: string; // i18n：形象名
   unlock: UnlockRule;
   voiceKey?: string; // i18n：解锁时看板娘的一句话（陪伴/欣慰/见证）
@@ -113,7 +113,7 @@ const STORE_KEY = "telos:portrait";
 
 export function portraitSrc(p: Portrait | string): string {
   const file = typeof p === "string" ? p : p.file;
-  return asset(`/portraits/${file}.png`);
+  return asset(`/portraits/${file}.webp`);
 }
 
 export function portraitById(id: string): Portrait | undefined {
