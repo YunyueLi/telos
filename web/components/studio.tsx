@@ -1,7 +1,8 @@
 "use client";
 
 // 书斋：形象经济一级页。四大板块——形象（她的瞬间 + 造型）· 印记（雅号 + 印章）·
-// 陈设（案头装点 + 画风纸张）· 通行证。顶部统一 anchor 贯穿全页，呈现「她 + 雅号 + 印 + 墨 + 进阶」。
+// 陈设（案头装点 + 纸色）· 通行证。顶部统一 anchor 贯穿全页，呈现「她 + 雅号 + 印 + 墨 + 进阶」。
+// 概念分域（别串味）：「画风」=她被怎么画的笔法墨韵（泼墨/木刻，归形象 tab）；「纸色」=整个 App 的纸张色温（归陈设 tab）。
 // 所有维度纯外观/荣誉，解锁绑真实学习，绝不影响掌握度与 XP。
 import { useState } from "react";
 import { useT } from "@/lib/telos/i18n";
@@ -40,7 +41,7 @@ type StudioTab = "image" | "seal" | "room" | "pass";
 const TABS: { k: StudioTab; label: string }[] = [
   { k: "image", label: "studio.t.image" }, // 形象（含造型）
   { k: "seal", label: "studio.t.mark" }, // 印记（雅号 + 印章）
-  { k: "room", label: "studio.t.room" }, // 陈设（装点 + 画风）
+  { k: "room", label: "studio.t.room" }, // 陈设（案头装点 + 纸色）
   { k: "pass", label: "studio.t.pass" }, // 通行证
 ];
 
