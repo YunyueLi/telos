@@ -1096,11 +1096,11 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .seals-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 书斋装点（文房清玩）*/
 .room{display:flex;flex-direction:column;gap:20px}
-.room-desk{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px clamp(14px,4vw,22px) 18px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+.room-desk{display:flex;flex-direction:column;align-items:center;gap:9px}
 .room-deskeyebrow{font:600 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);align-self:flex-start}
 /* 案头舞台：身后留极淡书斋背景位（_studio.webp，未生成则透明），下方几案承托陈设；高度/边距随宽度自适应 */
-.room-stage{position:relative;width:100%;min-height:clamp(196px,40vw,288px);display:flex;align-items:flex-end;justify-content:center;padding:12px clamp(6px,3vw,18px) 28px;background-position:center top;background-size:cover;background-repeat:no-repeat;border-radius:10px;overflow:hidden}
-.room-stage::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,transparent 0%,transparent 44%,var(--card) 90%);pointer-events:none}
+.room-stage{position:relative;width:100%;min-height:clamp(196px,40vw,288px);display:flex;align-items:flex-end;justify-content:center;padding:12px clamp(6px,3vw,18px) 28px;background-position:center top;background-size:cover;background-repeat:no-repeat;border-radius:14px;overflow:hidden}
+.room-stage::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,transparent 0%,transparent 50%,var(--paper) 94%);pointer-events:none}
 /* 陈设：单排不换行，clamp 自适应，4 件在手机也放得下 */
 .room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:clamp(12px,5vw,40px);flex-wrap:nowrap;position:relative;z-index:2;max-width:100%}
 .room-piece{display:grid;place-items:end center;min-width:0}
