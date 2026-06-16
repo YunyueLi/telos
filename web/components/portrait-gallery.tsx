@@ -17,25 +17,19 @@ import {
   unlockHint,
   getCurrentPortraitId,
   setCurrentPortraitId,
-  portraitById,
-  DEFAULT_PORTRAIT,
   type Portrait,
 } from "@/lib/telos/portraits";
 
-export function PortraitGallery({ projects }: { projects: Project[] }) {
+// 顶部「当前陪伴」卡已上移到书斋统一 anchor（StudioHero）；本组件只负责集章册分组与选择。
+export function PortraitGallery({ projects, bump }: { projects: Project[]; bump?: () => void }) {
   const { t } = useT();
   const stats = useMemo(() => collectStats(projects, isPro()), [projects]);
   const [sel, setSel] = useState<string>(() => getCurrentPortraitId());
 
-  // 形象集只含「她的瞬间」系列；衣橱套装(attire)归造型换装页，不进集章册计数/分组。
-  const gallery = useMemo(() => PORTRAITS.filter((p) => p.series !== "attire"), []);
-  const unlockedCount = useMemo(() => gallery.filter((p) => isUnlocked(p, stats)).length, [gallery, stats]);
-  const selP = portraitById(sel);
-  const cur: Portrait = selP && isUnlocked(selP, stats) ? selP : portraitById(DEFAULT_PORTRAIT)!;
-
   const choose = (p: Portrait) => {
     setCurrentPortraitId(p.id);
     setSel(p.id);
+    bump?.();
   };
 
   const groups = SERIES.map((s) => ({
@@ -47,19 +41,6 @@ export function PortraitGallery({ projects }: { projects: Project[] }) {
 
   return (
     <div className="pg">
-      <div className="pg-now">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <span className="pcirc pg-now-face">
-          <img src={asset(`/portraits/${cur.file}.webp`)} alt="" />
-        </span>
-        <div className="pg-now-info">
-          <span className="eyebrow">{t("pt.current")}</span>
-          <b>{t(cur.nameKey)}</b>
-          {cur.voiceKey && <p className="pg-voice">“{t(cur.voiceKey)}”</p>}
-          <span className="pg-count">{t("pt.collected", { n: unlockedCount, total: gallery.length })}</span>
-        </div>
-      </div>
-
       {groups.map((g) => (
         <div key={g.key} className="pg-series">
           <div className="pg-sh">
