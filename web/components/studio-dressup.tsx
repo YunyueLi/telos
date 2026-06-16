@@ -85,8 +85,6 @@ export function StudioDressup({ projects, bump }: { projects: Project[]; bump?: 
           );
         })}
       </div>
-
-      <p className="ward-foot">{t("dress.foot")}</p>
     </div>
   );
 }

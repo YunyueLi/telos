@@ -202,8 +202,6 @@ export function StudioPass() {
           ))}
         </ol>
       )}
-
-      <p className="pass-foot">{t("pass.foot")}</p>
     </div>
   );
 }
