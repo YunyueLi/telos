@@ -1096,7 +1096,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .seals-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 书斋装点（文房清玩）*/
 .room{display:flex;flex-direction:column;gap:20px}
-.room-desk{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px clamp(14px,4vw,22px) 18px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card);width:100%;max-width:600px;align-self:flex-start}
+.room-desk{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px clamp(14px,4vw,22px) 18px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
 .room-deskeyebrow{font:600 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);align-self:flex-start}
 /* 案头舞台：身后留极淡书斋背景位（_studio.webp，未生成则透明），下方几案承托陈设；高度/边距随宽度自适应 */
 .room-stage{position:relative;width:100%;min-height:clamp(126px,26vw,152px);display:flex;align-items:flex-end;justify-content:center;padding:12px clamp(6px,3vw,18px) 26px;background-position:center top;background-size:cover;background-repeat:no-repeat;border-radius:10px}
