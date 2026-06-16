@@ -72,7 +72,6 @@ export default function SettingsPage() {
             <img src={asset("/portraits/think.webp")} alt="" />
           </span>
           <div className="info">
-            <div className="eyebrow">{t("set.eyebrow")}</div>
             <h2>{t("me.settings")}</h2>
             <p className="me-goal">{t("set.lead")}</p>
           </div>

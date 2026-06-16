@@ -156,9 +156,8 @@ export function StreakBoard() {
   return (
     <div className="streak">
       <header className="streak-hd">
-        <div className="eyebrow">{t("streak.eyebrow")}</div>
         <h2>{t("nav.streak")}</h2>
-        <p className="streak-lead">{t("streak.lead")}</p>
+        {streak === 0 && <p className="streak-lead">{t("streak.lead")}</p>}
       </header>
 
       {/* 时令：当前节气（应时而现）+ 看板娘师者应时话 */}

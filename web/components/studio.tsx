@@ -32,9 +32,7 @@ export function Studio() {
   return (
     <div className="studio">
       <header className="studio-hd">
-        <div className="eyebrow">{t("studio.eyebrow")}</div>
         <h2>{t("studio.title")}</h2>
-        <p className="studio-lead">{t("studio.lead")}</p>
       </header>
 
       <div className="studio-tabs" role="tablist">
