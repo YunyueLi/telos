@@ -898,9 +898,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 @media(prefers-reduced-motion:reduce){.ring-bar,.celebrate,.celebrate-card{transition:none;animation:none}}
 /* 「坚持」Tab 页：全屏响应式激励仪表盘 */
 .streak{flex:1;width:100%;max-width:var(--page-max);margin:0 auto;padding:28px 24px 60px}
-.streak-hd{margin-bottom:13px}
-.streak-hd h2{font:500 24px var(--serif);letter-spacing:-.02em;line-height:1.1;margin:0 0 5px}
-.streak-lead{font-size:14px;color:var(--ink-2);line-height:1.6;max-width:54ch}
+.streak-hd{margin-bottom:14px}
+.streak-hd h2{font:500 24px var(--serif);letter-spacing:-.02em;line-height:1.1;margin:0}
 .streak-banner{display:flex;align-items:center;gap:15px;background:var(--ink);color:var(--paper);border-radius:18px;padding:19px 24px;margin-bottom:18px}
 .streak-banner .sb-fl{width:30px;height:30px;color:var(--paper);opacity:.5;flex:none}
 .streak-banner .sb-fl.on{opacity:1}

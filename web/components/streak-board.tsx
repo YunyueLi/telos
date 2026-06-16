@@ -157,7 +157,6 @@ export function StreakBoard() {
     <div className="streak">
       <header className="streak-hd">
         <h2>{t("nav.streak")}</h2>
-        {streak === 0 && <p className="streak-lead">{t("streak.lead")}</p>}
       </header>
 
       {/* 时令：当前节气（应时而现）+ 看板娘师者应时话 */}
