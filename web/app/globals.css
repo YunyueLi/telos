@@ -1126,19 +1126,34 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .room-cell.on .room-act{color:var(--ink)}
 .room-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 造型换装（诚实预览）*/
-.dressup{display:flex;flex-direction:column;gap:18px}
-.dressup-lead{display:flex;gap:13px;align-items:flex-start;padding:16px 18px;border:1.5px solid var(--line-soft);border-radius:14px;background:var(--card)}
-.dressup-badge{flex:none;width:38px;height:38px;border-radius:11px;border:1.5px solid var(--ink-3);display:grid;place-items:center;color:var(--ink-2)}
-.dressup-badge .ic{width:19px;height:19px}
-.dressup-lead b{font:500 17px var(--serif);color:var(--ink)}
-.dressup-lead p{margin:4px 0 0;font:400 13px/1.55 var(--sans);color:var(--ink-2)}
-.dressup-sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
-.dressup-set{display:flex;flex-direction:column;gap:3px;padding:14px;border:1px dashed var(--line-soft);border-radius:12px;background:var(--paper)}
-.dressup-set b{font:600 14px var(--sans);color:var(--ink-2)}
-.dressup-set > span{font:400 11.5px var(--sans);color:var(--ink-3)}
-.dressup-wip{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font:600 9.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-style:normal}
-.dressup-wip .ic{width:11px;height:11px}
-.dressup-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
+/* 造型换装 · 衣橱 / 试衣间 */
+.ward{display:flex;flex-direction:column;gap:18px}
+.ward-mirror{display:flex;align-items:center;gap:16px;padding:15px 18px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+.ward-face{width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);flex:none}
+.ward-now{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ward-now b{font:600 18px var(--serif);color:var(--ink)}
+.ward-ink{display:inline-flex;align-items:center;gap:5px;margin-top:4px;font:600 12px var(--mono);color:var(--ink-2)}
+.ward-ink .ic{width:14px;height:14px;color:var(--ink-2)}
+.ward-rack{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:11px}
+.ward-cell{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 6px 10px;border:1.4px solid var(--line-soft);border-radius:12px;background:var(--paper);cursor:pointer;transition:border-color .15s,transform .12s;text-align:center}
+.ward-cell.ok:hover,.ward-cell.buy:hover{border-color:var(--ink);transform:translateY(-1px)}
+.ward-cell.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.ward-cell.locked,.ward-cell:disabled{cursor:default}
+.ward-thumb{position:relative;width:72px;height:72px;display:grid;place-items:center}
+.ward-thumb > img{width:72px;height:72px;object-fit:contain;object-position:50% 12%;border-radius:10px}
+.ward-cell.locked .ward-thumb > img{filter:grayscale(1);opacity:.42}
+.ward-wip-ic{width:72px;height:72px;display:grid;place-items:center;border:1.4px dashed var(--line-soft);border-radius:10px;color:var(--ink-3)}
+.ward-wip-ic .ic{width:26px;height:26px;opacity:.5}
+.ward-on{position:absolute;right:-3px;bottom:-3px;width:19px;height:19px;border-radius:50%;background:var(--ink);display:grid;place-items:center;border:2px solid var(--paper)}
+.ward-on .ic{width:11px;height:11px;color:var(--paper)}
+.ward-price{position:absolute;top:-5px;right:-7px;display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:999px;background:var(--ink);color:var(--paper);font:700 10px var(--mono)}
+.ward-price .ic{width:9px;height:9px;color:var(--paper)}
+.ward-name{font:600 12.5px var(--sans);color:var(--ink);line-height:1.2}
+.ward-cell.locked .ward-name{color:var(--ink-2)}
+.ward-act{font:600 9.5px var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);display:inline-flex;align-items:center;gap:3px;line-height:1.3}
+.ward-cell.on .ward-act,.ward-cell.buy .ward-act{color:var(--ink)}
+.ward-act .ic{width:11px;height:11px}
+.ward-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 复习页"温故知新"师者话 */
 .rv-wengu{margin:16px 0 0;font:italic 500 14px/1.6 var(--serif);color:var(--ink-2);max-width:540px}
 /* MapHome 看板娘意义锚定 bar（回扣初心 + 进步可见）*/

@@ -20,6 +20,7 @@ import { getPrefsRev, setPrefsRev } from "./prefs-rev";
 import { getPassState, setPassState } from "./pass";
 import { getSealsState, setSealsState, DEFAULT_SEAL, DEFAULT_TITLE } from "./seals";
 import { getPlaced, setPlaced } from "./studyroom";
+import { getBoughtOutfits, setWardrobeBought } from "./wardrobe";
 
 const LANG_KEY = "telos:lang";
 const PORTRAIT_KEY = "telos:portrait";
@@ -37,6 +38,7 @@ export interface SyncState {
   pass: { claimedFree: number[]; claimedPro: number[] }; // 治学通行证领取：并集（领过即领过）
   seals: { seal: string; title: string }; // 印章雅号佩戴：偏好 LWW
   placed: string[]; // 书斋案头摆放：偏好 LWW
+  wardrobe: string[]; // 衣橱花墨买断套装：并集（买过即拥有）
 }
 
 function lsGet(key: string): string | null {
@@ -74,6 +76,7 @@ export function collectLocalState(): SyncState {
     pass: getPassState(),
     seals: getSealsState(),
     placed: getPlaced(),
+    wardrobe: getBoughtOutfits(),
   };
 }
 
@@ -106,6 +109,7 @@ export function normalizeSyncState(raw: unknown): SyncState {
       title: typeof sl.title === "string" ? sl.title : DEFAULT_TITLE,
     },
     placed: strArr(o.placed),
+    wardrobe: strArr(o.wardrobe),
   };
 }
 
@@ -141,6 +145,7 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
     },
     seals: prefWin.seals, // 偏好（整组 LWW）
     placed: prefWin.placed, // 偏好
+    wardrobe: [...new Set([...remote.wardrobe, ...local.wardrobe])], // 买断：并集
   };
 }
 
@@ -157,5 +162,6 @@ export function applyLocalState(s: SyncState): void {
   setPassState(s.pass);
   setSealsState(s.seals);
   setPlaced(s.placed);
+  setWardrobeBought(s.wardrobe);
   setPrefsRev(s.prefsRev);
 }
