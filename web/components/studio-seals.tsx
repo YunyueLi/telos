@@ -19,11 +19,10 @@ import {
   getCurrentTitle,
   setCurrentSeal,
   setCurrentTitle,
-  sealById,
-  titleById,
 } from "@/lib/telos/seals";
 
-export function StudioSeals({ projects }: { projects: Project[] }) {
+// 顶部「当前佩戴」卡已上移到书斋统一 anchor（StudioHero）；本组件只负责雅号与印章的选择。
+export function StudioSeals({ projects, bump }: { projects: Project[]; bump?: () => void }) {
   const { t } = useT();
   const [, force] = useState(0);
   const stats = collectStats(projects, isPro());
@@ -34,34 +33,19 @@ export function StudioSeals({ projects }: { projects: Project[] }) {
   const wearTitle = (id: string) => {
     setCurrentTitle(id);
     force((n) => n + 1);
+    bump?.();
   };
   const useSeal = (id: string) => {
     setCurrentSeal(id);
     force((n) => n + 1);
+    bump?.();
   };
-
-  const curSeal = sealById(curSealId);
-  const curTitle = titleById(curTitleId);
-  const sealOk = curSeal && isSealUnlocked(curSeal, stats, granted);
-  const titleOk = curTitle && isTitleUnlocked(curTitle, stats, granted);
 
   const titlesUnlocked = TITLES.filter((x) => isTitleUnlocked(x, stats, granted)).length;
   const sealsUnlocked = SEALS.filter((x) => isSealUnlocked(x, stats, granted)).length;
 
   return (
     <div className="seals">
-      <div className="seals-now">
-        <span className="seals-now-mark">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={asset(`/seals/s-${sealOk ? curSeal!.id : "qicheng"}.webp`)} alt="" />
-        </span>
-        <div className="seals-now-info">
-          <span className="eyebrow">{t("seal.current")}</span>
-          <b>{t((titleOk ? curTitle! : TITLES[0]).nameKey)}</b>
-          <span className="seals-now-sub">{t("seal.usingSeal", { name: t((sealOk ? curSeal! : SEALS[0]).nameKey) })}</span>
-        </div>
-      </div>
-
       <section className="seals-sect">
         <div className="seals-sh">
           <b>{t("seal.titles")}</b>

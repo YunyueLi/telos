@@ -1,32 +1,107 @@
 "use client";
 
-// 书斋：形象经济的一级页。统一承载形象 · 画风 · 治学通行证 · 印章雅号 · 书斋装点 · 造型换装，
-// 慢慢经营成你的样子。所有维度纯外观/荣誉，解锁绑真实学习，绝不影响掌握度与 XP。
+// 书斋：形象经济一级页。四大板块——形象（她的瞬间 + 造型）· 印记（雅号 + 印章）·
+// 陈设（案头装点 + 画风纸张）· 通行证。顶部统一 anchor 贯穿全页，呈现「她 + 雅号 + 印 + 墨 + 进阶」。
+// 所有维度纯外观/荣誉，解锁绑真实学习，绝不影响掌握度与 XP。
 import { useState } from "react";
 import { useT } from "@/lib/telos/i18n";
 import { useProject } from "@/lib/telos/use-project";
+import { Icon } from "@/components/icon";
+import { asset } from "@/lib/base";
+import { isPro } from "@/lib/telos/billing";
 import { PortraitGallery } from "@/components/portrait-gallery";
 import { ThemePicker } from "@/components/theme-picker";
 import { StudioPass } from "@/components/studio-pass";
 import { StudioSeals } from "@/components/studio-seals";
 import { StudioRoom } from "@/components/studio-room";
 import { StudioDressup } from "@/components/studio-dressup";
-import { passProgress } from "@/lib/telos/pass";
+import { passProgress, getPassGranted } from "@/lib/telos/pass";
+import {
+  collectStats,
+  isUnlocked,
+  portraitById,
+  getCurrentPortraitId,
+  DEFAULT_PORTRAIT,
+} from "@/lib/telos/portraits";
+import {
+  TITLES,
+  SEALS,
+  isTitleUnlocked,
+  isSealUnlocked,
+  getCurrentTitle,
+  getCurrentSeal,
+  titleById,
+  sealById,
+} from "@/lib/telos/seals";
+import { getInk } from "@/lib/telos/ink";
+import type { Project } from "@/lib/telos/project";
 
-type StudioTab = "portrait" | "theme" | "pass" | "seal" | "studyroom" | "dressup";
+type StudioTab = "image" | "seal" | "room" | "pass";
 const TABS: { k: StudioTab; label: string }[] = [
-  { k: "portrait", label: "studio.tabPortrait" },
-  { k: "theme", label: "studio.tabTheme" },
-  { k: "pass", label: "studio.c.pass" },
-  { k: "seal", label: "studio.c.seal" },
-  { k: "studyroom", label: "studio.c.studyroom" },
-  { k: "dressup", label: "studio.c.dressup" },
+  { k: "image", label: "studio.t.image" }, // 形象（含造型）
+  { k: "seal", label: "studio.t.mark" }, // 印记（雅号 + 印章）
+  { k: "room", label: "studio.t.room" }, // 陈设（装点 + 画风）
+  { k: "pass", label: "studio.t.pass" }, // 通行证
 ];
+
+// 贯穿全页的身份锚：她的当前样子 + 一句话 + 雅号/印/墨/进阶四枚速览。切 tab 不变，是书斋的「你」。
+function StudioHero({ projects }: { projects: Project[] }) {
+  const { t } = useT();
+  const pro = isPro();
+  const stats = collectStats(projects, pro);
+  const granted = getPassGranted();
+
+  const selP = portraitById(getCurrentPortraitId());
+  const cur = selP && isUnlocked(selP, stats) ? selP : portraitById(DEFAULT_PORTRAIT)!;
+
+  const ttl = titleById(getCurrentTitle());
+  const title = ttl && isTitleUnlocked(ttl, stats, granted) ? ttl : TITLES[0];
+  const sl = sealById(getCurrentSeal());
+  const seal = sl && isSealUnlocked(sl, stats, granted) ? sl : SEALS[0];
+
+  const ink = getInk().balance;
+  const prog = passProgress();
+
+  return (
+    <div className="studio-hero">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <span className="pcirc studio-hero-face">
+        <img src={asset(`/portraits/${cur.file}.webp`)} alt="" />
+      </span>
+      <div className="studio-hero-main">
+        <span className="eyebrow">{t("pt.current")}</span>
+        <b className="studio-hero-name">{t(cur.nameKey)}</b>
+        {cur.voiceKey && <p className="studio-hero-voice">“{t(cur.voiceKey)}”</p>}
+        <div className="studio-hero-chips">
+          <span className="shchip">
+            <Icon name="medal" />
+            {t(title.nameKey)}
+          </span>
+          <span className="shchip seal">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={asset(`/seals/s-${seal.id}.webp`)} alt="" />
+            {t(seal.nameKey)}
+          </span>
+          <span className="shchip">
+            <Icon name="spark" />
+            {t("dress.inkBal", { n: ink })}
+          </span>
+          <span className="shchip">
+            <Icon name="flag" />
+            {t("pass.stepN", { n: prog.curStep + 1 })}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Studio() {
   const { t } = useT();
   const { projects } = useProject();
-  const [tab, setTab] = useState<StudioTab>("portrait");
+  const [tab, setTab] = useState<StudioTab>("image");
+  const [, setRev] = useState(0);
+  const bump = () => setRev((n) => n + 1); // 子板块改选当前形象/雅号/印 → 刷新顶部 anchor
   const claimable = passProgress().claimableCount;
 
   return (
@@ -34,6 +109,8 @@ export function Studio() {
       <header className="studio-hd">
         <h2>{t("studio.title")}</h2>
       </header>
+
+      <StudioHero projects={projects} />
 
       <div className="studio-tabs" role="tablist">
         {TABS.map((tb) => (
@@ -51,19 +128,32 @@ export function Studio() {
       </div>
 
       <div className="studio-body">
-        {tab === "portrait" && <PortraitGallery projects={projects} />}
-        {tab === "theme" && (
-          <div className="studio-theme">
-            <p className="me-note" style={{ marginBottom: 14 }}>
-              {t("theme.sub")}
-            </p>
-            <ThemePicker />
+        {tab === "image" && (
+          <div className="studio-stack">
+            <PortraitGallery projects={projects} bump={bump} />
+            <section className="studio-sect">
+              <div className="pg-sh">
+                <b>{t("studio.c.dressup")}</b>
+                <span>{t("studio.c.dressup.s")}</span>
+              </div>
+              <StudioDressup projects={projects} bump={bump} />
+            </section>
+          </div>
+        )}
+        {tab === "seal" && <StudioSeals projects={projects} bump={bump} />}
+        {tab === "room" && (
+          <div className="studio-stack">
+            <StudioRoom projects={projects} />
+            <section className="studio-sect">
+              <div className="pg-sh">
+                <b>{t("studio.tabTheme")}</b>
+                <span>{t("theme.sub")}</span>
+              </div>
+              <ThemePicker />
+            </section>
           </div>
         )}
         {tab === "pass" && <StudioPass />}
-        {tab === "seal" && <StudioSeals projects={projects} />}
-        {tab === "studyroom" && <StudioRoom projects={projects} />}
-        {tab === "dressup" && <StudioDressup projects={projects} />}
       </div>
     </div>
   );

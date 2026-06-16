@@ -8,18 +8,21 @@ import { Icon } from "@/components/icon";
 import { asset } from "@/lib/base";
 import { isPro } from "@/lib/telos/billing";
 import type { Project } from "@/lib/telos/project";
-import { collectStats, isUnlocked, unlockHint, portraitById, getCurrentPortraitId, DEFAULT_PORTRAIT, type Portrait } from "@/lib/telos/portraits";
+import { collectStats, isUnlocked, unlockHint, portraitById, DEFAULT_PORTRAIT, type Portrait } from "@/lib/telos/portraits";
 import { OUTFITS, ownsOutfit, outfitCost, buyOutfit, wearOutfit, wearDefault, isWearing, wearingDefault } from "@/lib/telos/wardrobe";
 import { getInk } from "@/lib/telos/ink";
 
-export function StudioDressup({ projects }: { projects: Project[] }) {
+// 试衣镜卡已上移到书斋统一 anchor（StudioHero）；本组件只负责衣橱挂架与换上/购买。
+export function StudioDressup({ projects, bump }: { projects: Project[]; bump?: () => void }) {
   const { t } = useT();
   const [, force] = useState(0);
-  const refresh = () => force((n) => n + 1);
+  const refresh = () => {
+    force((n) => n + 1);
+    bump?.();
+  };
   const stats = collectStats(projects, isPro());
   const ink = getInk().balance;
 
-  const cur = portraitById(getCurrentPortraitId()) ?? portraitById(DEFAULT_PORTRAIT)!;
   const def = portraitById(DEFAULT_PORTRAIT)!;
   const onDefault = wearingDefault();
 
@@ -28,20 +31,6 @@ export function StudioDressup({ projects }: { projects: Project[] }) {
 
   return (
     <div className="ward">
-      <div className="ward-mirror">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <span className="pcirc ward-face">
-          <img src={asset(`/portraits/${cur.file}.webp`)} alt="" />
-        </span>
-        <div className="ward-now">
-          <span className="eyebrow">{t("dress.wearing")}</span>
-          <b>{onDefault ? t("dress.default") : t(cur.nameKey)}</b>
-          <span className="ward-ink">
-            <Icon name="spark" /> {t("dress.inkBal", { n: ink })}
-          </span>
-        </div>
-      </div>
-
       <div className="ward-rack">
         {/* 默认 · 教师装（始终可换上） */}
         <button className={`ward-cell ${onDefault ? "on" : "ok"}`} onClick={() => { wearDefault(); refresh(); }} aria-label={t("dress.default")}>
