@@ -245,8 +245,33 @@ A traditional Chinese carved seal impression (篆刻印章拓印) stamped in ver
 
 ---
 
+## 六、案头背景 〔无需参考；横构图〕
+
+「一方案头」身后的**极淡书斋氛围背景**，衬在几案 + 文房陈设之后（陈设是前景，背景只负责气氛）。**任选一张**生成即可；给我原图，我负责缩放 + 转 WebP + 接入（命名 `_studio`），并把几案/陈设叠在它前面。
+
+**硬要求（务必遵守，否则会盖住前景陈设）**：
+- **横向构图（约 3:2 或 16:9）**，主体氛围集中在**上 2/3**；**下 1/3 必须大面积留白**（几案和文房会摆在那里）。
+- **极淡、空灵**：大量留白，墨色只在边角轻扫；**不要**浓墨大色块、不要画到中下部。
+- **前景不要有任何家具**（桌、案、椅都不要——几案是代码画的）；不要人物。
+- 纯黑白写意水墨，白底即可（透明与否都行，我会处理）。
+
+**A — 临窗（推荐）→ 原图给我，我存 `_studio`**
+```
+A traditional Chinese xieyi (写意) freehand ink-wash painting used as a faint, airy background for a scholar's studio: a wooden lattice window in the upper area with soft diffused daylight coming through, a few delicate bamboo leaf shadows, and a great deal of empty pale negative space. Very light and minimal — pale gray ink washes only in the upper two-thirds, the entire lower third left almost entirely blank white. No furniture, no desk, no table, no chair, no people — only the suggestion of a quiet study wall and window. Pure black ink on white, soft and understated, wide landscape composition (3:2), high resolution.
+```
+
+**B — 挂画墙 → 原图给我，我存 `_studio`**
+```
+A traditional Chinese xieyi (写意) freehand ink-wash painting used as a faint, airy background for a scholar's studio: a quiet pale wall with a single hanging landscape scroll (山水挂轴) drifting in the upper-left, a faint wisp of incense smoke, and abundant empty negative space. Very light and minimal — soft gray ink only in the upper two-thirds, the entire lower third left almost blank white. No furniture, no desk, no table, no people — only a serene empty studio wall. Pure black ink on white, understated and spacious, wide landscape composition (3:2), high resolution.
+```
+
+> 出图后我接：`.room-stage` 衬这张背景（顶部对齐 + 底部渐隐到纸色），几案与陈设浮在前面；案头会从「一条墨线托面」升级成「一方真书斋」。
+
+---
+
 ## 接入约定（出图后我来做）
 
+- **案头背景**：1 张丢给我（第六组），我缩放/转 WebP 存 `web/public/decor/_studio.webp` + 接入 `.room-stage`，并按实际微调高度/渐隐。
 - **文房**：8 张丢进 `web/public/decor/`，我把书斋装点从 SVG 切成图片 + 放大案头展示。
 - **印章**：9 张丢进 `web/public/seals/`，我把印章雅号从 SVG 切成图片（保留朱红仪式色）。
 - **看板娘画风**：2 张丢进 `web/public/portraits/`，绑到 Pro 画风主题（theme face）。

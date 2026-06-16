@@ -1096,14 +1096,18 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .seals-foot{margin:0;font:400 11.5px/1.55 var(--sans);color:var(--ink-3);font-style:italic}
 /* 书斋装点（文房清玩）*/
 .room{display:flex;flex-direction:column;gap:20px}
-.room-desk{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 20px 20px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card)}
+.room-desk{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px clamp(14px,4vw,22px) 18px;border:1.5px solid var(--ink);border-radius:14px;background:var(--card);width:100%;max-width:600px;align-self:flex-start}
 .room-deskeyebrow{font:600 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);align-self:flex-start}
-.room-stage{position:relative;width:100%;min-height:120px;display:flex;align-items:flex-end;justify-content:center;padding:6px 4px 18px}
-.room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:30px;flex-wrap:wrap;position:relative;z-index:1}
-.room-piece{display:grid;place-items:end center}
-.room-piece img{width:78px;height:78px;object-fit:contain;filter:drop-shadow(0 5px 4px rgba(20,19,16,.18))}
-.room-surface{position:absolute;left:9%;right:9%;bottom:16px;height:2px;background:var(--ink);border-radius:2px;z-index:0;box-shadow:0 7px 12px -6px rgba(20,19,16,.22)}
-.room-empty{font:italic 500 14px var(--serif);color:var(--ink-3);padding:26px 0;text-align:center}
+/* 案头舞台：身后留极淡书斋背景位（_studio.webp，未生成则透明），下方几案承托陈设；高度/边距随宽度自适应 */
+.room-stage{position:relative;width:100%;min-height:clamp(126px,26vw,152px);display:flex;align-items:flex-end;justify-content:center;padding:12px clamp(6px,3vw,18px) 26px;background-position:center top;background-size:cover;background-repeat:no-repeat;border-radius:10px}
+.room-stage::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,transparent 32%,var(--card) 86%);pointer-events:none}
+/* 陈设：单排不换行，clamp 自适应，4 件在手机也放得下 */
+.room-shelf{display:flex;align-items:flex-end;justify-content:center;gap:clamp(12px,5vw,40px);flex-wrap:nowrap;position:relative;z-index:2;max-width:100%}
+.room-piece{display:grid;place-items:end center;min-width:0}
+.room-piece img{width:clamp(54px,15vw,86px);height:clamp(54px,15vw,86px);object-fit:contain;filter:drop-shadow(0 6px 5px rgba(20,19,16,.22))}
+/* 几案：墨线托面（纸色面 + 加厚前沿 + 落地投影），陈设坐落其上 */
+.room-board{position:absolute;left:6%;right:6%;bottom:14px;height:12px;z-index:1;background:var(--paper);border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:3px;box-shadow:0 10px 16px -10px rgba(20,19,16,.35)}
+.room-empty{font:italic 500 13.5px var(--serif);color:var(--ink-3);padding:8px 4px 18px;text-align:center;position:relative;z-index:2}
 .room-count{font:600 10px var(--mono);letter-spacing:.05em;color:var(--ink-3)}
 .room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:11px}
 .room-cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border:1.4px solid var(--line-soft);border-radius:12px;background:var(--paper);cursor:pointer;transition:border-color .15s,transform .12s}
