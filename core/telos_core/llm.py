@@ -688,6 +688,8 @@ def derive_graph(goal: str, timeout: float = 60.0, lang: str = "", emit=None) ->
     if spec is None:
         _emit({"t": "phase", "phase": "single"})
         spec = _derive_single_spec(goal, ctx, lang, timeout)
+    # critique 前先把装配好的图吐给前端 → 可早 ~26s 跳地图（校对在后台精修后再 patch）。
+    _emit({"t": "graph", "goal": goal, "title": str(spec.get("title", "")).strip(), "points": spec.get("points", [])})
     try:
         _emit({"t": "phase", "phase": "critique"})
         spec = _critique_and_repair(goal, spec, lang, timeout)

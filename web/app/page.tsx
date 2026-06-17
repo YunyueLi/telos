@@ -113,6 +113,9 @@ function progressSeg(p: DeriveProgress | null): { floor: number; ceil: number; t
     }
     case "assemble":
       return { floor: 84, ceil: 90, tau: 2, key: "ob.phAssemble" };
+    case "assembled":
+      return { floor: 88, ceil: 92, tau: 2, key: "ob.phAssemble" }; // 装配好（即将跳地图）
+
     case "single":
       return { floor: 30, ceil: 82, tau: 40, key: "ob.phExpand" };
     case "critique":
@@ -354,7 +357,7 @@ function MapHome({
   onOpenNode: (id: string) => void;
   onDiagnose: () => void;
 }) {
-  const { project, graph, view } = useProject();
+  const { project, graph, view, deriving } = useProject();
   const { t } = useT();
   const [isPhone, setIsPhone] = useState(false);
   // 阶段概览：点击行 → 往下内联展开该阶段的能力点清单（手风琴），不再直接弹节点详情
@@ -419,6 +422,12 @@ function MapHome({
       </div>
 
       <aside className="mh-rail">
+        {/* 早出图后 critique 仍在后台精修：轻提示，完成即消失（地图随之 patch 几处节点/边）。 */}
+        {deriving && (
+          <div className="mh-refining" role="status">
+            <span className="spinner" /> {t("home.refining")}
+          </div>
+        )}
         {/* 看板娘意义锚定：进步可见(Agent3)。仅有进度时显示——fresh 用下方 recap 锚定初心，不重复 */}
         {!fresh && (
           <div className="mh-companion">

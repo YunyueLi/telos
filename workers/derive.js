@@ -505,6 +505,8 @@ async function derive(goal, env, lang, emit) {
     spec = await deriveSingleSpec(goal, ctx, env, lang);
   }
   const graph = toGraph(spec, goal);
+  // critique 前先把装配好的图吐给前端 → 可早 ~26s 跳地图（校对在后台精修后再 patch）。
+  ev({ t: "graph", goal: graph.goal, title: graph.title, points: graph.points });
   try {
     ev({ t: "phase", phase: "critique" });
     graph.points = await critiqueAndRepair(goal, graph.points, env, lang);
