@@ -386,13 +386,14 @@ export interface DerivedGraph {
   points: DerivedPoint[];
 }
 
-// 倒推真实进度（流式 / 直连共用）：按管线里程碑上报，前端据此画真进度条 + 模块清单。
+// 倒推真实进度（流式 / 直连共用）：按管线里程碑上报，前端据此画真进度条 + 模块清单 + 早出图。
 export interface DeriveProgress {
-  phase: "search" | "blueprint" | "expand" | "assemble" | "critique" | "single";
+  phase: "search" | "blueprint" | "expand" | "assemble" | "critique" | "single" | "assembled";
   modulesTotal?: number; // 蓝图判定的模块数（expand 阶段已知）
   modulesDone?: number; // 已完成展开的模块数
   modules?: { id: string; title: string }[]; // 模块清单（蓝图就绪时一次性给）
   doneId?: string; // 刚完成的模块 id
+  graph?: DerivedGraph; // phase==="assembled"：装配好的可用图（critique 前）→ 可早跳地图
 }
 
 // 把端点返回的 points 规整成前端 engine.ts 能直接吃的形状（容错老式 snake_case 字段）。
@@ -515,6 +516,15 @@ async function deriveGraphStream(
       onProgress({ phase: "expand", modulesTotal: Number(ev.total) || total, modulesDone: Number(ev.done) || 0, doneId: String(ev.id ?? "") });
     } else if (t === "error") {
       throw new Error(hostedErrorMessage(ev.message) || String(ev.message || tStatic("err.deriveFailedShort")));
+    } else if (t === "graph") {
+      // 装配好的可用图（critique 前）：上报给上层早跳地图，但不终止流（继续读 critique → done）。
+      const pts = ev.points;
+      if (Array.isArray(pts) && pts.length) {
+        onProgress({
+          phase: "assembled",
+          graph: { goal: String(ev.goal ?? goal), title: String(ev.title ?? "").trim() || undefined, points: normalize(pts) },
+        });
+      }
     } else if (t === "done" || (Array.isArray(ev.points) && !t)) {
       const pts = ev.points;
       if (Array.isArray(pts) && pts.length) {

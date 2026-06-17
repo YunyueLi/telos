@@ -1161,6 +1161,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 /* 复习页"温故知新"师者话 */
 .rv-wengu{margin:16px 0 0;font:italic 500 14px/1.6 var(--serif);color:var(--ink-2);max-width:540px}
 /* MapHome 看板娘意义锚定 bar（回扣初心 + 进步可见）*/
+/* 早出图后 critique 后台精修的轻提示（完成即消失）*/
+.mh-refining{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font:600 11.5px var(--mono);letter-spacing:.02em;color:var(--ink-3);background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:5px 12px 5px 10px}
+.mh-refining .spinner{width:12px;height:12px}
 .mh-companion{display:flex;align-items:center;gap:11px;margin:0;padding:10px 14px;background:var(--paper);border:1.5px solid var(--line-soft);border-radius:13px}
 .mh-companion .pmini{width:38px;height:38px;flex:none}
 .mh-companion p{margin:0;font:italic 500 13.5px/1.5 var(--serif);color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}

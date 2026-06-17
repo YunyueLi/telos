@@ -359,24 +359,45 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       setDeriving(true);
       setDeriveError(null);
       setDeriveProgress(null);
-      try {
-        const res = await deriveGraph(g, undefined, setDeriveProgress);
+
+      // 用一张图建立/更新当前项目。首次建立 → 新项目 + 跳出 onboarding；已早建（earlyId）→ 同 id patch
+      // （critique 精修后的 points/title），保留学习状态。merge(p) 更新 projects → graph/view 自动重算重渲染。
+      let earlyId: string | null = null;
+      const establish = (res: { goal: string; title?: string; points: Project["points"] }): Project => {
         const now = Date.now();
+        const id = earlyId ?? genId();
+        const prev = earlyId ? projectsRef.current.find((x) => x.id === earlyId) : null;
         const p: Project = {
-          id: genId(),
+          id,
           goal: res.goal,
           title: res.title,
           points: res.points,
-          state: emptyState(),
-          createdAt: now,
+          state: prev?.state ?? emptyState(),
+          createdAt: prev?.createdAt ?? now,
           updatedAt: now,
         };
         upsertProject(p);
-        setActiveId(p.id);
+        setActiveId(id);
         merge(p);
-        pushCloud(p);
-        setActive(p.id);
-        setComposing(false);
+        setActive(id);
+        if (!earlyId) setComposing(false); // 仅首次建立需要切出引导页
+        return p;
+      };
+
+      try {
+        const res = await deriveGraph(g, undefined, (pr) => {
+          setDeriveProgress(pr);
+          // 装配好（critique 前）→ 立即建项目 + 跳地图，用户早 ~26s 看到可用地图；校对在后台继续。
+          if (pr.phase === "assembled" && pr.graph && !earlyId) {
+            try {
+              earlyId = establish(pr.graph).id;
+            } catch {
+              earlyId = null; // 早出图异常（极少）→ 退回到「完成才建」
+            }
+          }
+        });
+        const fp = establish(res); // 最终图：早建则同 id patch，否则新建
+        pushCloud(fp);
         const r = noteDerive();
         setDailyVersion((v) => v + 1);
         if (r.justMetGoal) setGoalNonce((n) => n + 1);
