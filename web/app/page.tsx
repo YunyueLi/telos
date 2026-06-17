@@ -435,13 +435,13 @@ function MapHome({
             <span className="pmini">
               <img src={asset("/portraits/point.webp")} alt="" />
             </span>
-            <p>{t("home.coProgress", { goal: project.goal, n: view.mastered, total: view.total })}</p>
+            <p>{t("home.coProgress", { goal: project.title || project.goal, n: view.mastered, total: view.total })}</p>
           </div>
         )}
         {fresh && next && (
           <div className="mh-recap">
             {t("home.recap", {
-              goal: project.goal,
+              goal: project.title || project.goal,
               count: view.total > 1 ? t("home.recapCount", { total: view.total }) : "",
             })}
           </div>
