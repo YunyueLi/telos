@@ -17,7 +17,7 @@
 - **书斋 / 形象经济**（一级页 `/studio`，4 大板块）：**形象**（神态·造型·画风）· **印记**（雅号·印章）· **陈设**（案头装点·纸色）· **治学通行证**。顶部统一 anchor 贯穿全页（她+雅号+印+墨+进阶）。概念分域勿混：「画风」=她被怎么画的笔法墨韵（泼墨/木刻，`portraits.ts` theme 系列，Pro）；「纸色」=整个 App 的纸张色温（`theme.ts`，免费 2 + Pro 2）。引擎 `lib/telos/{pass,seals,studyroom,wardrobe,theme}.ts`，解锁语义复用 `portraits.matchUnlock`，跨设备同步走 `sync-state.ts`。红线：纯外观/荣誉、绝不影响学习与 XP；墨只赚不卖、无开箱抽卡、通行证进度只能靠学不可买跳级。Pro=治学轨（每阶额外墨 + 赛季限定印章/雅号/文房）+ 全画风 + 全纸色。
 - **托管 AI**：无 BYOK 的请求带 Supabase token → Worker `hostedGate` 验身份 + KV(`TELOS_USAGE`) 计量（月度/试用/加油包 `pack_d10|pack_l200`）；BYOK 请求旁路计量零成本。错误码 NEED_LOGIN/HOSTED_TRIAL_USED/HOSTED_QUOTA/NO_HOSTED 前端本地化。买断(lifetime)**不含**托管用量。
 - **模板店内容安全**：付费图谱内容（desc/drill/benchmark）**绝不进前端/仓库**（防白嫖）——前端 `templates.ts` 只留 meta+脱敏大纲，完整 points 存 KV `tpl:<id>`（私有母版 `workers/templates-private.json` **git-ignored**，`workers/seed-templates.sh` 灌入），Worker `POST /template` 鉴权（`verifyUser`→已购 `app_metadata.telos_templates` 或 Pro）后下发，前端 `derive.ts fetchTemplatePoints` 拉取。免费模板（科二）内容内嵌前端。Pro=全解锁，非 Pro 可单买。
-- **设计基准 = 实际 App（`/app/`，即 `web/`）**，所有产品视觉/品牌/图标以它为准。`landing/index.html` **已过时**，勿再当基准；待重写以对齐 App（见 HANDOFF P2）。
+- **设计基准 = 实际 App（`/app/`，即 `web/`）**，所有产品视觉/品牌/图标以它为准。`landing/index.html`（营销落地页，部署在 `/`）已对齐当前 App + 产品：单文件内联 CSS、响应式（预览图用随容器缩放的 viewBox SVG，禁止固定 px 绝对定位防溢出）、webp 立绘；内容含 工作方式/学习地图/坚持/书斋形象经济/定价(BYOK·Pro·模板店)/学习科学。产品再演进时同步更新此页，勿让「完全免费」等措辞回潮（现为 BYOK 免费 + Pro 托管）。
 
 ## web 关键
 
