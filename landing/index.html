@@ -16,7 +16,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden;text-rendering:optimizeLegibility}
   .wrap{max-width:1140px;margin:0 auto;padding:0 32px}
   a{color:inherit;text-decoration:none}
   img{max-width:100%}
@@ -53,10 +53,10 @@
   /* hero */
   .hero{display:grid;grid-template-columns:1.08fr .92fr;gap:40px;align-items:center;padding:68px 0 48px}
   .hero .kick{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--ink-2);text-transform:uppercase}
-  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(38px,6vw,60px);line-height:1.04;letter-spacing:-.022em;margin:18px 0 0}
+  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(38px,6vw,60px);line-height:1.12;letter-spacing:-.022em;margin:16px 0 0}
   .hero h1 em{font-style:italic;position:relative;white-space:nowrap}
   .hand-u{position:absolute;left:-2%;bottom:-10px;width:104%;height:14px;stroke:var(--ink);stroke-width:2.4;fill:none}
-  .hero .lead{color:var(--ink-2);font-size:17px;line-height:1.62;max-width:468px;margin-top:26px}
+  .hero .lead{color:var(--ink-2);font-size:17px;line-height:1.78;max-width:468px;margin-top:24px}
   .hero .cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
   .trust{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:26px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em}
   .trust span{display:inline-flex;align-items:center;gap:6px}
@@ -66,7 +66,7 @@
   .heroart .deco{position:absolute;inset:0;width:100%;height:100%;stroke:var(--ink);fill:none}
 
   /* section head */
-  section{padding:44px 0}
+  section{padding:48px 0}
   .shead{display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:28px;flex-wrap:wrap}
   .shead .no{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .shead h2{font-family:var(--serif);font-weight:500;font-size:clamp(24px,3.4vw,31px);letter-spacing:-.01em}
@@ -74,13 +74,13 @@
 
   /* manifesto */
   .quote{padding:clamp(34px,5vw,52px) clamp(22px,4vw,44px);text-align:center;margin:6px 0}
-  .quote p{font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(21px,3.6vw,30px);line-height:1.32;letter-spacing:-.01em;max-width:760px;margin:0 auto}
+  .quote p{font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(21px,3.6vw,30px);line-height:1.42;letter-spacing:-.01em;max-width:760px;margin:0 auto}
   .quote .src{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,238,233,.55);margin-top:22px}
 
   /* 「学什么都行」泛用性 chip 带 */
   .anyhead{margin-bottom:18px}
   .anyhead h2{font-family:var(--serif);font-weight:500;font-size:clamp(22px,3vw,28px);letter-spacing:-.01em}
-  .anyhead p{color:var(--ink-2);font-size:14.5px;line-height:1.6;margin-top:8px;max-width:640px}
+  .anyhead p{color:var(--ink-2);font-size:14.5px;line-height:1.75;margin-top:10px;max-width:640px}
   .chips{display:flex;flex-wrap:wrap;gap:10px}
   .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:9px 15px;font-size:13.5px;color:var(--ink);transition:.15s}
   .chip:hover{border-color:var(--ink);transform:translateY(-1px)}
@@ -96,7 +96,7 @@
   .vcard .step{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ink-3)}
   .vcard.dk .step{color:rgba(240,238,233,.6)}
   .vcard h4{font-family:var(--serif);font-weight:500;font-size:20px}
-  .vcard p{font-size:13px;color:var(--ink-2);line-height:1.55;margin-top:2px}
+  .vcard p{font-size:13px;color:var(--ink-2);line-height:1.7;margin-top:5px}
   .vcard.dk p{color:rgba(240,238,233,.8)}
 
   /* bento features */
@@ -105,7 +105,7 @@
   .tile.big{grid-column:span 4}.tile.sm{grid-column:span 2}.tile.md{grid-column:span 3}
   .tile .th{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:500;font-size:18px;color:var(--ink);line-height:1.25}
   .tile .th .ic{width:18px;height:18px;color:var(--ink);flex:none}
-  .tile p{font-size:13px;color:var(--ink-2);line-height:1.55;margin-top:8px}
+  .tile p{font-size:13px;color:var(--ink-2);line-height:1.68;margin-top:8px}
   .tile.dk{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .tile.dk .th,.tile.dk .th .ic{color:var(--paper)}
   .tile.dk p{color:rgba(240,238,233,.82)}
@@ -159,7 +159,7 @@
   .plan .price{font-size:13.5px;color:var(--ink-2);margin-top:6px}
   .plan.dk .price{color:rgba(240,238,233,.82)}
   .plan ul{list-style:none;margin:16px 0 0;display:flex;flex-direction:column;gap:9px;flex:1}
-  .plan li{display:flex;gap:9px;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+  .plan li{display:flex;gap:10px;font-size:13.5px;line-height:1.6;color:var(--ink-2)}
   .plan.dk li{color:rgba(240,238,233,.86)}
   .plan li .ic{width:15px;height:15px;flex:none;margin-top:2px;color:var(--ink-3)}
   .plan.dk li .ic{color:rgba(240,238,233,.65)}
@@ -169,9 +169,9 @@
 
   /* science */
   .sci{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 32px}
-  .sci .r{display:flex;gap:14px;padding:14px 0;border-bottom:1px dashed var(--line-soft)}
-  .sci .r .k{font-family:var(--serif);font-weight:500;font-size:16px;flex:none;min-width:138px}
-  .sci .r .v{font-size:13px;color:var(--ink-2);line-height:1.5}
+  .sci .r{display:flex;gap:16px;padding:16px 0;border-bottom:1px dashed var(--line-soft)}
+  .sci .r .k{font-family:var(--serif);font-weight:500;font-size:16px;line-height:1.5;flex:none;min-width:138px}
+  .sci .r .v{font-size:13px;color:var(--ink-2);line-height:1.68}
 
   /* plate (product preview) */
   .cap{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;display:flex;gap:12px;margin-bottom:10px}
@@ -194,12 +194,12 @@
   .nextc{margin-top:22px;border-radius:14px;padding:17px}
   .nextc .l{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:rgba(240,238,233,.6)}
   .nextc .t{font-family:var(--serif);font-weight:500;font-size:18px;margin:3px 0}
-  .nextc .d{font-size:12.5px;color:rgba(240,238,233,.78);line-height:1.5}
+  .nextc .d{font-size:12.5px;color:rgba(240,238,233,.78);line-height:1.6}
 
   /* open source band + final cta */
   .band{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center;padding:clamp(30px,5vw,44px) clamp(26px,4vw,46px)}
   .band h3{font-family:var(--serif);font-weight:500;font-size:clamp(24px,3.6vw,30px);letter-spacing:-.01em;line-height:1.12}
-  .band p{color:rgba(240,238,233,.8);font-size:14.5px;line-height:1.6;margin-top:12px;max-width:520px}
+  .band p{color:rgba(240,238,233,.8);font-size:14.5px;line-height:1.7;margin-top:13px;max-width:520px}
   .band .acts{display:flex;flex-direction:column;gap:11px}
 
   footer{border-top:1px solid var(--line);margin-top:10px;padding:34px 0 64px}
