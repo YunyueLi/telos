@@ -77,6 +77,15 @@
   .quote p{font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(21px,3.6vw,30px);line-height:1.32;letter-spacing:-.01em;max-width:760px;margin:0 auto}
   .quote .src{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,238,233,.55);margin-top:22px}
 
+  /* 「学什么都行」泛用性 chip 带 */
+  .anyhead{margin-bottom:18px}
+  .anyhead h2{font-family:var(--serif);font-weight:500;font-size:clamp(22px,3vw,28px);letter-spacing:-.01em}
+  .anyhead p{color:var(--ink-2);font-size:14.5px;line-height:1.6;margin-top:8px;max-width:640px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:9px 15px;font-size:13.5px;color:var(--ink);transition:.15s}
+  .chip:hover{border-color:var(--ink);transform:translateY(-1px)}
+  .chip .dom{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;color:var(--ink-3);background:var(--paper);border-radius:6px;padding:2px 6px}
+
   /* how it works — 4 step loop */
   .hiw{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
   .vcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:4px}
@@ -285,6 +294,26 @@
   <p>“从你想成为的样子，倒推回此刻该迈出的第一步。”</p><div class="src">Telos · 逆向设计学习范式</div>
 </div></section></div>
 
+<!-- WHAT CAN I LEARN · universality -->
+<section class="wrap" id="any" style="padding-top:18px">
+  <div class="anyhead">
+    <h2>说得出，就学得会</h2>
+    <p>编程、语言、乐器、考试、竞技、习惯……任意目标，Telos 都能倒推成一张专属的学习地图。下面每一个都是真实可倒推的目标：</p>
+  </div>
+  <div class="chips">
+    <span class="chip"><i class="dom">记忆</i> 背熟 GRE 核心 3000 词</span>
+    <span class="chip"><i class="dom">技艺</i> 从零学会古典吉他弹唱</span>
+    <span class="chip"><i class="dom">竞技</i> 把英雄联盟打上钻石段位</span>
+    <span class="chip"><i class="dom">创作</i> 写出能投稿的科幻短篇</span>
+    <span class="chip"><i class="dom">习惯</i> 养成每天深度工作两小时</span>
+    <span class="chip"><i class="dom">考试</i> 考研英语一 70+</span>
+    <span class="chip"><i class="dom">实操</i> 驾照科目二一把过</span>
+    <span class="chip"><i class="dom">生活</i> 冲出一杯好喝的手冲咖啡</span>
+    <span class="chip"><i class="dom">健身</i> 三个月跑完半程马拉松</span>
+    <span class="chip"><i class="dom">编程</i> 用 Rust 写高性能 HTTP 服务器</span>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section class="wrap" id="hiw">
   <div class="shead"><span class="no">01</span><h2>工作方式</h2><span class="sub">倒推 → 诊断 → 教学 → 复习</span></div>
@@ -309,11 +338,11 @@
           <path class="gedge s" d="M86 112C150 110 196 76 240 74"/>
           <path class="gedge l" d="M300 74C346 50 380 42 410 40"/>
           <path class="gedge l" d="M300 74C346 98 380 110 410 112"/>
-          <g class="gnode done" transform="translate(48,40)"><rect x="-44" y="-15" width="88" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">HTTP 基础</text></g>
-          <g class="gnode done" transform="translate(48,112)"><rect x="-44" y="-15" width="88" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">Python</text></g>
-          <g class="gnode now" transform="translate(270,74)"><rect x="-46" y="-15" width="92" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">JWT 原理</text></g>
-          <g class="gnode lock" transform="translate(412,40)"><rect x="-40" y="-15" width="80" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">FastAPI</text></g>
-          <g class="gnode lock" transform="translate(412,112)"><rect x="-40" y="-15" width="80" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">部署上线</text></g>
+          <g class="gnode done" transform="translate(50,40)"><rect x="-48" y="-15" width="96" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">选豆与磨度</text></g>
+          <g class="gnode done" transform="translate(50,112)"><rect x="-48" y="-15" width="96" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">水温·粉水比</text></g>
+          <g class="gnode now" transform="translate(270,74)"><rect x="-46" y="-15" width="92" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">注水手法</text></g>
+          <g class="gnode lock" transform="translate(412,40)"><rect x="-44" y="-15" width="88" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">风味复现</text></g>
+          <g class="gnode lock" transform="translate(412,112)"><rect x="-40" y="-15" width="80" height="30" rx="9"/><text x="0" y="4" text-anchor="middle">拉花</text></g>
         </svg>
       </div>
     </div>
@@ -347,7 +376,7 @@
   <div class="plate"><div class="ptop"><span class="u">telos / 地图</span><span class="br"><i></i><i></i><i></i></span></div>
     <div class="mtop">
       <span class="pmini"><img class="peep" src="assets/portraits/avatar.webp" alt="" width="40" height="40" loading="lazy"/></span>
-      <span class="hi">继续，Alex<span>用 FastAPI 写带 JWT 鉴权的 REST API · 倒推出 12 个能力点</span></span>
+      <span class="hi">继续，Alex<span>从零学会古典吉他弹唱 · 倒推出 12 个能力点</span></span>
       <div class="leg"><span><i class="d"></i>已掌握</span><span><i></i>现在学</span><span><i class="l"></i>学习中</span><span><i class="k"></i>未解锁</span></div>
     </div>
     <div class="mbody">
@@ -363,15 +392,15 @@
           <path class="gedge l" d="M540 120C576 144 598 166 614 184"/>
           <path class="gedge l" d="M540 270C576 248 598 224 614 206"/>
           <ellipse class="gring" cx="286" cy="196" rx="78" ry="38"/>
-          <g class="gnode done" transform="translate(96,56)"><rect x="-52" y="-19" width="104" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">Python 基础</text><text class="sub" x="0" y="11" text-anchor="middle">已掌握</text></g>
-          <g class="gnode done" transform="translate(286,56)"><rect x="-52" y="-19" width="104" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">函数与类型</text><text class="sub" x="0" y="11" text-anchor="middle">已掌握</text></g>
-          <g class="gnode done" transform="translate(96,196)"><rect x="-52" y="-19" width="104" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">HTTP 基础</text><text class="sub" x="0" y="11" text-anchor="middle">已掌握</text></g>
-          <g class="gnode now" transform="translate(286,196)"><rect x="-54" y="-19" width="108" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">JWT 原理</text><text class="sub" x="0" y="11" text-anchor="middle">现在学这个</text></g>
-          <g class="gnode learn" transform="translate(286,318)"><rect x="-54" y="-19" width="108" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">REST 设计</text><text class="sub" x="0" y="11" text-anchor="middle">学习中 62%</text></g>
-          <g class="gnode lock" transform="translate(512,120)"><rect x="-50" y="-19" width="100" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">FastAPI 路由</text><text class="sub" x="0" y="11" text-anchor="middle">未解锁</text></g>
-          <g class="gnode lock" transform="translate(512,270)"><rect x="-50" y="-19" width="100" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">鉴权中间件</text><text class="sub" x="0" y="11" text-anchor="middle">未解锁</text></g>
-          <g class="gnode lock" transform="translate(636,196)"><rect x="-42" y="-19" width="84" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">部署上线</text><text class="sub" x="0" y="11" text-anchor="middle">目标</text></g>
-          <text class="gfront" x="350" y="150">↙ 你的学习前沿</text>
+          <g class="gnode done" transform="translate(96,56)"><rect x="-52" y="-19" width="104" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">持琴与调音</text><text class="sub" x="0" y="11" text-anchor="middle">已掌握</text></g>
+          <g class="gnode done" transform="translate(286,56)"><rect x="-52" y="-19" width="104" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">看懂六线谱</text><text class="sub" x="0" y="11" text-anchor="middle">已掌握</text></g>
+          <g class="gnode done" transform="translate(96,196)"><rect x="-52" y="-19" width="104" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">基础和弦</text><text class="sub" x="0" y="11" text-anchor="middle">已掌握</text></g>
+          <g class="gnode now" transform="translate(286,196)"><rect x="-54" y="-19" width="108" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">右手节奏型</text><text class="sub" x="0" y="11" text-anchor="middle">现在学这个</text></g>
+          <g class="gnode learn" transform="translate(286,318)"><rect x="-54" y="-19" width="108" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">顺畅换和弦</text><text class="sub" x="0" y="11" text-anchor="middle">学习中 62%</text></g>
+          <g class="gnode lock" transform="translate(512,120)"><rect x="-50" y="-19" width="100" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">常用扫弦型</text><text class="sub" x="0" y="11" text-anchor="middle">未解锁</text></g>
+          <g class="gnode lock" transform="translate(512,270)"><rect x="-50" y="-19" width="100" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">弹唱配合</text><text class="sub" x="0" y="11" text-anchor="middle">未解锁</text></g>
+          <g class="gnode lock" transform="translate(636,196)"><rect x="-44" y="-19" width="88" height="38" rx="11"/><text x="0" y="-1" text-anchor="middle">完整弹唱</text><text class="sub" x="0" y="11" text-anchor="middle">目标</text></g>
+          <text class="gfront" x="352" y="150">↙ 你的学习前沿</text>
         </svg>
       </div>
       <div class="aside">
@@ -382,8 +411,8 @@
         <div class="dark nextc">
           <svg class="contour skL" viewBox="0 0 300 180" preserveAspectRatio="none"><g stroke="currentColor" fill="none" stroke-width="1.4" opacity="0.13"><path d="M-10 40C80 20 160 60 310 30"/><path d="M-10 90C80 70 160 110 310 80"/><path d="M-10 140C80 120 160 160 310 130"/></g></svg>
           <div class="l">推荐下一步</div>
-          <div class="t">JWT 原理</div>
-          <div class="d">前置已全部掌握，正处你的学习前沿。约 25 分钟。</div>
+          <div class="t">右手节奏型</div>
+          <div class="d">前置已全部掌握，正处你的学习前沿。约 20 分钟。</div>
           <a class="btn btn-light" href="app/" style="width:100%;justify-content:center;margin-top:13px">开始学习 <svg class="ic sk"><use href="#i-arrow"/></svg></a>
         </div>
       </div>
