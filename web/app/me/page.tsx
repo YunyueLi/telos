@@ -210,13 +210,15 @@ export default function MePage() {
               <Icon name="plus" /> {t("shell.new")}
             </button>
           </div>
-          <div className="me-set">
-            <button className="me-row" onClick={() => router.push("/diagnose")} disabled={!project}>
-              <Icon name="spark" className="ic" />
-              <span className="l">{t("me.resetStart")}</span>
-              <span className="v">{t("me.cbmDiag")}</span>
-            </button>
-          </div>
+          {project && (
+            <div className="me-set">
+              <button className="me-row" onClick={() => router.push("/diagnose")}>
+                <Icon name="spark" className="ic" />
+                <span className="l">{t("me.resetStart")}</span>
+                <span className="v">{t("me.cbmDiag")}</span>
+              </button>
+            </div>
+          )}
           {projects.length === 0 ? (
             <p className="me-note">{t("me.noProjects")}</p>
           ) : (

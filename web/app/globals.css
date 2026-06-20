@@ -354,6 +354,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-box textarea::placeholder{color:var(--ink-3)}
 .ob-bar{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line-soft);padding-top:11px}
 .ob-hint{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+/* 键盘快捷键提示只在有物理键盘(细指针)或宽屏显示——触屏/窄屏没有 Cmd/Ctrl 键 */
+@media(pointer:coarse),(max-width:560px){.ob-hint{display:none}}
 /* 六类学习 · 液态玻璃分类卡（一行三个 · 两行）—— 分类用胶囊标签清晰标注 */
 .ob-cats{width:100%}
 .ob-cats .lab{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
