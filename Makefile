@@ -14,8 +14,8 @@ web:   ## 只起网页（:3000，零配置自动连 serve.py）
 test:  ## 跑引擎测试（Python 零依赖）
 	@cd core && python3 run_tests.py
 
-build: ## 生产构建网页（静态导出）
-	@cd web && npm run build
+build: ## 生产构建 Cloudflare Pages 输出（landing + /app）
+	@./scripts/build-pages.sh
 
 help:  ## 列出所有命令
 	@grep -hE '^[a-z]+:.*##' $(MAKEFILE_LIST) | sed -E 's/:.*## / — /' | sort

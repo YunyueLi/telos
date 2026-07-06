@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Telos · 一键本地运行：装好依赖、起「倒推代理 + 网页应用」、自动打开浏览器。
 # 用法：  ./start.sh        （Ctrl-C 退出，会自动收尾后台进程）
-# 想零安装直接体验？直接开线上版：https://yunyueli.github.io/telos/app/
+# 想零安装直接体验？直接开线上版：https://telos.ungetsu.net/app/
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -24,7 +24,7 @@ if grep -q "sk-your-own-key-here" core/.env 2>/dev/null; then
   bold "还没填 LLM key —— 倒推 / 微课需要它"
   echo "  1) 到 https://platform.deepseek.com 拿一个 key（便宜、注册常送额度）"
   echo "  2) 把 core/.env 里的 TELOS_LLM_API_KEY= 改成你的 key，保存后刷新页面即可"
-  dim "  （不想装也行：直接开线上版 https://yunyueli.github.io/telos/app/ ，零配置）"
+  dim "  （不想装也行：直接开线上版 https://telos.ungetsu.net/app/ ，零配置）"
   echo
 fi
 

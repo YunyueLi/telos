@@ -9,7 +9,7 @@
 
 **Telos = 逆向设计学习引擎**：说目标 → LLM 倒推出带前置依赖的能力图谱(DAG) → 诊断起点 → 交互式微课只教缺的、边教边验证 → FSRS 间隔复习。已是**单一真实产品**（不再有 demo 宇宙 / mockup 框架）。
 
-### 产品形态（web，Next.js 16 静态导出 · 自定义域 `telos.ungetsu.net`：landing `/`、app `/app/`；旧 github.io 自动 301）
+### 产品形态（web，Next.js 16 静态导出 · Cloudflare Pages 自定义域 `telos.ungetsu.net`：landing `/`、app `/app/`）
 - 路由：`/`（Hub）· `/diagnose`（CBM 诊断）· `/review`（FSRS 复习）· `/streak`（坚持/激励）· `/studio`（书斋/形象经济）· `/me`（档案+项目+账户）· `/settings`（配置）· `/account`（登录）· `/pro`（定价）· `/store`（模板店）· `/cert`（证书验真）· `/privacy` · `/terms`。微课/节点详情是全屏接管/sheet（静态导出无动态路由）。
 - 微课 & 节点详情是**全屏接管 / sheet 覆盖层**，不是路由（静态导出无法用动态 id 路由）。
 - 外壳 `components/app-shell.tsx`：顶栏(品牌/当前目标/新学习/连胜/XP/头像) + 移动底部三 Tab(地图/复习/我)。
@@ -55,7 +55,7 @@ cd web  && npm run dev               # :3000
 - 构建检查：`cd web && npm run build`。引擎测试：`cd core && python3 run_tests.py`（21 passed）。
 
 ### 约定（硬性）
-- 提交：conventional，结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。代码改动**默认直接提交+push+部署**（push main → Actions deploy.yml → Pages）。
+- 提交：conventional，结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。代码改动**默认直接提交+push+部署**（push main → Cloudflare Pages 项目 `telos`）。
 - **绝不**提交 `.env`/任何 key；提交前 secret 扫一遍（`git diff --cached | grep -E "sk-[A-Za-z0-9]{20,}"`）。
 - 回复中文、不写"总结"段、禁 emoji、用手绘 Icon。`devIndicators:false`（左下 N 已隐）。
 

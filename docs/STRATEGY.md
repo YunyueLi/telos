@@ -37,7 +37,7 @@
 
 ## 二、学习地图画布:React Flow + d3-dag(我的定夺)
 
-用户让我定夺,**结论:主选 React Flow(`@xyflow/react`,MIT)+ d3-dag 布局,客户端 `ssr:false` 挂载,可直接跑在 GitHub Pages 静态导出上。** 理由是它唯一同时满足:开源 License 干净 + React 原生 + 静态站友好 + 无限缩放平移 + 多形态可延展。
+用户让我定夺,**结论:主选 React Flow(`@xyflow/react`,MIT)+ d3-dag 布局,客户端 `ssr:false` 挂载,可直接跑在 Cloudflare Pages 静态导出上。** 理由是它唯一同时满足:许可干净 + React 原生 + 静态站友好 + 无限缩放平移 + 多形态可延展。
 
 **为什么不是 tldraw / 其它:**
 - **tldraw**:技术最强,但 source-available(非 OSI 开源)、非商用强制水印、商用需 license key,**与干净的 Apache-2.0 开源冲突**,排除为主方案。

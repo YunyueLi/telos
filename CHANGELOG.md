@@ -24,7 +24,7 @@ First public release. Telos reverse-derives any goal into a prerequisite skill m
 - Black-and-white editorial **design system** (Fraunces + Inter + JetBrains Mono, hand-drawn icons, monochrome mascot) — codified in `docs/DESIGN.md`.
 
 ### Online & deploy
-- Hosted app on **GitHub Pages** with online derivation via a **Cloudflare Worker** (LLM key server-side, CORS-locked).
+- Hosted app on **Cloudflare Pages** with online derivation via a **Cloudflare Worker** (LLM key server-side, CORS-locked).
 - **One-click "Deploy to Cloudflare"** button; committed `.env.example` templates; every optional integration (search / accounts / OAuth) degrades gracefully.
 
 ### Docs

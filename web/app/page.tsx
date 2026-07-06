@@ -11,7 +11,7 @@ import { asset } from "@/lib/base";
 import { AppShell } from "@/components/app-shell";
 import NodePanel from "@/components/node-panel";
 import PathView from "@/components/path-view";
-// 画布静态导入（核心界面）：之前用 dynamic 懒加载，部署更替后旧 HTML 缓存(GitHub Pages ≤10min)
+// 画布静态导入（核心界面）：之前用 dynamic 懒加载，部署更替后旧 HTML 缓存
 // 引用的旧 chunk 已 404 → 地图永远停在「加载地图…」，需再刷新才好。静态导入后页面 JS 能起，地图必能起。
 import DeriveCanvas from "@/components/canvas";
 import { useProject } from "@/lib/telos/use-project";

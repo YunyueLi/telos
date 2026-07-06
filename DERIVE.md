@@ -9,7 +9,7 @@
 | 场景 | 端点 | key 来自 |
 |---|---|---|
 | 本地体验 / CLI / SKILL | `core/serve.py`（零依赖) | 你机器上的 `core/.env` |
-| 公开网页(GitHub Pages) | `workers/derive.js`（Cloudflare Worker） | **用户请求自带（BYOK）**；私有/自费实例可用 Worker secret 作回退 |
+| 官方网页(Cloudflare Pages) | `workers/derive.js`（Cloudflare Worker） | **用户请求自带（BYOK）**；私有/自费实例可用 Worker secret 作回退 |
 
 > 安全须知:**任何曾经粘贴/提交到公开处的 key 都视为已泄露,先去控制台作废重建。**
 > `core/.env` 已被 `.gitignore` 忽略;私有实例的 Worker key 用 `wrangler secret` 存,不进仓库。
@@ -70,8 +70,8 @@ npx wrangler secret put TELOS_SEARCH_API_KEY # 可选:Tavily
 部署后会得到一个地址,如 `https://telos-derive.<你的子域>.workers.dev`。
 倒推端点就是它加 `/derive`。把它接到网页有两种方式:
 
-1. **构建期注入**(让公开站默认可用):在 GitHub Action(`.github/workflows/deploy.yml`)
-   的构建步骤加环境变量
+1. **构建期注入**(让站点默认可用):在 Cloudflare Pages 项目 `telos`
+   的环境变量里设置
    `NEXT_PUBLIC_TELOS_DERIVE_URL=https://telos-derive.xxx.workers.dev/derive`。
    （这个 URL 不是机密,可以公开;真正的 key 在 Worker 里。)
 2. **运行时粘贴**:任何访客在「倒推」页底部把上面的 `/derive` 地址填进去保存即可(存在各自浏览器的 localStorage)。

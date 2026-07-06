@@ -7,8 +7,8 @@ import { dirname } from "node:path";
 const root = dirname(fileURLToPath(import.meta.url));
 
 // Static export served under the custom domain https://telos.ungetsu.net/app/.
-// (The GitHub Pages project URL …github.io/telos/app/ 301-redirects here once the
-//  custom domain is set, so the app lives at /app — no /telos prefix.)
+// Cloudflare Pages publishes the marketing landing page at / and this app under
+// /app, so production keeps a stable /app basePath with no repository prefix.
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {

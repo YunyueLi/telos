@@ -43,7 +43,7 @@ export function getDeriveUrl(): string {
       if (env) return env;
       return LOCAL_ENDPOINT;
     }
-    // 生产页（如 GitHub Pages）：构建期端点是权威。【忽略本机残留的覆盖】——dev 调试遗留的
+    // 生产页：构建期端点是权威。【忽略本机残留的覆盖】——dev 调试遗留的
     // localhost / 旧地址会让线上去打一个打不通的端点（cantConnect）。自愈：硬刷新即恢复，无需清缓存。
     if (env) return env;
     // 仅当没有构建端点（裸静态部署）时，才允许运行时粘贴的【非 localhost】覆盖生效。

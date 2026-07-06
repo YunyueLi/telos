@@ -1,6 +1,6 @@
 "use client";
 
-// 部署更替自愈：GitHub Pages 的 HTML 缓存(≤10min)在新部署后仍引用旧哈希 chunk（文件已被替换→404），
+// 部署更替自愈：CDN 的 HTML 缓存在新部署后可能仍引用旧哈希 chunk（文件已被替换→404），
 // 动态 import 失败会让对应功能永久卡死（如导出）。这里全局捕获 chunk 加载失败 → 自动整页刷新一次
 // 拉取新 HTML。60 秒冷却防死循环：刷新后若仍失败（真网络故障），不再连环重载。
 import { useEffect } from "react";
