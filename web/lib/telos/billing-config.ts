@@ -20,8 +20,8 @@ export const BILLING = {
   // 展示价格（仅展示用；实收以收银台为准，服务商会按地区本地化）
   plans: {
     monthly: { productId: "PRODUCT_ID_REDACTED", price: "$2.9", save: "" },
-    yearly: { productId: "", price: "$19", save: "-45%" },
-    lifetime: { productId: "", price: "$49", save: "" },
+    yearly: { productId: "PRODUCT_ID_REDACTED", price: "$19", save: "-45%" },
+    lifetime: { productId: "PRODUCT_ID_REDACTED", price: "$49", save: "" },
   } as Record<Plan, { productId: string; price: string; save: string }>,
   // 用户自助管理/取消订阅（customer portal）
   manageUrl: "",
@@ -34,8 +34,8 @@ export const BILLING = {
   },
   // 加油包（创建产品后填 product_id；plan 传 pack_d10 / pack_l200 这类 SKU 码，webhook 自动充值）
   packs: [
-    { sku: "pack_d10" as const, price: "$1.9", label: "+10", unit: "d" as const, productId: "" },
-    { sku: "pack_l200" as const, price: "$1.9", label: "+200", unit: "l" as const, productId: "" },
+    { sku: "pack_d10" as const, price: "$1.9", label: "+10", unit: "d" as const, productId: "PRODUCT_ID_REDACTED" },
+    { sku: "pack_l200" as const, price: "$1.9", label: "+200", unit: "l" as const, productId: "PRODUCT_ID_REDACTED" },
   ],
   // 模板店若使用一个通用 Creem 产品，在这里填 product_id；否则在每个模板 meta 上填自己的 productId。
   templateProductId: "",
