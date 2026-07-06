@@ -5,7 +5,7 @@
 // 全屏响应式：手机单列堆叠 / 平板桌面左右分栏（今日+保护在左，日历占满右列）。
 // 设计依据：Duolingo（目标自定、连胜按达成今日目标计、freeze 自动桥接、最多持 2）；
 // 习惯类 App 月历打卡（月份切换、日期数字、今日高亮、未来日淡显）；动机红线见 xp.ts。
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon, type IconName } from "@/components/icon";
 import { SelectMenu, type MenuOption } from "@/components/select-menu";
 import { useProject } from "@/lib/telos/use-project";
@@ -14,15 +14,20 @@ import {
   GOAL_OPTIONS,
   TIER_MIN_LEVEL,
   bestDayXp,
+  currentWeekKey,
   levelInfo,
   maxStreak,
   monthGrid,
   totalXp,
+  weekXp,
   type DayCell,
 } from "@/lib/telos/xp";
 import { DAILY_INK, GRAPH_INK } from "@/lib/telos/ink";
 import { Stamp } from "@/components/stamp";
 import { currentTerm } from "@/lib/telos/solarterm";
+import { pullLeaderboard, reportWeekXp, type LeaderboardData } from "@/lib/telos/cloud";
+
+const LEAGUE_PREF = "telos:league";
 
 // 进度环：纯 SVG，描边随 pct 收放；达标显对勾，否则显百分比。
 function Ring({ pct, met }: { pct: number; met: boolean }) {
@@ -53,7 +58,7 @@ function Ring({ pct, met }: { pct: number; met: boolean }) {
 
 export function StreakBoard() {
   const { t, lang } = useT();
-  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, spendable, canRedeem, freezeCost, redeemFreeze, dailyVersion, setDailyGoal, view } =
+  const { streak, dailyXp, dailyGoal, dailyPct, dailyGoalMet, freezes, spendable, canRedeem, freezeCost, redeemFreeze, dailyVersion, setDailyGoal, view, cloudOn } =
     useProject();
 
   // 等级 / 段位 / 个人纪录（全本地真实算，随学习重算）。
@@ -61,6 +66,13 @@ export function StreakBoard() {
   const lvl = useMemo(() => levelInfo(total), [total]);
   const longest = useMemo(() => maxStreak(), [dailyVersion]);
   const best = useMemo(() => bestDayXp(), [dailyVersion]);
+  const week = useMemo(() => currentWeekKey(), [dailyVersion]);
+  const weekTotal = useMemo(() => weekXp(week), [dailyVersion, week]);
+  const [leagueOn, setLeagueOn] = useState(true);
+  const [leaguePrefReady, setLeaguePrefReady] = useState(false);
+  const [league, setLeague] = useState<LeaderboardData | null>(null);
+  const [leagueLoading, setLeagueLoading] = useState(false);
+  const [leagueError, setLeagueError] = useState<string | null>(null);
   const mastered = view?.mastered ?? 0;
   const mapPct = view?.pct ?? 0;
   const achievements: { id: string; icon: IconName; value: number; target: number }[] = [
@@ -73,6 +85,51 @@ export function StreakBoard() {
     { id: "mapDone", icon: "flag", value: mapPct, target: 100 },
     { id: "shieldFull", icon: "shield", value: freezes, target: 2 },
   ];
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(LEAGUE_PREF);
+      if (stored === "0") setLeagueOn(false);
+    } catch {
+      /* ignore */
+    }
+    setLeaguePrefReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!leaguePrefReady) return;
+    try {
+      window.localStorage.setItem(LEAGUE_PREF, leagueOn ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [leagueOn, leaguePrefReady]);
+
+  useEffect(() => {
+    if (!leaguePrefReady) return;
+    let alive = true;
+    const run = async () => {
+      setLeagueLoading(true);
+      const errors: string[] = [];
+      if (leagueOn) {
+        const pushed = await reportWeekXp(week, weekTotal, true);
+        if (pushed.error && pushed.error !== "signed-out" && pushed.error !== "unconfigured") errors.push(pushed.error);
+      } else if (cloudOn) {
+        const pushed = await reportWeekXp(week, 0, false);
+        if (pushed.error && pushed.error !== "signed-out" && pushed.error !== "unconfigured") errors.push(pushed.error);
+      }
+      const pulled = await pullLeaderboard(week, 30);
+      if (pulled.error) errors.push(pulled.error);
+      if (!alive) return;
+      setLeague(pulled.data);
+      setLeagueError(errors[0] ?? null);
+      setLeagueLoading(false);
+    };
+    void run();
+    return () => {
+      alive = false;
+    };
+  }, [cloudOn, leagueOn, leaguePrefReady, week, weekTotal]);
 
   // 当前查看的月份（默认本月）。不能翻到未来月。
   const now = new Date();
@@ -152,6 +209,9 @@ export function StreakBoard() {
           ? "streak.coMid"
           : "streak.coHigh";
   const term = currentTerm(now); // 当前节气（应时而现）
+  const leagueEntries = league?.entries ?? [];
+  const selfEntry = league?.self ?? null;
+  const leagueTotal = league?.total ?? leagueEntries.length;
 
   return (
     <div className="streak">
@@ -392,6 +452,70 @@ export function StreakBoard() {
                 </button>
               )}
             </div>
+          </section>
+
+          {/* 本周联赛：轻榜单，只排名真实学习 XP；用户可随时隐藏参榜。 */}
+          <section className="streak-card league-card">
+            <div className="league-head">
+              <div>
+                <h3>{t("league.title")}</h3>
+                <span>{t("league.week", { week })}</span>
+              </div>
+              <button
+                type="button"
+                className={`league-toggle ${leagueOn ? "on" : ""}`}
+                aria-pressed={leagueOn}
+                onClick={() => setLeagueOn((v) => !v)}
+              >
+                <Icon name={leagueOn ? "globe" : "lock"} />
+                {leagueOn ? t("league.optOut") : t("league.optIn")}
+              </button>
+            </div>
+
+            <div className="league-self">
+              <span>{t("league.weekXp", { n: weekTotal })}</span>
+              {selfEntry ? <b>{t("league.rank", { rank: selfEntry.rank })}</b> : <b>--</b>}
+            </div>
+            {selfEntry && selfEntry.rank > 1 && (
+              <p className="league-note">
+                {selfEntry.gapToNext > 0 ? t("league.toNext", { n: selfEntry.gapToNext }) : t("league.sameXp")}
+              </p>
+            )}
+            {!leagueOn ? (
+              <p className="league-note">{t("league.private")}</p>
+            ) : !cloudOn ? (
+              <p className="league-note">{t("league.signIn")}</p>
+            ) : selfEntry ? (
+              <p className="league-note">{t("league.selfRank", { rank: selfEntry.rank, total: leagueTotal })}</p>
+            ) : null}
+            {leagueError && (
+              <p className="league-note err" title={leagueError}>
+                {t("league.error")}
+              </p>
+            )}
+
+            {leagueLoading && leagueEntries.length === 0 ? (
+              <div className="league-empty">
+                <Icon name="refresh" />
+                <b>{t("league.syncing")}</b>
+              </div>
+            ) : leagueEntries.length > 0 ? (
+              <ol className="league-list">
+                {leagueEntries.slice(0, 10).map((row) => (
+                  <li key={row.userId} className={`league-row ${row.self ? "me" : ""}`.trim()}>
+                    <span className="league-rank">{row.rank}</span>
+                    <span className="league-name">{row.self ? t("league.you") : row.name}</span>
+                    <span className="league-xp">{row.xp} XP</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="league-empty">
+                <Icon name="medal" />
+                <b>{t("league.emptyT")}</b>
+                <span>{t("league.emptyP")}</span>
+              </div>
+            )}
           </section>
         </div>
       </div>

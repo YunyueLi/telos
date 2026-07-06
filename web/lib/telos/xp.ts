@@ -319,6 +319,37 @@ export function bestDayXp(): number {
   return m;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function dateKeyToUtc(date: string): Date | null {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+// ISO 周：周一 UTC 滚动，key 形如 2026-W28。周榜只读每日真实 XP 流水。
+export function currentWeekKey(date = new Date()): string {
+  const dt = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  const year = dt.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil(((dt.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
+  return `${year}-W${pad(week)}`;
+}
+
+function weekKeyOfDateKey(date: string): string | null {
+  const dt = dateKeyToUtc(date);
+  return dt ? currentWeekKey(dt) : null;
+}
+
+export function weekXp(week = currentWeekKey()): number {
+  const d = load();
+  let s = 0;
+  for (const k in d.days) if (weekKeyOfDateKey(k) === week) s += d.days[k];
+  return s;
+}
+
 // 历史最长连胜（扫所有 covered 日，求最长连续 run）。
 export function maxStreak(): number {
   const d = load();

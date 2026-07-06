@@ -1184,8 +1184,31 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .today-body .daily-meta{flex:1;min-width:0}
 .streak-card .daily-freeze{border:0;background:none;padding:0;margin:0}
 .cal-card .daily-cal{margin-top:0}
+.league-card{display:flex;flex-direction:column;gap:12px}
+.league-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.league-head h3{font:400 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin:0 0 4px}
+.league-head span{font:500 10.5px var(--mono);color:var(--ink-3)}
+.league-toggle{flex:none;display:inline-flex;align-items:center;gap:5px;max-width:44%;min-height:30px;padding:6px 10px;border:1px solid var(--line-soft);border-radius:9px;background:var(--paper);font:600 11.5px var(--sans);color:var(--ink-2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.league-toggle:hover{border-color:var(--ink-3);color:var(--ink)}
+.league-toggle.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.league-toggle .ic{width:13px;height:13px;flex:none}
+.league-self{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 0 8px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+.league-self span{font:600 11.5px var(--mono);letter-spacing:.03em;color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.league-self b{font:500 25px var(--serif);color:var(--ink);line-height:1;white-space:nowrap}
+.league-note{margin:-3px 0 0;font:500 11.5px/1.45 var(--sans);color:var(--ink-3)}
+.league-note.err{color:var(--seal)}
+.league-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--line-soft)}
+.league-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:34px;border-bottom:1px solid var(--line-soft)}
+.league-row.me{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.league-rank{font:600 11px var(--mono);color:var(--ink-3);text-align:center}
+.league-name{font:600 12.5px var(--sans);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.league-xp{font:600 11px var(--mono);color:var(--ink-2);white-space:nowrap}
+.league-empty{min-height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;color:var(--ink-3);border:1px dashed var(--line-soft);border-radius:12px;padding:14px}
+.league-empty .ic{width:19px;height:19px}
+.league-empty b{font:500 14px var(--serif);color:var(--ink-2)}
+.league-empty span{font:500 11.5px/1.4 var(--sans);max-width:220px}
 @media(min-width:760px){.streak-grid{grid-template-columns:minmax(300px,360px) 1fr;align-items:start}}
-@media(max-width:520px){.streak{padding:22px 16px 56px}.streak-banner{padding:17px 18px;gap:12px}.sb-num b{font-size:34px}.sb-state{font-size:11px}}
+@media(max-width:520px){.streak{padding:22px 16px 56px}.streak-banner{padding:17px 18px;gap:12px}.sb-num b{font-size:34px}.sb-state{font-size:11px}.league-toggle{max-width:50%;padding-inline:9px}}
 /* 等级 / 段位 / 个人纪录 */
 .lvl-top{display:flex;align-items:center;gap:11px;margin-bottom:12px}
 .lvl-medal{flex:none;width:38px;height:38px;display:grid;place-items:center;border:1.4px solid var(--ink);border-radius:11px;background:var(--paper)}
