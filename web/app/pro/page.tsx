@@ -15,6 +15,7 @@ import {
   entitlement,
   isPro,
   refreshEntitlement,
+  startBillingPortal,
   startCheckout,
   type Entitlement,
 } from "@/lib/telos/billing";
@@ -39,6 +40,7 @@ export default function ProPage() {
   const [confirming, setConfirming] = useState(false); // 支付回跳后的轮询确认
   const [usage, setUsage] = useState<HostedUsage | null>(null); // 托管用量（登录 + 托管开通时显示）
   const [checkoutSku, setCheckoutSku] = useState<string>("");
+  const [portalLoading, setPortalLoading] = useState(false);
   const [checkoutMsg, setCheckoutMsg] = useState<string>("");
   const pollRef = useRef<number>(0);
 
@@ -92,7 +94,7 @@ export default function ProPage() {
   }, []);
 
   const buy = async (plan: Plan | string) => {
-    if (checkoutSku) return;
+    if (checkoutSku || portalLoading) return;
     if (!user) {
       router.push("/account");
       return;
@@ -106,6 +108,28 @@ export default function ProPage() {
       setCheckoutMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setCheckoutSku("");
+    }
+  };
+
+  const manage = async () => {
+    if (checkoutSku || portalLoading) return;
+    if (!user) {
+      router.push("/account");
+      return;
+    }
+    setCheckoutMsg("");
+    if (BILLING.manageUrl) {
+      window.location.assign(BILLING.manageUrl);
+      return;
+    }
+    setPortalLoading(true);
+    try {
+      const url = await startBillingPortal();
+      window.location.assign(url);
+    } catch (e) {
+      setCheckoutMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPortalLoading(false);
     }
   };
 
@@ -151,10 +175,11 @@ export default function ProPage() {
             <b>{t("pro.statusPro")}</b>
             <span className="u">{untilText}</span>
             <span className="sp" />
-            {BILLING.manageUrl && ent?.plan !== "lifetime" && (
-              <a className="btn btn-light pro-mng" href={BILLING.manageUrl} target="_blank" rel="noopener noreferrer">
+            {ent?.plan !== "lifetime" && (
+              <button className="btn btn-light pro-mng" type="button" onClick={manage} disabled={portalLoading}>
+                {portalLoading && <span className="spinner" style={{ width: 12, height: 12 }} />}
                 {t("pro.manage")}
-              </a>
+              </button>
             )}
           </div>
         )}

@@ -18,11 +18,12 @@ export interface Entitlement {
   plan: "monthly" | "yearly" | "lifetime" | null;
   until: number | null; // ms；null = 不过期（买断）或非 Pro
   templates: string[]; // 已购模板 id（webhook 写 app_metadata.telos_templates）
+  customerId: string | null; // Creem customer id，用于自助管理订阅入口
   uid: string | null; // 权益所属账号；登出/换号后缓存不串号
   at: number; // 上次确认时间
 }
 
-const EMPTY: Entitlement = { pro: false, plan: null, until: null, templates: [], uid: null, at: 0 };
+const EMPTY: Entitlement = { pro: false, plan: null, until: null, templates: [], customerId: null, uid: null, at: 0 };
 
 let _ent: Entitlement | null = null;
 
@@ -32,7 +33,7 @@ function readCache(): Entitlement {
     const raw = window.localStorage.getItem(CACHE_KEY);
     if (!raw) return EMPTY;
     const e = JSON.parse(raw) as Entitlement;
-    return e && typeof e.pro === "boolean" ? e : EMPTY;
+    return e && typeof e.pro === "boolean" ? { ...EMPTY, ...e, templates: Array.isArray(e.templates) ? e.templates : [] } : EMPTY;
   } catch {
     return EMPTY;
   }
@@ -92,6 +93,7 @@ export async function refreshEntitlement(): Promise<Entitlement> {
       telos_plan?: Entitlement["plan"];
       telos_pro_until?: number | string | null;
       telos_templates?: string[];
+      telos_billing_customer_id?: string;
     };
     const untilRaw = meta.telos_pro_until;
     const until =
@@ -105,6 +107,7 @@ export async function refreshEntitlement(): Promise<Entitlement> {
       plan: meta.telos_plan ?? null,
       until,
       templates: Array.isArray(meta.telos_templates) ? meta.telos_templates.map(String) : [],
+      customerId: meta.telos_billing_customer_id ? String(meta.telos_billing_customer_id) : null,
       uid: user.id,
       at: Date.now(),
     };
@@ -140,6 +143,21 @@ function checkoutErrorMessage(code: unknown): string | null {
   }
 }
 
+function portalErrorMessage(code: unknown): string | null {
+  switch (String(code || "")) {
+    case "NEED_LOGIN":
+      return tStatic("err.needLogin");
+    case "PORTAL_NOT_CONFIGURED":
+      return tStatic("err.portalUnavailable");
+    case "NO_BILLING_CUSTOMER":
+      return tStatic("err.portalNoCustomer");
+    case "PORTAL_FAILED":
+      return tStatic("err.portalFailed");
+    default:
+      return null;
+  }
+}
+
 // 创建服务商收银台会话。user_id / email 从 Supabase 会话取，产品映射由 Worker 端确认。
 export async function startCheckout(sku: BillingSku | string): Promise<string> {
   const base = billingApiBase();
@@ -162,5 +180,30 @@ export async function startCheckout(sku: BillingSku | string): Promise<string> {
   const dataJson = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   const url = String(dataJson.url || "").trim();
   if (!res.ok || !url) throw new Error(checkoutErrorMessage(dataJson.error) || tStatic("err.checkoutFailed"));
+  return url;
+}
+
+// 创建服务商自助管理入口（取消订阅、更新支付方式、查看订单）。
+export async function startBillingPortal(): Promise<string> {
+  const base = billingApiBase();
+  if (!base) throw new Error(tStatic("err.portalUnavailable"));
+  const sb = supabase();
+  if (!sb) throw new Error(tStatic("err.needLogin"));
+  const { data } = await sb.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error(tStatic("err.needLogin"));
+  let res: Response;
+  try {
+    res = await fetch(`${base}/billing/portal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: "{}",
+    });
+  } catch {
+    throw new Error(tStatic("err.portalFailed"));
+  }
+  const dataJson = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const url = String(dataJson.url || "").trim();
+  if (!res.ok || !url) throw new Error(portalErrorMessage(dataJson.error) || tStatic("err.portalFailed"));
   return url;
 }

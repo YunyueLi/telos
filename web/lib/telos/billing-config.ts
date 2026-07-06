@@ -4,7 +4,7 @@
 //
 // 上线步骤（创建产品后把空字符串填上即可，代码不用再动）：
 // 1) 在服务商后台创建 3 个产品/价格：月付订阅 / 年付订阅 / 买断。
-// 2) 把各自的 product_id 填进下方 productId；customer portal 链接填 manageUrl。
+// 2) 把各自的 product_id 填进下方 productId；订阅管理默认走 Worker 动态生成 Customer Portal。
 // 3) Webhook 指到 <worker>/billing/webhook，secret 用 `wrangler secret put BILLING_WEBHOOK_SECRET` 设置。
 // 4) product_id 也要同步到 workers/wrangler.toml 的 CREEM_PRODUCT_*，Worker 会以服务端映射为准。
 
@@ -23,7 +23,7 @@ export const BILLING = {
     yearly: { productId: "PRODUCT_ID_REDACTED", price: "$19", save: "-45%" },
     lifetime: { productId: "PRODUCT_ID_REDACTED", price: "$49", save: "" },
   } as Record<Plan, { productId: string; price: string; save: string }>,
-  // 用户自助管理/取消订阅（customer portal）
+  // 可选：外部固定管理页；留空则由 Worker 按登录用户动态生成 Creem Customer Portal。
   manageUrl: "",
   // 托管 AI 配额（展示用——真源在 workers/wrangler.toml 的 HOSTED_* vars，两处保持一致）
   hosted: {
