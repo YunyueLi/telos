@@ -25,19 +25,32 @@ if [ -f web/out/404.html ]; then
   cp web/out/404.html deploy/404.html
 fi
 
+# Top-level clean route aliases for public product surfaces. The canonical
+# static app still lives under /app, while these aliases keep visible URLs such
+# as /account and /settings usable on Cloudflare Pages.
+for route in account cert diagnose me privacy pro review settings store streak studio terms; do
+  if [ -d "web/out/$route" ]; then
+    rm -rf "deploy/$route"
+    cp -R "web/out/$route" "deploy/$route"
+  fi
+done
+
+find deploy -name '.DS_Store' -delete
+
 cat > deploy/_redirects <<'EOF'
-/account /app/account/ 302
-/cert /app/cert/ 302
-/diagnose /app/diagnose/ 302
-/me /app/me/ 302
-/privacy /app/privacy/ 302
-/pro /app/pro/ 302
-/review /app/review/ 302
-/settings /app/settings/ 302
-/store /app/store/ 302
-/streak /app/streak/ 302
-/studio /app/studio/ 302
-/terms /app/terms/ 302
+/app /app/ 301
+/account /account/index.html 200
+/cert /cert/index.html 200
+/diagnose /diagnose/index.html 200
+/me /me/index.html 200
+/privacy /privacy/index.html 200
+/pro /pro/index.html 200
+/review /review/index.html 200
+/settings /settings/index.html 200
+/store /store/index.html 200
+/streak /streak/index.html 200
+/studio /studio/index.html 200
+/terms /terms/index.html 200
 /app/account /app/account/ 301
 /app/cert /app/cert/ 301
 /app/diagnose /app/diagnose/ 301
@@ -54,15 +67,22 @@ EOF
 
 cat > deploy/_headers <<'EOF'
 /*
+  Cache-Control: no-cache
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
 
-/app/*
-  Cache-Control: no-cache
-
 /app/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/app/portraits/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/app/seals/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
 /app/sw.js

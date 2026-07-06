@@ -1,7 +1,9 @@
 {
-  "name": "web",
+  "name": "@telos/product-web",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "description": "Official Telos product web app. Proprietary; Telos Core is distributed separately.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -8,6 +8,11 @@ license = { text = "Apache-2.0" }
 keywords = ["education", "learning", "knowledge-space-theory", "fsrs", "spaced-repetition", "agent"]
 dependencies = []
 
+[project.urls]
+Homepage = "https://telos.ungetsu.net/"
+Repository = "https://github.com/YunyueLi/telos"
+Issues = "https://github.com/YunyueLi/telos/issues"
+
 [project.optional-dependencies]
 dev = ["pytest>=7"]
 
