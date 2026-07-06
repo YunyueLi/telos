@@ -11,8 +11,8 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/telos/auth";
 import { useT } from "@/lib/telos/i18n";
 import { BASE } from "@/lib/base";
-import { BILLING_EVENT, entitlement, isPro, refreshEntitlement } from "@/lib/telos/billing";
-import { BILLING, checkoutUrlRaw } from "@/lib/telos/billing-config";
+import { BILLING_EVENT, entitlement, isPro, refreshEntitlement, startCheckout } from "@/lib/telos/billing";
+import { BILLING, productConfigured } from "@/lib/telos/billing-config";
 import { TEMPLATES, type Template } from "@/lib/telos/templates";
 import { fetchTemplatePoints } from "@/lib/telos/derive";
 import { genId, listProjects, setActiveId, upsertProject, type Project } from "@/lib/telos/project";
@@ -26,6 +26,7 @@ export default function StorePage() {
   const [owned, setOwned] = useState<string[]>([]);
   const [open, setOpen] = useState<string | null>(null); // 展开大纲的模板
   const [importing, setImporting] = useState<string | null>(null); // 正在下发内容的模板
+  const [checkoutSku, setCheckoutSku] = useState<string>("");
   const [msg, setMsg] = useState<string>("");
 
   const sync = () => {
@@ -83,13 +84,22 @@ export default function StorePage() {
     window.location.assign(`${BASE}/`); // 全量刷新让 Provider 重读项目库
   };
 
-  const buy = (tp: Template) => {
+  const buy = async (tp: Template) => {
+    if (checkoutSku) return;
     if (!user) {
       window.location.assign(`${BASE}/account/`);
       return;
     }
-    const url = checkoutUrlRaw(tp.url, tp.sku, user.id, user.email ?? undefined);
-    if (url) window.open(url, "_blank", "noopener");
+    setMsg("");
+    setCheckoutSku(tp.sku);
+    try {
+      const url = await startCheckout(tp.sku);
+      window.location.assign(url);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCheckoutSku("");
+    }
   };
 
   return (
@@ -122,6 +132,8 @@ export default function StorePage() {
             const own = mounted && canImport(tp);
             const opened = open === tp.id;
             const busy = importing === tp.id;
+            const buying = checkoutSku === tp.sku;
+            const purchasable = productConfigured(tp.sku, tp.productId);
             return (
               <div key={tp.id} className="store-card">
                 <div className="store-card-top">
@@ -157,8 +169,9 @@ export default function StorePage() {
                       {busy ? <span className="spinner" /> : <Icon name="play" />}{" "}
                       {busy ? t("store.importing") : t("store.get")}
                     </button>
-                  ) : tp.url ? (
-                    <button className="btn btn-line store-btn" onClick={() => buy(tp)}>
+                  ) : purchasable ? (
+                    <button className="btn btn-line store-btn" onClick={() => buy(tp)} disabled={!!checkoutSku}>
+                      {buying && <span className="spinner" />}
                       {t("store.buy")} · {tp.price}
                     </button>
                   ) : (

@@ -20,7 +20,7 @@ export interface TemplateMeta {
   goal: string; // 导入后的项目 goal
   desc: string;
   price: string; // 展示价
-  url: string; // checkout 链接（服务商建品后填；空 = 暂不可单独购买，Pro 可解锁）
+  productId: string; // Creem product_id（服务商建品后填；空 = 暂不可单独购买，Pro 可解锁）
   free?: boolean; // 免费模板
   tags: string[];
   nodes: number; // 能力点总数（预览）
@@ -119,7 +119,7 @@ export const TEMPLATES: Template[] = [
     goal: "考研英语一拿到 70 分以上",
     desc: "词汇地基 → 长难句手术 → 阅读突破 → 完形 → 新题型与翻译 → 写作 → 全真冲刺，14 个能力点对齐真实 70+ 得分构成，每点配可执行练法与量化达标线。",
     price: "¥19.9",
-    url: "",
+    productId: "",
     tags: ["考研", "英语", "应试"],
     nodes: 14,
     minutes: 760,
@@ -140,7 +140,7 @@ export const TEMPLATES: Template[] = [
     goal: "通过 Python 后端工程师面试并拿到 offer",
     desc: "代码内功 → 语言深水区 → 计算机基础八股 → 数据存储与中间件 → 系统设计与分布式 → 项目深挖与模拟面，14 个能力点覆盖大厂面试六维，练法带频次、达标线用 AC 率/通过率量化。",
     price: "¥19.9",
-    url: "",
+    productId: "",
     tags: ["求职", "编程", "面试"],
     nodes: 14,
     minutes: 730,
@@ -160,7 +160,7 @@ export const TEMPLATES: Template[] = [
     goal: "驾照科目二考试一次通过",
     desc: "上车基本功 → 五项分项攻坚 → 串联与考场实战 → 考场心态，把「凭感觉」拆成带教练找点法、对齐真实扣分细则的可练可测动作。",
     price: "¥9.9",
-    url: "",
+    productId: "",
     free: true, // 首发引流：免费
     tags: ["驾考", "技能"],
     points: KE2,

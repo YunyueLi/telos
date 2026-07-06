@@ -6,6 +6,9 @@
 // 前端：refreshEntitlement() 拉最新 → 模块缓存 + localStorage（离线/秒读）→ 广播事件；isPro() 同步读缓存。
 // 本机调试：localStorage 置 telos:pro=1 可强制 Pro（仅影响本机展示，真权益仍以账号为准）。
 import { supabase } from "./supabase";
+import { getDeriveUrl } from "./derive";
+import { tStatic } from "./i18n";
+import type { BillingSku } from "./billing-config";
 
 export const BILLING_EVENT = "telos:billing";
 const CACHE_KEY = "telos:billing";
@@ -116,4 +119,48 @@ export async function refreshEntitlement(): Promise<Entitlement> {
 // 登出时调用：清掉本机权益缓存，避免下一个登录者串号。
 export function clearEntitlement(): void {
   writeCache(EMPTY);
+}
+
+function billingApiBase(): string {
+  const url = getDeriveUrl();
+  return url ? url.replace(/\/(derive|lesson|probe|title)\/?$/, "") : "";
+}
+
+function checkoutErrorMessage(code: unknown): string | null {
+  switch (String(code || "")) {
+    case "NEED_LOGIN":
+      return tStatic("err.needLogin");
+    case "CHECKOUT_NOT_CONFIGURED":
+    case "PRODUCT_NOT_CONFIGURED":
+      return tStatic("err.checkoutUnavailable");
+    case "CHECKOUT_FAILED":
+      return tStatic("err.checkoutFailed");
+    default:
+      return null;
+  }
+}
+
+// 创建服务商收银台会话。user_id / email 从 Supabase 会话取，产品映射由 Worker 端确认。
+export async function startCheckout(sku: BillingSku | string): Promise<string> {
+  const base = billingApiBase();
+  if (!base) throw new Error(tStatic("err.checkoutUnavailable"));
+  const sb = supabase();
+  if (!sb) throw new Error(tStatic("err.needLogin"));
+  const { data } = await sb.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error(tStatic("err.needLogin"));
+  let res: Response;
+  try {
+    res = await fetch(`${base}/billing/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ plan: sku }),
+    });
+  } catch {
+    throw new Error(tStatic("err.checkoutFailed"));
+  }
+  const dataJson = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const url = String(dataJson.url || "").trim();
+  if (!res.ok || !url) throw new Error(checkoutErrorMessage(dataJson.error) || tStatic("err.checkoutFailed"));
+  return url;
 }

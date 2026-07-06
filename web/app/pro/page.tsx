@@ -15,10 +15,11 @@ import {
   entitlement,
   isPro,
   refreshEntitlement,
+  startCheckout,
   type Entitlement,
 } from "@/lib/telos/billing";
 import { fetchHostedUsage, type HostedUsage } from "@/lib/telos/derive";
-import { BILLING, billingConfigured, checkoutUrl, type Plan } from "@/lib/telos/billing-config";
+import { BILLING, billingConfigured, type Plan } from "@/lib/telos/billing-config";
 
 const PLANS: { key: Plan; nameKey: string; perKey: string }[] = [
   { key: "monthly", nameKey: "pro.planMonthly", perKey: "pro.perMo" },
@@ -37,6 +38,8 @@ export default function ProPage() {
   const [restoreMsg, setRestoreMsg] = useState<"" | "ok" | "no">("");
   const [confirming, setConfirming] = useState(false); // 支付回跳后的轮询确认
   const [usage, setUsage] = useState<HostedUsage | null>(null); // 托管用量（登录 + 托管开通时显示）
+  const [checkoutSku, setCheckoutSku] = useState<string>("");
+  const [checkoutMsg, setCheckoutMsg] = useState<string>("");
   const pollRef = useRef<number>(0);
 
   const sync = () => {
@@ -88,13 +91,22 @@ export default function ProPage() {
     return () => window.clearTimeout(pollRef.current);
   }, []);
 
-  const buy = (plan: Plan | string) => {
+  const buy = async (plan: Plan | string) => {
+    if (checkoutSku) return;
     if (!user) {
       router.push("/account");
       return;
     }
-    const url = checkoutUrl(plan, user.id, user.email ?? undefined);
-    if (url) window.open(url, "_blank", "noopener");
+    setCheckoutMsg("");
+    setCheckoutSku(plan);
+    try {
+      const url = await startCheckout(plan);
+      window.location.assign(url);
+    } catch (e) {
+      setCheckoutMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCheckoutSku("");
+    }
   };
 
   const restore = async () => {
@@ -146,6 +158,14 @@ export default function ProPage() {
             )}
           </div>
         )}
+        {mounted && checkoutMsg && (
+          <div className="ob-limit" role="note" style={{ maxWidth: "none", marginTop: 18 }}>
+            <Icon name="spark" style={{ width: 16, height: 16 }} />
+            <span className="lt">
+              <span>{checkoutMsg}</span>
+            </span>
+          </div>
+        )}
 
         {/* 托管用量（登录 + 托管开通时显示）：月度配额 / 试用余量 / 加油包余额 */}
         {mounted && usage && (
@@ -178,12 +198,13 @@ export default function ProPage() {
                 );
               })}
               {usage.bonus.d + usage.bonus.l > 0 && <p className="pu-note">{t("pro.usageBonus")}</p>}
-              {BILLING.packs.some((p) => p.url) && (
+              {BILLING.packs.some((p) => p.productId) && (
                 <div className="pu-packs">
                   {BILLING.packs
-                    .filter((p) => p.url)
+                    .filter((p) => p.productId)
                     .map((p) => (
-                      <button key={p.sku} className="btn btn-line pu-pack" onClick={() => buy(p.sku)}>
+                      <button key={p.sku} className="btn btn-line pu-pack" onClick={() => buy(p.sku)} disabled={!!checkoutSku}>
+                        {checkoutSku === p.sku && <span className="spinner" />}
                         {p.unit === "d" ? t("pro.usageD") : t("pro.usageL")} {p.label} · {p.price}
                       </button>
                     ))}
@@ -211,9 +232,10 @@ export default function ProPage() {
                     </div>
                     <button
                       className={`btn ${hot ? "btn-ink" : "btn-line"} pro-buy`}
-                      disabled={!configured || !cfg.url}
+                      disabled={!configured || !cfg.productId || !!checkoutSku}
                       onClick={() => buy(p.key)}
                     >
+                      {checkoutSku === p.key && <span className="spinner" />}
                       {user ? t("pro.choose") : t("pro.goLogin")}
                     </button>
                     {p.key === "lifetime" && <p className="pro-life-note">{t("pro.lifeNote")}</p>}
