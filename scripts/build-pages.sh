@@ -67,11 +67,166 @@ EOF
 
 cat > deploy/_headers <<'EOF'
 /*
-  Cache-Control: no-cache
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/app/
+  Cache-Control: no-cache
+
+/app/index.html
+  Cache-Control: no-cache
+
+/account/
+  Cache-Control: no-cache
+
+/account/index.html
+  Cache-Control: no-cache
+
+/settings/
+  Cache-Control: no-cache
+
+/settings/index.html
+  Cache-Control: no-cache
+
+/pro/
+  Cache-Control: no-cache
+
+/pro/index.html
+  Cache-Control: no-cache
+
+/cert/
+  Cache-Control: no-cache
+
+/cert/index.html
+  Cache-Control: no-cache
+
+/diagnose/
+  Cache-Control: no-cache
+
+/diagnose/index.html
+  Cache-Control: no-cache
+
+/me/
+  Cache-Control: no-cache
+
+/me/index.html
+  Cache-Control: no-cache
+
+/privacy/
+  Cache-Control: no-cache
+
+/privacy/index.html
+  Cache-Control: no-cache
+
+/review/
+  Cache-Control: no-cache
+
+/review/index.html
+  Cache-Control: no-cache
+
+/store/
+  Cache-Control: no-cache
+
+/store/index.html
+  Cache-Control: no-cache
+
+/streak/
+  Cache-Control: no-cache
+
+/streak/index.html
+  Cache-Control: no-cache
+
+/studio/
+  Cache-Control: no-cache
+
+/studio/index.html
+  Cache-Control: no-cache
+
+/terms/
+  Cache-Control: no-cache
+
+/terms/index.html
+  Cache-Control: no-cache
+
+/app/account/
+  Cache-Control: no-cache
+
+/app/account/index.html
+  Cache-Control: no-cache
+
+/app/cert/
+  Cache-Control: no-cache
+
+/app/cert/index.html
+  Cache-Control: no-cache
+
+/app/diagnose/
+  Cache-Control: no-cache
+
+/app/diagnose/index.html
+  Cache-Control: no-cache
+
+/app/me/
+  Cache-Control: no-cache
+
+/app/me/index.html
+  Cache-Control: no-cache
+
+/app/privacy/
+  Cache-Control: no-cache
+
+/app/privacy/index.html
+  Cache-Control: no-cache
+
+/app/pro/
+  Cache-Control: no-cache
+
+/app/pro/index.html
+  Cache-Control: no-cache
+
+/app/review/
+  Cache-Control: no-cache
+
+/app/review/index.html
+  Cache-Control: no-cache
+
+/app/settings/
+  Cache-Control: no-cache
+
+/app/settings/index.html
+  Cache-Control: no-cache
+
+/app/store/
+  Cache-Control: no-cache
+
+/app/store/index.html
+  Cache-Control: no-cache
+
+/app/streak/
+  Cache-Control: no-cache
+
+/app/streak/index.html
+  Cache-Control: no-cache
+
+/app/studio/
+  Cache-Control: no-cache
+
+/app/studio/index.html
+  Cache-Control: no-cache
+
+/app/terms/
+  Cache-Control: no-cache
+
+/app/terms/index.html
+  Cache-Control: no-cache
 
 /app/_next/static/*
   Cache-Control: public, max-age=31536000, immutable
