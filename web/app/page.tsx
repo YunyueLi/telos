@@ -25,14 +25,14 @@ import { BILLING_EVENT, isPro } from "@/lib/telos/billing";
 import { BILLING } from "@/lib/telos/billing-config";
 import { useT } from "@/lib/telos/i18n";
 
-// 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
-const CATS: { domain: string; descKey: string; egKey: string }[] = [
-  { domain: "A", descKey: "ob.catMemoryDesc", egKey: "ob.catMemory" },
-  { domain: "B", descKey: "ob.catProgramDesc", egKey: "ob.eg1" },
-  { domain: "C", descKey: "ob.catCreateDesc", egKey: "ob.catCreate" },
-  { domain: "D", descKey: "ob.catActionDesc", egKey: "ob.eg5" },
-  { domain: "E", descKey: "ob.catCompeteDesc", egKey: "ob.catCompete" },
-  { domain: "F", descKey: "ob.catHabitDesc", egKey: "ob.catHabit" },
+// 六类学习（domain A-F）+ 折叠后的代表案例。默认不露具体目标，避免示例抢走“分类框架”的认知焦点。
+const CATS: { domain: string; descKey: string; egKey: string; caseKeys: string[] }[] = [
+  { domain: "A", descKey: "ob.catMemoryDesc", egKey: "ob.catMemory", caseKeys: ["ob.catMemoryCase2"] },
+  { domain: "B", descKey: "ob.catProgramDesc", egKey: "ob.eg1", caseKeys: ["ob.catProgramCase2"] },
+  { domain: "C", descKey: "ob.catCreateDesc", egKey: "ob.catCreate", caseKeys: ["ob.catCreateCase2"] },
+  { domain: "D", descKey: "ob.catActionDesc", egKey: "ob.eg5", caseKeys: ["ob.catActionCase2"] },
+  { domain: "E", descKey: "ob.catCompeteDesc", egKey: "ob.catCompete", caseKeys: ["ob.catCompeteCase2"] },
+  { domain: "F", descKey: "ob.catHabitDesc", egKey: "ob.catHabit", caseKeys: ["ob.catHabitCase2"] },
 ];
 
 type VoiceResult = { isFinal?: boolean; 0?: { transcript?: string } };
@@ -194,6 +194,7 @@ function Onboarding({
   const [pro, setPro] = useState(false);
   const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
   const [coachNudge, setCoachNudge] = useState(0);
+  const [openCat, setOpenCat] = useState<string | null>(null);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [voiceError, setVoiceError] = useState("");
@@ -466,18 +467,39 @@ function Onboarding({
         </div>
         <div className="ob-catgrid">
           {CATS.map((c) => {
-            const eg = t(c.egKey);
+            const isOpen = openCat === c.domain;
+            const cases = [c.egKey, ...c.caseKeys].map((key) => t(key));
+            const panelId = `ob-cat-panel-${c.domain}`;
             return (
-              <button key={c.domain} className="ob-cat" onClick={() => fill(eg)} disabled={deriving} title={eg}>
-                <span className="ob-cat-code">{c.domain}</span>
-                <span className="ob-cat-body">
-                  <span className="ob-cat-top">
-                    <span className="ob-cat-name">{domainLabel(c.domain, t)}</span>
-                    <span className="ob-cat-d">{t(c.descKey)}</span>
+              <section key={c.domain} className={`ob-cat ${isOpen ? "open" : ""}`}>
+                <button
+                  type="button"
+                  className="ob-cat-summary"
+                  onClick={() => setOpenCat(isOpen ? null : c.domain)}
+                  disabled={deriving}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                >
+                  <span className="ob-cat-code">{c.domain}</span>
+                  <span className="ob-cat-body">
+                    <span className="ob-cat-top">
+                      <span className="ob-cat-name">{domainLabel(c.domain, t)}</span>
+                      <span className="ob-cat-d">{t(c.descKey)}</span>
+                    </span>
                   </span>
-                  <span className="ob-cat-g">{eg}</span>
-                </span>
-              </button>
+                  <Icon name="chevron" className="ob-cat-cv" style={{ width: 15, height: 15 }} />
+                </button>
+                <div id={panelId} className="ob-cat-cases" hidden={!isOpen}>
+                  <span className="ob-case-label">{t("ob.caseLabel")}</span>
+                  <div className="ob-case-list">
+                    {cases.map((eg) => (
+                      <button key={eg} type="button" className="ob-case" onClick={() => fill(eg)} disabled={deriving}>
+                        {eg}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </section>
             );
           })}
         </div>
