@@ -334,54 +334,54 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 }
 
 /* —— 引导 / 目标输入：先让目标输入成为首屏主任务，老师退为陪伴信号 —— */
-.ob{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(16px,2.4vh,26px);max-width:1180px;width:100%;margin:0 auto;padding:clamp(24px,4.5vh,52px) 32px}
-.ob-hero{display:grid;grid-template-columns:minmax(0,640px) minmax(320px,430px);gap:clamp(34px,5.4vw,78px);align-items:center;justify-content:center;width:100%;max-width:1120px;margin:0 auto}
+.ob{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.8vh,30px);max-width:1220px;width:100%;margin:0 auto;padding:clamp(24px,4.5vh,52px) 32px}
+.ob-hero{display:grid;grid-template-columns:minmax(0,600px) minmax(360px,500px);gap:clamp(38px,5.8vw,84px);align-items:center;justify-content:center;width:100%;max-width:1160px;margin:0 auto}
 .ob-hero-main{min-width:0;width:100%}
 .ob h1{font-family:var(--serif);font-weight:520;font-size:clamp(34px,3.55vw,54px);letter-spacing:0;line-height:1.03;margin:10px 0 14px;max-width:12.5em}
 .ob-compact h1{font-size:clamp(25px,2.6vw,32px);margin:2px 0 14px}
 .ob-lead{color:var(--ink-2);font-size:15.5px;line-height:1.62;max-width:620px;margin:0 0 22px}
-.ob-art{justify-self:stretch;align-self:stretch;position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:520px;width:100%;max-width:430px;margin:0 auto;padding:0 0 8px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
-.ob-art:before{content:"";position:absolute;left:50%;top:78px;width:370px;height:370px;transform:translateX(-50%);border:0;border-radius:50%;background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--card) 42%,transparent),transparent 68%);pointer-events:none}
-.ob-art:after{content:"";position:absolute;left:50%;bottom:86px;width:320px;height:34px;transform:translateX(-50%);border-bottom:1px solid color-mix(in srgb,var(--ink) 18%,transparent);border-radius:50%;pointer-events:none}
-.ob-art .deco{position:absolute;left:50%;top:76px;width:330px;height:auto;transform:translateX(-50%);stroke:var(--ink);fill:none;opacity:.18;pointer-events:none}
-.ob-portrait{position:relative;z-index:1;display:grid;place-items:end center;width:100%;min-height:378px;margin:0 0 12px;padding:22px 0 0;border:0;background:transparent;color:inherit;cursor:pointer}
+.ob-art{justify-self:stretch;align-self:stretch;position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:560px;width:100%;max-width:500px;margin:0 auto;padding:0 0 8px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+.ob-art:before{content:"";position:absolute;left:50%;top:70px;width:420px;height:420px;transform:translateX(-50%);border:0;border-radius:50%;background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--card) 40%,transparent),transparent 68%);pointer-events:none}
+.ob-art:after{content:"";position:absolute;left:50%;bottom:88px;width:380px;height:36px;transform:translateX(-50%);border-bottom:1px solid color-mix(in srgb,var(--ink) 18%,transparent);border-radius:50%;pointer-events:none}
+.ob-art .deco{position:absolute;left:50%;top:70px;width:380px;height:auto;transform:translateX(-50%);stroke:var(--ink);fill:none;opacity:.16;pointer-events:none}
+.ob-portrait{position:relative;z-index:1;display:grid;place-items:end center;width:100%;min-height:428px;margin:0 0 12px;padding:22px 0 0;border:0;background:transparent;color:inherit;cursor:pointer}
 .ob-portrait:disabled{cursor:default}
-.ob-art .pcirc.ob-face{position:relative;left:auto;top:auto;width:min(388px,105%);height:402px;border:0;border-radius:0;flex:none;background:transparent;box-shadow:none;overflow:visible;transition:transform .22s ease,filter .22s ease}
+.ob-art .pcirc.ob-face{position:relative;left:auto;top:auto;width:min(456px,108%);height:446px;border:0;border-radius:0;flex:none;background:transparent;box-shadow:none;overflow:visible;transition:transform .22s ease,filter .22s ease}
 .ob-art .ob-face img{width:100%;height:100%;object-fit:contain;object-position:50% 50%;filter:contrast(1.05);mix-blend-mode:multiply}
 .ob-portrait:hover .ob-face{transform:translateY(-5px);filter:drop-shadow(0 24px 34px rgba(20,19,16,.11))}
-.ob-box{width:100%;max-width:640px;border:1.6px solid var(--ink);border-radius:20px;padding:16px 18px 14px;background:color-mix(in srgb,var(--card) 92%,var(--paper));box-shadow:0 22px 62px rgba(20,19,16,.09),0 1px 0 rgba(255,255,255,.7) inset}
-.ob-box:focus-within{box-shadow:0 24px 64px rgba(20,19,16,.11),0 0 0 3px color-mix(in srgb,var(--ink) 7%,transparent)}
-.ob-box textarea{font-size:16px;min-height:64px;padding:1px 4px 13px;width:100%;border:0;background:transparent;resize:none;font-family:var(--sans);color:var(--ink);line-height:1.52}
+.ob-box{width:100%;max-width:640px;border:0;border-radius:0;padding:8px 0 0;background:transparent;box-shadow:none;border-bottom:1.8px solid var(--ink)}
+.ob-box:focus-within{box-shadow:none;border-bottom-color:#000}
+.ob-box textarea{font-size:18px;min-height:82px;padding:0 2px 15px;width:100%;border:0;background:transparent;resize:none;font-family:var(--sans);color:var(--ink);line-height:1.55}
 .ob-box textarea:focus{outline:none}
 .ob-box textarea::placeholder{color:var(--ink-3)}
-.ob-bar{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line-soft);padding-top:11px}
+.ob-bar{display:flex;align-items:center;gap:10px;border-top:1px solid color-mix(in srgb,var(--ink) 10%,transparent);padding:12px 2px 12px}
 .ob-hint{display:none;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
-.ob-voice{height:36px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line-soft);border-radius:999px;background:var(--paper);color:var(--ink-2);padding:0 12px;font:650 12px var(--sans);cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,color .15s,transform .15s}
-.ob-voice:hover{border-color:var(--ink);color:var(--ink);background:var(--card)}
+.ob-voice{height:36px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-bottom:1px solid color-mix(in srgb,var(--ink) 25%,transparent);border-radius:0;background:transparent;color:var(--ink-2);padding:0 2px;font:650 12px var(--sans);cursor:pointer;white-space:nowrap;transition:color .15s,transform .15s,border-color .15s}
+.ob-voice:hover{border-color:var(--ink);color:var(--ink);background:transparent}
 .ob-voice:disabled{opacity:.48;cursor:default}
 .ob-voice .ic{width:14px;height:14px}
-.ob-voice.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.ob-voice.on{border-color:var(--ink);background:transparent;color:var(--ink)}
 .ob-voice-msg{max-width:640px;margin-top:9px;font:500 12.5px/1.45 var(--sans);color:#8a3128}
 @media(prefers-reduced-motion:no-preference){.ob-voice.on .ic{animation:micPulse 1s ease-in-out infinite}@keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}}
 /* 键盘快捷键提示只在有物理键盘(细指针)或宽屏显示——触屏/窄屏没有 Cmd/Ctrl 键 */
 @media(pointer:coarse),(max-width:560px){.ob-hint{display:none}}
-/* 六类学习 · 液态玻璃分类卡（一行三个 · 两行）—— 分类用胶囊标签清晰标注 */
+/* 六类学习 · 细线题签（一行三个 · 两行） */
 .ob-cats{width:100%;max-width:1120px;margin-left:auto;margin-right:auto}
 .ob-cats .lab{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px}
-.ob-catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.ob-catgrid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:28px;row-gap:0}
 .ob-cat{
-  display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;cursor:pointer;
-  min-height:68px;padding:12px 14px;border-radius:13px;
-  background:color-mix(in srgb,var(--card) 82%,var(--paper));
-  border:1px solid color-mix(in srgb,var(--line-soft) 88%,var(--ink));
-  box-shadow:0 8px 24px rgba(20,19,16,.045),inset 0 1px 0 rgba(255,255,255,.66);
-  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease;
+  display:grid;grid-template-columns:52px minmax(0,1fr);align-items:baseline;gap:11px;text-align:left;cursor:pointer;
+  min-height:54px;padding:12px 0;border-radius:0;
+  background:transparent;
+  border:0;border-top:1px solid color-mix(in srgb,var(--ink) 14%,transparent);
+  box-shadow:none;
+  transition:transform .16s ease,border-color .16s ease,color .16s ease;
 }
-.ob-cat:hover{transform:translateY(-2px);border-color:var(--ink);background:var(--card);box-shadow:0 14px 32px rgba(20,19,16,.08),inset 0 1px 0 rgba(255,255,255,.85)}
+.ob-cat:hover{transform:translateX(4px);border-color:var(--ink)}
 .ob-cat:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
-.ob-cat-k{font:600 10px var(--mono);letter-spacing:.04em;color:var(--ink-2);background:var(--paper);border:1px solid var(--line-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
-.ob-cat-g{font:500 13px/1.34 var(--sans);color:var(--ink)}
-@media(max-width:560px){.ob-catgrid{grid-template-columns:repeat(2,1fr);gap:8px}.ob-cat{min-height:82px;padding:11px 12px}.ob-cat-g{font-size:12.5px}}
+.ob-cat-k{font:600 10px var(--mono);letter-spacing:.04em;color:var(--ink-3);background:transparent;border:0;border-radius:0;padding:0;white-space:nowrap}
+.ob-cat-g{font:560 13px/1.42 var(--sans);color:var(--ink);min-width:0}
+@media(max-width:560px){.ob-catgrid{grid-template-columns:1fr;column-gap:0}.ob-cat{min-height:0;padding:11px 0;grid-template-columns:48px minmax(0,1fr)}.ob-cat-g{font-size:12.5px}}
 .ob-cfg{width:100%;border:1px solid var(--line-soft);border-radius:14px;background:var(--card);overflow:hidden}
 .ob-cfg summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;padding:13px 16px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
 .ob-cfg summary::-webkit-details-marker{display:none}
@@ -679,9 +679,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .store-soon{font:500 11.5px var(--mono);color:var(--ink-3)}
 .store-soon-link{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
 /* 引导页模板店入口 */
-.ob-store{display:flex;align-items:center;gap:12px;max-width:520px;margin:8px auto 0;border:1px solid color-mix(in srgb,var(--line-soft) 82%,var(--ink));border-radius:14px;background:color-mix(in srgb,var(--card) 88%,var(--paper));padding:13px 15px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s,background .15s}
-.ob-store:hover{border-color:var(--ink);background:var(--card);box-shadow:0 12px 30px rgba(20,19,16,.07)}
-.ob-store .os-ic{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1.4px solid var(--ink);border-radius:10px;background:var(--paper);color:var(--ink)}
+.ob-store{display:flex;align-items:center;gap:12px;max-width:520px;margin:8px auto 0;border:0;border-top:1px solid color-mix(in srgb,var(--ink) 16%,transparent);border-bottom:1px solid color-mix(in srgb,var(--ink) 16%,transparent);border-radius:0;background:transparent;padding:13px 2px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+.ob-store:hover{border-color:var(--ink);background:transparent;box-shadow:none;transform:translateX(3px)}
+.ob-store .os-ic{flex:none;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:0;background:transparent;color:var(--ink)}
 .ob-store .os-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .ob-store .os-t b{font:600 13.5px var(--sans);color:var(--ink)}
 .ob-store .os-t span{font-size:12px;color:var(--ink-3);line-height:1.45}
@@ -981,9 +981,9 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .ob h1{font-size:34px;line-height:1.07;margin:8px 0 12px;max-width:11.5em}
   .ob-compact h1{font-size:27px}
   .ob-lead{font-size:14.5px;line-height:1.58;margin-bottom:16px;max-width:none}
-  .ob-box{max-width:none;border-radius:18px;padding:13px 14px 12px;box-shadow:0 12px 34px rgba(20,19,16,.07),0 1px 0 rgba(255,255,255,.62) inset}
+  .ob-box{max-width:none;border-radius:0;padding:8px 0 0;box-shadow:none}
   .ob-box textarea{min-height:58px;font-size:15px;line-height:1.48;padding-bottom:11px}
-  .ob-bar{padding-top:10px}
+  .ob-bar{padding:10px 2px 11px}
   .ob-bar .btn{min-width:102px;justify-content:center;padding:12px 18px}
   .ob-art{min-height:346px;max-width:none;padding:0 0 4px}
   .ob-art:before{top:56px;width:250px;height:250px}
