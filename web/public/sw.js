@@ -1,9 +1,14 @@
 // Telos Service Worker — 让静态 SPA 可安装、可离线。
-// 策略：① 导航(HTML) network-first —— 始终拿最新外壳，避免缓存旧 HTML 引用已失效的 chunk
+// 策略：① 导航(HTML) network-first + cache reload —— 始终拿最新外壳，避免缓存旧 HTML 引用已失效的 chunk
 //          （与 ChunkGuard 互补），离线时回退缓存的外壳；
-//        ② 同源静态资源(_next 的 hash 文件、图标等) cache-first —— hash 文件名天然安全长缓存，离线可用；
-//        ③ 跨源请求（倒推 runtime / Supabase / LLM provider）一律不拦 —— 实时、不缓存。
-const CACHE = "telos-v2";
+//        ② JS/CSS chunk network-first —— Turbopack 文件名不总是足够稳定地表达内容变化；
+//        ③ 其他同源静态资源 cache-first —— 图标/图片离线可用；
+//        ④ 跨源请求（倒推 runtime / Supabase / LLM provider）一律不拦 —— 实时、不缓存。
+const CACHE = "telos-v4";
+
+function reloadRequest(req) {
+  return new Request(req, { cache: "reload" });
+}
 
 self.addEventListener("install", () => self.skipWaiting());
 
@@ -28,7 +33,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       (async () => {
         try {
-          const res = await fetch(req);
+          const res = await fetch(reloadRequest(req));
           const cache = await caches.open(CACHE);
           cache.put(req, res.clone());
           return res;
@@ -40,7 +45,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 同源静态资源：cache-first（命中即返回，未命中走网络并缓存）
+  if (url.pathname.endsWith("/sw.js")) {
+    event.respondWith(fetch(reloadRequest(req)));
+    return;
+  }
+
+  if (url.pathname.includes("/_next/static/chunks/")) {
+    event.respondWith(
+      (async () => {
+        try {
+          const res = await fetch(reloadRequest(req));
+          if (res.ok && res.type === "basic") {
+            const cache = await caches.open(CACHE);
+            cache.put(req, res.clone());
+          }
+          return res;
+        } catch {
+          return (await caches.match(req)) || Response.error();
+        }
+      })(),
+    );
+    return;
+  }
+
+  // 其他同源静态资源：cache-first（命中即返回，未命中走网络并缓存）
   event.respondWith(
     (async () => {
       const cached = await caches.match(req);

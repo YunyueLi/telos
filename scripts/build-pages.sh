@@ -84,6 +84,15 @@ cat > deploy/_headers <<'EOF'
 /app/index.html
   Cache-Control: no-cache
 
+/app/sw.js
+  Cache-Control: no-cache
+
+/app/_next/static/chunks/*.css
+  Cache-Control: no-cache
+
+/app/_next/static/chunks/*.js
+  Cache-Control: no-cache
+
 /account/
   Cache-Control: no-cache
 
