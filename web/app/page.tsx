@@ -26,13 +26,13 @@ import { BILLING } from "@/lib/telos/billing-config";
 import { useT } from "@/lib/telos/i18n";
 
 // 六类学习（domain A-F）+ 各一个代表性示例目标（i18n key）。点卡片填入输入框，覆盖 Telos 支持的全部学习机制。
-const CATS: { domain: string; egKey: string }[] = [
-  { domain: "A", egKey: "ob.catMemory" },
-  { domain: "B", egKey: "ob.eg1" },
-  { domain: "C", egKey: "ob.catCreate" },
-  { domain: "D", egKey: "ob.eg5" },
-  { domain: "E", egKey: "ob.catCompete" },
-  { domain: "F", egKey: "ob.catHabit" },
+const CATS: { domain: string; descKey: string; egKey: string }[] = [
+  { domain: "A", descKey: "ob.catMemoryDesc", egKey: "ob.catMemory" },
+  { domain: "B", descKey: "ob.catProgramDesc", egKey: "ob.eg1" },
+  { domain: "C", descKey: "ob.catCreateDesc", egKey: "ob.catCreate" },
+  { domain: "D", descKey: "ob.catActionDesc", egKey: "ob.eg5" },
+  { domain: "E", descKey: "ob.catCompeteDesc", egKey: "ob.catCompete" },
+  { domain: "F", descKey: "ob.catHabitDesc", egKey: "ob.catHabit" },
 ];
 
 type VoiceResult = { isFinal?: boolean; 0?: { transcript?: string } };
@@ -463,13 +463,22 @@ function Onboarding({
       </div>
 
       <div className="ob-cats">
-        <span className="lab">{t("ob.examplesLab")}</span>
+        <div className="ob-cats-head">
+          <div className="ob-cats-title">
+            <h2>{t("ob.examplesTitle")}</h2>
+          </div>
+          <p>{t("ob.examplesDesc")}</p>
+        </div>
         <div className="ob-catgrid">
           {CATS.map((c) => {
             const eg = t(c.egKey);
             return (
               <button key={c.domain} className="ob-cat" onClick={() => fill(eg)} disabled={deriving} title={eg}>
-                <span className="ob-cat-k">{domainLabel(c.domain, t)}</span>
+                <span className="ob-cat-top">
+                  <span className="ob-cat-code">{c.domain}</span>
+                  <span className="ob-cat-name">{domainLabel(c.domain, t)}</span>
+                </span>
+                <span className="ob-cat-d">{t(c.descKey)}</span>
                 <span className="ob-cat-g">{eg}</span>
               </button>
             );
