@@ -146,12 +146,14 @@ function Onboarding({
   const [cfgUrl, setCfgUrl] = useState("");
   const [pro, setPro] = useState(false);
   const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
+  const [coachNudge, setCoachNudge] = useState(0);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const manualFace = useCurrentPortraitFile(); // 形象集里手动选的陪伴形象
   // 情境神态：无项目→迎新；有项目→用手动选的（她还会随场景说话——"活的"陪伴，不只一张死图）
   const heroMood: Mood = projectCount > 0 ? "idle" : "welcome";
   const returning = projectCount > 0; // 回头客（已有项目）→ 压缩头、直奔输入；新人 → 完整 hero 讲清楚
-  const heroFace = moodFace(heroMood)?.file ?? manualFace;
+  const mood = moodFace(heroMood);
+  const heroFace = heroMood === "welcome" ? "teach" : mood?.file ?? manualFace;
   const heroBubbleKey = heroMood === "welcome" ? "mood.welcome" : "mood.idle";
   // 免费版项目数上限：超限时在输入框下方给事前提示（derive 内还有硬校验兜底）
   const limitReached = mounted && !pro && projectCount >= BILLING.freeProjectLimit;
@@ -195,6 +197,12 @@ function Onboarding({
       ta.focus();
       ta.scrollIntoView({ block: "center", behavior: "smooth" });
     }
+  };
+  const coachPick = () => {
+    if (deriving) return;
+    const pick = CATS[coachNudge % CATS.length];
+    setCoachNudge((n) => n + 1);
+    fill(t(pick.egKey));
   };
 
   // 倒推进度：缓动逼近 92%（永不假装完成，成功即切到地图），阶段=流水线真实步骤、按经验时间推进。
@@ -288,18 +296,45 @@ function Onboarding({
           {deriveError && <div className="errbox">{deriveError}</div>}
         </div>
 
-        <aside className="ob-art">
+        <aside className="ob-art" aria-label="Telos 老师">
+          <div className="ob-bubble" role="status">{t(heroBubbleKey)}</div>
+          <button
+            type="button"
+            className="ob-portrait"
+            onClick={coachPick}
+            disabled={deriving}
+            aria-label={t("ob.coachPick")}
+            title={t("ob.coachPick")}
+          >
           <svg className="deco skL" viewBox="0 0 330 360" aria-hidden="true">
             <circle cx="165" cy="176" r="150" strokeDasharray="2 10" />
             <path d="M295 130l2 8 8 2-8 2-2 8-2-8-8-2 8-2z" />
             <path d="M32 250l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" />
             <path d="M270 270c9-6 17-6 24 0" strokeWidth="2.2" />
           </svg>
-          <div className="ob-bubble" role="status">{t(heroBubbleKey)}</div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <span className="pcirc">
+          <span className="pcirc ob-face">
             <img src={asset(`/portraits/${heroFace}.webp`)} alt="Telos 老师" />
           </span>
+          </button>
+          <div className="ob-teacher-actions">
+            <button type="button" className="ob-teacher-act" onClick={coachPick} disabled={deriving}>
+              <Icon name="target" /> {t("ob.coachPick")}
+            </button>
+            <Link href="/studio" className="ob-teacher-act">
+              <Icon name="studio" /> {t("nav.studio")}
+            </Link>
+          </div>
+          <div className="ob-teacher-chips" aria-label={t("ob.examplesLab")}>
+            {CATS.slice(0, 4).map((c) => {
+              const eg = t(c.egKey);
+              return (
+                <button key={c.domain} type="button" onClick={() => fill(eg)} disabled={deriving}>
+                  {domainLabel(c.domain, t)}
+                </button>
+              );
+            })}
+          </div>
         </aside>
       </div>
 
