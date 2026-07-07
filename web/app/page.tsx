@@ -338,12 +338,7 @@ function Onboarding({
     <div className={returning ? "ob ob-compact" : "ob"}>
       <div className="ob-hero">
         <div className="ob-hero-main">
-          {!returning && <div className="eyebrow">{t("ob.eyebrow")}</div>}
-          <h1>
-            {t("ob.h1line1")}
-            <br />
-            {t("ob.h1line2")}
-          </h1>
+          <h1>{t("ob.h1")}</h1>
           {!returning && <p className="ob-lead">{t("ob.lead")}</p>}
 
           <div className="ob-box">

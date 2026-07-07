@@ -1010,9 +1010,10 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 }
 @media(max-width:420px){
   .ob{padding-left:20px;padding-right:20px}
-  .ob h1{font-size:31px}
+  .ob h1{font-size:28px;line-height:1.08}
   .ob-box textarea{font-size:14.5px}
 }
+@media(max-width:360px){.ob h1{font-size:25px}}
 /* 形象解锁庆祝（一次性弹窗）*/
 .puc{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 28%,transparent);padding:24px;animation:pucIn .25s ease;cursor:pointer}
 @keyframes pucIn{from{opacity:0}to{opacity:1}}
