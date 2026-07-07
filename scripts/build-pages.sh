@@ -4,11 +4,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-# Cloudflare Pages production defaults. These values are public client config;
-# secrets and service-role keys stay in Worker/Supabase secret stores.
-export NEXT_PUBLIC_TELOS_DERIVE_URL="${NEXT_PUBLIC_TELOS_DERIVE_URL:-https://telos-api.ungetsu.net/derive}"
-export NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:-https://SUPABASE_PROJECT_REF_REDACTED.supabase.co}"
-export NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY:-SUPABASE_PUBLISHABLE_KEY_REDACTED}"
+# Community Edition builds do not inject official hosted-product config.
+# Set these in your own environment when self-hosting.
+export NEXT_PUBLIC_TELOS_DERIVE_URL="${NEXT_PUBLIC_TELOS_DERIVE_URL:-}"
+export NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:-}"
+export NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}"
 
 if [ ! -d web/node_modules ]; then
   npm ci --prefix web --legacy-peer-deps

@@ -1,35 +1,24 @@
 # Security Policy
 
-This private repository contains the official hosted Telos product: web app,
-Cloudflare Worker service layer, billing integration, Supabase integration,
-curated templates, and brand/product assets.
-
 ## Reporting
 
-Report sensitive issues through a private GitHub security advisory on this
-repository. Do not open public issues or discussions for vulnerabilities,
-secrets exposure, billing bypasses, auth/session bugs, hosted quota bypasses, or
-template entitlement bypasses.
+Use GitHub private security advisories for vulnerabilities in this repository. Please do not publish exploit details before there is a fix or mitigation path.
 
-If a report affects Telos Core only, use the public `YunyueLi/telos`
-security advisory flow instead.
+For routine bugs that do not expose data, secrets, account access, or execution paths, open a normal issue.
 
 ## Scope
 
 In scope:
 
-- hosted product auth, sync, billing, metering, template access, and Worker API
-- leakage of service-role credentials, webhook secrets, model keys, or private
-  template content
-- vulnerabilities that let a user access another user's data or hosted quota
+- local runtime request handling
+- web app data isolation and local storage behavior
+- dependency vulnerabilities with a practical Telos exploit path
+- leakage risks in examples, docs, scripts, or build output
 
 Out of scope:
 
-- generic dependency CVEs with no reachable Telos exploit path
+- vulnerabilities in third-party model providers, Supabase, Cloudflare, or payment processors unless Telos integrates them unsafely
 - denial-of-service reports without a practical reproduction
-- issues in third-party model providers, Supabase, Cloudflare, or payment
-  processors unless Telos integrates them unsafely
+- reports against private hosted-product infrastructure that cannot be reproduced from this public repository
 
-Secrets must stay in Cloudflare, Supabase, and payment-provider secret stores.
-Never commit `.env` files, service-role keys, webhook secrets, model provider
-keys, or private template payloads.
+Never commit `.env` files, service-role keys, webhook secrets, model-provider keys, production tokens, private template payloads, user data, or real deployment credentials.

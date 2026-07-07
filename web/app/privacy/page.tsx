@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         <div className="eyebrow">隐私政策 · Privacy</div>
         <h1>隐私政策</h1>
         <p className="legal-date">最近更新：2026 年 6 月 8 日</p>
-        <p>Telos 是一个逆向设计的学习工具。我们只为「让你学得更好」而收集必要的数据，绝不出售你的任何信息。</p>
+        <p>Telos 是一个逆向设计的学习工具。Community Edition 默认本地优先；官方托管版本只为「让你学得更好」而收集必要的数据，绝不出售你的任何信息。</p>
 
         <h2>我们收集什么</h2>
         <ul>
@@ -42,10 +42,10 @@ export default function PrivacyPage() {
         </ul>
 
         <h2>数据存储</h2>
-        <p>账号与学习数据存储于 <b>Supabase</b>（托管的认证与数据库服务），通过行级安全（RLS）隔离，<b>仅你本人</b>可访问自己的数据。部分数据也会缓存在你设备本地（localStorage）以便离线使用。</p>
+        <p>本地模式下，学习数据保存在你的设备浏览器中。使用官方托管版本或你自行配置的同步服务时，账号与学习数据会存储在对应的托管认证与数据库服务中，并通过权限规则隔离。</p>
 
         <h2>第三方服务</h2>
-        <p>生成学习内容时，我们会将<b>必要的文本</b>（如你输入的学习目标）发送给大模型服务（DeepSeek）与联网检索服务（Tavily），以生成能力图谱与微课。除此之外，我们不向第三方共享你的个人信息，也<b>不出售</b>你的任何数据。</p>
+        <p>生成学习内容时，Telos 会将<b>必要的文本</b>（如你输入的学习目标）发送给你配置的大模型服务与可选检索服务，以生成能力图谱与微课。除此之外，我们不向第三方共享你的个人信息，也<b>不出售</b>你的任何数据。</p>
 
         <h2>你的权利</h2>
         <p>你可随时在应用内查看、导出或删除你的学习数据，或注销账号。需要协助可邮件联系我们。</p>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
         <div className="eyebrow">Privacy Policy</div>
         <h1>Privacy Policy</h1>
         <p className="legal-date">Last updated: June 8, 2026</p>
-        <p>Telos is a backward-design learning tool. We collect only the data needed to help you learn better, and we never sell your information.</p>
+        <p>Telos is a backward-design learning tool. Community Edition is local-first by default; hosted Telos collects only the data needed to help you learn better, and we never sell your information.</p>
 
         <h2>What we collect</h2>
         <ul>
@@ -73,10 +73,10 @@ export default function PrivacyPage() {
         </ul>
 
         <h2>Storage</h2>
-        <p>Account and learning data are stored in <b>Supabase</b> (managed auth + database), isolated by Row-Level Security so that <b>only you</b> can access your own data. Some data is also cached locally on your device.</p>
+        <p>In local mode, learning data is stored in your browser. If you use hosted Telos or configure your own sync service, account and learning data are stored in that hosted auth and database system with access rules.</p>
 
         <h2>Third parties</h2>
-        <p>To generate content, we send the <b>minimum necessary text</b> (e.g. your learning goal) to an LLM provider (DeepSeek) and a web-search provider (Tavily). We do not otherwise share your personal information, and we do <b>not sell</b> any of your data.</p>
+        <p>To generate content, Telos sends the <b>minimum necessary text</b> (e.g. your learning goal) to the model provider and optional search provider you configure. We do not otherwise share your personal information, and we do <b>not sell</b> any of your data.</p>
 
         <h2>Your rights</h2>
         <p>You can view, export, or delete your learning data, or delete your account, at any time. Contact us for help.</p>

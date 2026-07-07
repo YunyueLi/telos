@@ -1,4 +1,4 @@
-// 倒推端点：调用本地 serve.py 或线上 Cloudflare Worker，得到知识图谱。
+// 倒推端点：调用本地 serve.py、用户自托管 runtime 或 hosted Telos API，得到知识图谱。
 // 端点地址来自构建期环境变量 NEXT_PUBLIC_TELOS_DERIVE_URL，可被 localStorage 覆盖
 //（这样用户不用重新构建，直接在页面里粘贴本地地址就能体验）。
 "use client";
@@ -62,7 +62,7 @@ export function getHealthUrl(url?: string): string {
 }
 
 // ---- BYOK：用户自带的 LLM 配置（key/base/model + 联网检索）。存 localStorage，登录后随账号同步。----
-// key 只随请求发往倒推端点（你的 Worker 或本地 serve.py），端点不落盘、不记录；绝不进任何前端构建产物。
+// key 只随请求发往你选择的 provider / runtime；绝不进任何前端构建产物。
 const LLM_KEY = "telos:llm";
 // 配置变更事件：setLlmConfig / setKeyActive 后广播，让接入状态卡等监听方即时重测。
 export const LLM_EVENT = "telos:llm";
@@ -129,15 +129,14 @@ export function cleanBaseUrl(raw?: string): string | undefined {
   return u.origin + path;
 }
 
-// ---- 直连模式（真·BYOK）：用户配了自己的 key 且激活 → 浏览器直连 provider，绕过代理 Worker。----
-// 为什么：线上倒推 Worker 在 `*.workers.dev`，被 GFW 屏蔽（中国网络连接挂起）；用户自带的
-// DeepSeek/Tavily 可直连且允许浏览器 CORS。直连零代理、零单点故障、各地都通。key 只发往用户自己的 provider。
+// ---- 直连模式（真·BYOK）：用户配了自己的 key 且激活 → 浏览器直连 provider，绕过代理。----
+// 直连零代理、零单点故障。key 只发往用户自己的 provider。
 export function directMode(): boolean {
   return keyActive() && hasLlmKey();
 }
 
-// ---- 托管模式（开箱即用 · 商业化主引擎）：无 BYOK 的登录用户 → Worker 用服务端 key 代为推理，----
-// 按账号计量（Free 试用 / Pro 月度配额 / 加油包）。身份 = Supabase access_token（auth.tsx 随会话注入）。
+// ---- 托管模式：无 BYOK 的登录用户 → 配置的 hosted endpoint 代为推理。----
+// 身份 = access_token（auth.tsx 随会话注入）。
 let _hostedToken: string | null = null;
 export function setHostedToken(token: string | null): void {
   const t = (token || "").trim() || null;
@@ -152,7 +151,7 @@ export function setHostedToken(token: string | null): void {
 function isLocalUrl(url: string): boolean {
   return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|\/|$)/i.test(url);
 }
-// 托管就绪：配了端点且（本地 serve.py 不验身份 / 线上 Worker 需已登录携 token）。
+// 托管就绪：配了端点且（本地 serve.py 不验身份 / hosted endpoint 需已登录携 token）。
 export function hostedReady(): boolean {
   const url = getDeriveUrl();
   if (!url) return false;
@@ -182,8 +181,8 @@ export async function fetchHostedUsage(): Promise<HostedUsage | null> {
   }
 }
 
-// 付费模板内容下发：完整图谱（desc/drill/benchmark）不在前端（防白嫖）——购买/Pro 后凭身份从 Worker /template 拉取。
-// 失败抛本地化错误（未配端点 / 需登录 / 未拥有）。免费模板内容前端已内嵌，不走这里。
+// Hosted-only 模板内容下发：完整图谱不在前端，凭身份从配置的后端 /template 拉取。
+// 失败抛本地化错误（未配端点 / 需登录 / 未拥有）。公共免费模板内容前端已内嵌，不走这里。
 export async function fetchTemplatePoints(id: string): Promise<KnowledgePoint[]> {
   const url = getDeriveUrl();
   if (!url) throw new Error(tStatic("err.noTemplate"));
@@ -252,7 +251,7 @@ export async function verifyCertificate(serial: string): Promise<CertRecord> {
   }
 }
 
-// 托管错误码 → 本地化文案（Worker 返回 {error:"<code>"}）。未识别返回 null 由调用方走通用错误。
+// 托管错误码 → 本地化文案（后端返回 {error:"<code>"}）。未识别返回 null 由调用方走通用错误。
 function hostedErrorMessage(code: unknown): string | null {
   switch (String(code || "")) {
     case "NEED_LOGIN":
@@ -287,7 +286,7 @@ export function engineReady(): boolean {
 }
 
 // 一次性清理：生产页（非 localhost）若残留指向 localhost 的 `telos:derive-url` 覆盖（早期本地调试遗留），
-// 直接删掉——它只会让无 key 的 Worker 回退路径去打一个本机打不通的地址。getDeriveUrl 已忽略它，这里再物理清除。
+// 直接删掉——它只会让无 key 的 hosted 回退路径去打一个本机打不通的地址。getDeriveUrl 已忽略它，这里再物理清除。
 export function cleanupStaleEndpointOverride(): void {
   if (typeof window === "undefined" || isLocalHost()) return;
   const override = (window.localStorage.getItem(LS_KEY) || "").trim();
@@ -297,7 +296,7 @@ export function cleanupStaleEndpointOverride(): void {
 }
 
 // 把用户自带配置拼成请求头（随每次倒推/微课/诊断调用发出）。
-// 无 BYOK key 时附 Supabase token → Worker 走「托管模式」（服务端 key + 按账号计量）。
+// 无 BYOK key 时附 token → configured endpoint 走「托管模式」。
 function llmHeaders(): Record<string, string> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
   if (_keyActive) {

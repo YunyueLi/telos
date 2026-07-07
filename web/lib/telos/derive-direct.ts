@@ -1,11 +1,9 @@
-// 浏览器直连倒推（真·BYOK）——绕过被墙的 Cloudflare Worker。
+// 浏览器直连倒推（真·BYOK）——绕过中间代理。
 //
-// 背景：线上倒推端点是 `*.workers.dev`，被 GFW 屏蔽（中国网络打不通，连接挂起而非快速失败）；
-// 而用户自带的 LLM/检索 provider（DeepSeek / Tavily）可直连且允许浏览器 CORS。
-// 所以当用户配置了自己的 key 时，前端直接调用 provider，不再经任何代理。key 只发往用户自己的 provider。
+// 当用户配置了自己的 key 时，前端直接调用 provider，不经任何代理。key 只发往用户自己的 provider。
 //
-// 本文件是 `workers/derive.js` 编排逻辑的**第三处镜像**（前两处：core/telos_core/llm.py、workers/derive.js）。
-// 三段式层级倒推：蓝图 → 并行展开模块 → 汇编/断环。改编排请三处同步。
+// 本文件与 core/telos_core/llm.py 保持编排一致：
+// 三段式层级倒推：蓝图 → 并行展开模块 → 汇编/断环。
 "use client";
 
 import type { DeriveProgress } from "./derive"; // 仅类型（运行时擦除）→ 与 derive.ts 无循环依赖
@@ -97,7 +95,7 @@ async function chatText(system: string, user: string, cfg: DirectCfg, maxTokens 
   }
 }
 
-// ===== prompts（与 workers/derive.js 逐字一致，改一处改三处）=====
+// ===== prompts（与 core/telos_core/prompts.py 保持语义一致）=====
 
 function langDirective(lang: string): string {
   lang = String(lang || "").trim();

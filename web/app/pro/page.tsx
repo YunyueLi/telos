@@ -1,8 +1,7 @@
 "use client";
 
-// Telos Pro：定价 / 升级 / 权益管理页。
-// 购买流程：登录 → 跳服务商托管收银台（带 user_id+plan）→ 支付 → webhook 写 Supabase app_metadata
-// → 回跳本页 ?success=1 → 轮询 refreshEntitlement 确认解锁。权益绑定账号，多设备登录即享。
+// Telos Pro：Community Edition 保留产品入口和展示状态，但不携带官方 checkout 映射。
+// Hosted Telos 的支付、权益写入和生产配置在私有 hosted-product 仓维护。
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -72,7 +71,7 @@ export default function ProPage() {
     };
   }, [user, pro]);
 
-  // 支付成功回跳（?success=1）：轮询确认（webhook 写入通常几秒内到）
+  // hosted checkout 成功回跳（?success=1）：轮询确认权益状态。
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!new URLSearchParams(window.location.search).has("success")) return;

@@ -7,7 +7,7 @@ description: Use this when you need to teach a learner a skill or hit a concrete
 
 Telos turns a goal into a teachable plan and keeps the bookkeeping honest. It is
 the engine, not the teacher: **you (the LLM) do the teaching, explaining, and
-judging whether the learner passed; telos-core does the math** — building the
+judging whether the learner passed; Telos Core does the math** — building the
 prerequisite graph, locating the learner, picking what to learn next, and
 deciding when to review.
 
@@ -46,7 +46,7 @@ Skip it for one-off Q&A, or when there are no prerequisites / no goal to reach.
 
 ## How you fit in
 
-| You (the LLM)                                   | telos-core (this skill)                          |
+| You (the LLM)                                   | Telos Core (this skill)                          |
 | ----------------------------------------------- | ------------------------------------------------ |
 | Write the Outcome Spec from the user's goal     | Reverse-derive / hold the **Knowledge Graph**    |
 | Ask diagnostic questions, judge each answer     | Run **adaptive diagnosis**, build Learner State  |

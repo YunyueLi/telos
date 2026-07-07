@@ -1,11 +1,5 @@
-// 官方图谱模板店（知识付费）：人工精修的能力图谱，一键导入成学习项目。
-//
-// 安全模型：付费模板的完整内容（desc/drill/benchmark）【不在前端 / 不进公开仓库】——否则会被白嫖。
-//   · 前端这里只放 meta + 大纲预览（仅模块名 + 数量，公开安全）。
-//   · 完整 points 存 Cloudflare KV（workers/templates-private.json 灌入），由 Worker /template
-//     鉴权后下发（已购该模板 或 Pro）→ 前端 derive.ts 的 fetchTemplatePoints 拉取。
-//   · 免费模板（科二）内容直接内嵌（本就公开，可离线 / 无端点导入）。
-// 内容以中文撰写（目标人群）。
+// Community template catalog. Public templates can include complete points;
+// hosted-only premium payloads are represented by safe metadata and outlines.
 import type { KnowledgePoint } from "./engine";
 
 export interface TemplateOutline {
@@ -15,12 +9,12 @@ export interface TemplateOutline {
 
 export interface TemplateMeta {
   id: string;
-  sku: string; // checkout plan 传值（tpl_*，webhook 写 app_metadata.telos_templates）
+  sku: string; // stable template SKU
   title: string;
   goal: string; // 导入后的项目 goal
   desc: string;
   price: string; // 展示价
-  productId: string; // Creem product_id（服务商建品后填；空 = 暂不可单独购买，Pro 可解锁）
+  productId: string; // empty in Community Edition; hosted checkout config is private
   free?: boolean; // 免费模板
   tags: string[];
   nodes: number; // 能力点总数（预览）
@@ -29,7 +23,7 @@ export interface TemplateMeta {
 }
 
 export interface Template extends TemplateMeta {
-  points?: KnowledgePoint[]; // 仅免费模板内嵌；付费模板 undefined → 购买 / Pro 后从 Worker 下发
+  points?: KnowledgePoint[]; // public templates can embed points; hosted-only templates keep metadata only
 }
 
 const P = (

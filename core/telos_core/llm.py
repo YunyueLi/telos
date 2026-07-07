@@ -17,7 +17,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .models import KnowledgeGraph
-from .prompts import (  # 公开 baseline prompt；owner 私有增强见 prompts_private.py（git-ignored，部署/自用时覆盖）
+from .prompts import (
     _SYSTEM, _USER, _BLUEPRINT_SYSTEM, _BLUEPRINT_USER_TPL, _MODULE_SYSTEM, _MODULE_USER_TPL,
     _CRITIQUE_SYSTEM, _CRITIQUE_USER, _TITLE_SYSTEM, _TITLE_USER, _LESSON_SYSTEM, _LESSON_HEADER,
     _LESSON_STEPS, _LESSON_REQS, _STYLE_RULES, _PROBES_SYSTEM, _PROBES_USER,
@@ -516,7 +516,7 @@ def _derive_single_spec(goal: str, ctx: str, lang: str, timeout: float) -> dict:
     return {"title": str(spec.get("title", "")).strip(), "points": out}
 
 
-# ===== 对抗式专家审查 + 自动修补（镜像 derive-direct.ts / workers/derive.js）=====
+# ===== 对抗式专家审查 + 自动修补（与 derive-direct.ts 保持一致）=====
 
 
 def _norm_points(spec: dict) -> list:

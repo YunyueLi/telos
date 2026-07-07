@@ -6,9 +6,9 @@ import { dirname } from "node:path";
 // makes Turbopack infer the wrong root).
 const root = dirname(fileURLToPath(import.meta.url));
 
-// Static export served under the custom domain https://telos.ungetsu.net/app/.
-// Cloudflare Pages publishes the marketing landing page at / and this app under
-// /app, so production keeps a stable /app basePath with no repository prefix.
+// Static export served under /app. The marketing landing page is published at /
+// and this app under /app, so production keeps a stable basePath with no
+// repository prefix.
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {

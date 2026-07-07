@@ -1,0 +1,51 @@
+<svg width="1200" height="420" viewBox="0 0 1200 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Telos Core pipeline</title>
+  <desc id="desc">A pipeline from outcome spec to prerequisite graph, diagnosis, learning frontier, lesson and probe, and spaced review.</desc>
+  <rect width="1200" height="420" rx="28" fill="#F7F5F0"/>
+  <path d="M0 84H1200M0 168H1200M0 252H1200M0 336H1200M120 0V420M240 0V420M360 0V420M480 0V420M600 0V420M720 0V420M840 0V420M960 0V420M1080 0V420" stroke="#D8D2C5" stroke-width="1" opacity=".38"/>
+  <rect x="52" y="54" width="1096" height="312" rx="22" fill="#FFFDF8" stroke="#161510" stroke-width="2"/>
+  <text x="88" y="103" fill="#161510" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="3">TELOS CORE PIPELINE</text>
+  <text x="88" y="140" fill="#161510" font-family="Georgia, 'Times New Roman', serif" font-size="36">Outcome-first learning, packaged as portable contracts.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <g transform="translate(88 202)">
+      <rect width="150" height="92" rx="16" fill="#161510"/>
+      <text x="20" y="34" fill="#F7F5F0" font-size="15" font-weight="700">Outcome Spec</text>
+      <text x="20" y="61" fill="#D8D2C5" font-size="12">goal, context,</text>
+      <text x="20" y="78" fill="#D8D2C5" font-size="12">constraints</text>
+    </g>
+    <path d="M250 248H306" stroke="#161510" stroke-width="2"/>
+    <path d="M298 240L306 248L298 256" stroke="#161510" stroke-width="2"/>
+    <g transform="translate(318 202)">
+      <rect width="150" height="92" rx="16" fill="#F1EDE5" stroke="#161510" stroke-width="1.5"/>
+      <text x="20" y="34" fill="#161510" font-size="15" font-weight="700">Graph</text>
+      <text x="20" y="61" fill="#625D52" font-size="12">points, edges,</text>
+      <text x="20" y="78" fill="#625D52" font-size="12">domains</text>
+    </g>
+    <path d="M480 248H536" stroke="#161510" stroke-width="2"/>
+    <path d="M528 240L536 248L528 256" stroke="#161510" stroke-width="2"/>
+    <g transform="translate(548 202)">
+      <rect width="150" height="92" rx="16" fill="#F1EDE5" stroke="#161510" stroke-width="1.5"/>
+      <text x="20" y="34" fill="#161510" font-size="15" font-weight="700">Diagnosis</text>
+      <text x="20" y="61" fill="#625D52" font-size="12">BKT + CBM</text>
+      <text x="20" y="78" fill="#625D52" font-size="12">evidence</text>
+    </g>
+    <path d="M710 248H766" stroke="#161510" stroke-width="2"/>
+    <path d="M758 240L766 248L758 256" stroke="#161510" stroke-width="2"/>
+    <g transform="translate(778 202)">
+      <rect width="150" height="92" rx="16" fill="#F1EDE5" stroke="#161510" stroke-width="1.5"/>
+      <text x="20" y="34" fill="#161510" font-size="15" font-weight="700">Frontier</text>
+      <text x="20" y="61" fill="#625D52" font-size="12">KST/ZPD</text>
+      <text x="20" y="78" fill="#625D52" font-size="12">next moves</text>
+    </g>
+    <path d="M940 248H996" stroke="#161510" stroke-width="2"/>
+    <path d="M988 240L996 248L988 256" stroke="#161510" stroke-width="2"/>
+    <g transform="translate(1008 202)">
+      <rect width="110" height="92" rx="16" fill="#161510"/>
+      <text x="17" y="34" fill="#F7F5F0" font-size="15" font-weight="700">Review</text>
+      <text x="17" y="61" fill="#D8D2C5" font-size="12">FSRS</text>
+      <text x="17" y="78" fill="#D8D2C5" font-size="12">schedule</text>
+    </g>
+  </g>
+  <path d="M1070 314C1008 365 912 372 821 340C751 315 704 318 638 346C544 386 446 372 384 316" stroke="#161510" stroke-width="2" stroke-dasharray="7 9" opacity=".6"/>
+  <text x="428" y="365" fill="#625D52" font-family="Inter, Arial, sans-serif" font-size="13">lesson + probe results flow back into mastery and review state</text>
+</svg>

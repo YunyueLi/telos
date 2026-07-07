@@ -1,9 +1,9 @@
 {
-  "name": "@telos/product-web",
+  "name": "@telos/community-web",
   "version": "0.1.0",
   "private": true,
-  "license": "UNLICENSED",
-  "description": "Official Telos product web app. Proprietary; Telos Core is distributed separately.",
+  "license": "AGPL-3.0-or-later",
+  "description": "Telos Community Edition web app.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

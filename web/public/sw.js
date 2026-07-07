@@ -2,7 +2,7 @@
 // 策略：① 导航(HTML) network-first —— 始终拿最新外壳，避免缓存旧 HTML 引用已失效的 chunk
 //          （与 ChunkGuard 互补），离线时回退缓存的外壳；
 //        ② 同源静态资源(_next 的 hash 文件、图标等) cache-first —— hash 文件名天然安全长缓存，离线可用；
-//        ③ 跨源请求（倒推 Worker / Supabase / LLM provider）一律不拦 —— 实时、不缓存。
+//        ③ 跨源请求（倒推 runtime / Supabase / LLM provider）一律不拦 —— 实时、不缓存。
 const CACHE = "telos-v2";
 
 self.addEventListener("install", () => self.skipWaiting());

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""本地倒推服务：给网页 Demo 用的零依赖 HTTP 代理。
+"""本地倒推服务：给 Telos Community Edition 用的零依赖 HTTP 代理。
 
     POST /derive   {"goal": "..."}  -> {"goal":..., "points":[{id,name,prereqs,isGoal,minutes}]}
     GET  /health                    -> {"ok":true,"available":<bool>,"model":...}
 
 key 从 core/.env 读取（在你自己机器上，不会外泄）。本服务默认只监听本机 127.0.0.1。
-公开部署请改用 workers/derive.js（Cloudflare Worker，key 存后端 secret，不进前端）。
+自托管时可用 TELOS_HOST / TELOS_PORT 放到自己的反向代理后面。
 
 用法：
     python3 serve.py                 # 监听 127.0.0.1:8787

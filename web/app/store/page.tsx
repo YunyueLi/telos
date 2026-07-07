@@ -1,9 +1,8 @@
 "use client";
 
-// 官方模板店：人工精修图谱一键导入（知识付费）。
-// 获取规则：免费模板内容前端内嵌、直接导入；付费模板的完整内容【不在前端】——
-// 已购（app_metadata.telos_templates，webhook 发货）或 Pro 时，由 Worker /template 鉴权后下发再导入。
-// 可单独购买（checkout 链接接入后出现「购买」）。导入受免费版 3 项目上限约束（Pro 无限）。
+// 模板店：人工精修图谱一键导入。
+// 免费模板内容前端内嵌、直接导入；hosted-only 模板由配置的后端鉴权下发。
+// Community Edition 默认没有 checkout 映射。导入受免费版 3 项目上限约束（Pro 无限）。
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icon";
@@ -51,7 +50,7 @@ export default function StorePage() {
       return;
     }
     setMsg("");
-    // 免费模板内容前端内嵌；付费模板从 Worker 鉴权下发（内容不在前端）。
+    // 免费模板内容前端内嵌；hosted-only 模板从配置的后端鉴权下发。
     let points = tp.points;
     if (!points) {
       setImporting(tp.id);

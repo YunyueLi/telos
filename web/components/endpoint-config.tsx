@@ -2,7 +2,7 @@
 
 // 接入状态：三张能力卡（AI 引擎 / 联网搜索 / 跨设备同步），点卡片弹出对应配置。
 // BYOK——用户自带 LLM 配置（API Key / 模型 / 接口地址），存本机 + 随账号同步，随请求发往服务、不落盘。
-// 服务端点（处理倒推的服务器，默认线上 Worker）收进「自部署」高级，普通用户无需触碰。
+// 服务端点（处理倒推的 runtime）收进「自部署」高级，普通用户无需触碰。
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -26,7 +26,7 @@ import { useT } from "@/lib/telos/i18n";
 const DEEPSEEK_KEYS_URL = "https://platform.deepseek.com/api_keys";
 const MODEL_PRESETS = ["deepseek-v4-pro", "deepseek-v4-flash"];
 const ENDPOINT_PRESETS = [
-  { key: "worker", labelKey: "epc.worker", fill: "" }, // 线上默认（env 注入），留空＝用构建期默认
+  { key: "worker", labelKey: "epc.worker", fill: "" }, // 构建期默认 endpoint
   { key: "local", labelKey: "epc.local", fill: LOCAL_ENDPOINT },
 ];
 

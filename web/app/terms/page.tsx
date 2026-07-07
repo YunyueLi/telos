@@ -41,7 +41,7 @@ export default function TermsPage() {
         <p>能力图谱、微课、测题等内容由 AI 生成，<b>可能存在错误或不准确</b>，仅供学习参考，不构成专业、医疗、法律或投资建议。请自行核实重要信息。</p>
 
         <h2>知识产权</h2>
-        <p>你创建的学习数据归你所有。Telos Core 使用 Apache-2.0；官方托管产品、品牌、模板、UI/UX 与服务层保留所有权利。</p>
+        <p>你创建的学习数据归你所有。Telos Community Edition 使用 AGPL-3.0；独立的 core 包额外以 Apache-2.0 提供。Telos 名称、域名与官方品牌标识受商标政策约束。</p>
 
         <h2>服务"按现状"提供</h2>
         <p>我们会尽力维护服务，但不保证其不间断或完全无误，并可能随时调整、新增或停止部分功能。</p>
@@ -72,7 +72,7 @@ export default function TermsPage() {
         <p>Skill maps, lessons, and quizzes are AI-generated and <b>may contain errors</b>. They are for learning reference only and do not constitute professional, medical, legal, or financial advice. Verify important information yourself.</p>
 
         <h2>Intellectual property</h2>
-        <p>Your learning data is yours. Telos Core is Apache-2.0; the official hosted product, brand, templates, UI/UX, and service layer remain proprietary.</p>
+        <p>Your learning data is yours. Telos Community Edition is AGPL-3.0; the standalone core package is additionally available under Apache-2.0. The Telos name, domains, and official brand identity are governed by the trademark policy.</p>
 
         <h2>Provided “as is”</h2>
         <p>We maintain the service in good faith but do not guarantee it is uninterrupted or error-free, and we may change, add, or discontinue features at any time.</p>

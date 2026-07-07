@@ -1,10 +1,7 @@
 """Telos prompt 库（Python 引擎端）—— 倒推 / 微课 / 诊断的全部提示词。
 
-【公开 baseline + 私有增强】本模块是「够用、能跑」的公开基线：clone / 自部署即用、质量稳定。
-owner 的持续 prompt 调优写进 git-ignored 的 prompts_private.py（部署 / 自用时覆盖），公开仓只留本 baseline。
-
-与 workers/prompts.js 是【有意的繁简镜像】（Python 为繁版、JS 为精简版，非逐字相同）；
-改「铁律」子串时同步两端——workers/check-prompt-parity.mjs 会校验关键不变量在两端在场。
+本模块是 Community Edition 的公开提示词实现：clone / 自部署即用、质量稳定。
+改提示词时同步检查 core 测试和前端直连编排。
 """
 
 _SYSTEM = (

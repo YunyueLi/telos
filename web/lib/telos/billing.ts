@@ -1,8 +1,7 @@
 "use client";
 
 // Telos Pro 权益单一真相源。
-// 真源 = Supabase `app_metadata.telos_pro`（只有服务端 service_role 能写——由 workers/derive.js 的
-// /billing/webhook 在支付服务商回调时写入；用户改不了，区别于 user_metadata）。
+// Hosted Telos 的真源是账号 metadata；Community Edition 只读取已配置后端返回的状态。
 // 前端：refreshEntitlement() 拉最新 → 模块缓存 + localStorage（离线/秒读）→ 广播事件；isPro() 同步读缓存。
 // 本机调试：localStorage 置 telos:pro=1 可强制 Pro（仅影响本机展示，真权益仍以账号为准）。
 import { supabase } from "./supabase";
@@ -17,8 +16,8 @@ export interface Entitlement {
   pro: boolean;
   plan: "monthly" | "yearly" | "lifetime" | null;
   until: number | null; // ms；null = 不过期（买断）或非 Pro
-  templates: string[]; // 已购模板 id（webhook 写 app_metadata.telos_templates）
-  customerId: string | null; // Creem customer id，用于自助管理订阅入口
+  templates: string[]; // 已拥有模板 id
+  customerId: string | null; // hosted billing customer id，用于自助管理订阅入口
   uid: string | null; // 权益所属账号；登出/换号后缓存不串号
   at: number; // 上次确认时间
 }
@@ -73,7 +72,7 @@ export function entitlement(): Entitlement {
   return _ent ?? (_ent = readCache());
 }
 
-// 从 Supabase 拉最新权益（getUser() 走服务端，拿到 webhook 刚写入的 app_metadata，而不是本地旧 JWT）。
+// 从账号服务拉最新权益（getUser() 走服务端，避免只读到本地旧 JWT）。
 // 未登录 / 未配置云端 → 清空为非 Pro。返回最新 Entitlement。
 export async function refreshEntitlement(): Promise<Entitlement> {
   const sb = supabase();
@@ -158,7 +157,7 @@ function portalErrorMessage(code: unknown): string | null {
   }
 }
 
-// 创建服务商收银台会话。user_id / email 从 Supabase 会话取，产品映射由 Worker 端确认。
+// 创建 hosted checkout 会话。Community Edition 默认没有 checkout 映射。
 export async function startCheckout(sku: BillingSku | string): Promise<string> {
   const base = billingApiBase();
   if (!base) throw new Error(tStatic("err.checkoutUnavailable"));
@@ -183,7 +182,7 @@ export async function startCheckout(sku: BillingSku | string): Promise<string> {
   return url;
 }
 
-// 创建服务商自助管理入口（取消订阅、更新支付方式、查看订单）。
+// 创建 hosted billing 自助管理入口（取消订阅、更新支付方式、查看订单）。
 export async function startBillingPortal(): Promise<string> {
   const base = billingApiBase();
   if (!base) throw new Error(tStatic("err.portalUnavailable"));

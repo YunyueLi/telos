@@ -1,0 +1,12 @@
+.git
+.DS_Store
+AGENTS.md
+core/.env
+core/__pycache__/
+deploy/
+node_modules/
+web/.env.local
+web/.next/
+web/node_modules/
+web/out/
+workers/

@@ -62,7 +62,7 @@ export default function MePage() {
     const serial = certSerial(goal, p.id); // 稳定编号：目标 + 项目 id（不随语言/领取时刻变，验真用同一个）
     const dateISO = new Date().toISOString().slice(0, 10);
     const verifyUrl = `${window.location.host}${BASE}/cert?no=${serial}`;
-    await registerCertificate({ serial, name, goal, nodes: p.points.length, dateISO }); // 登记到 KV，供 /cert 公开验真
+    await registerCertificate({ serial, name, goal, nodes: p.points.length, dateISO }); // 登记到配置的后端，供 /cert 公开验真
     earnGraphInk(serial); // 完成整张图谱发墨（幂等，按 serial 去重）
     const canvas = buildCertificate({
       name,

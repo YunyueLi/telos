@@ -309,7 +309,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
     if (syncedRef.current === user.id) return;
     syncedRef.current = user.id;
-    void refreshEntitlement(); // 登录：拉取账号 Pro 权益（webhook 写入的 app_metadata）
+    void refreshEntitlement(); // 登录：拉取账号 Pro 权益
     // BYOK：登录时本机 ↔ 账号双向对账（后写入者胜，按 updatedAt）。
     // 关键：用 getUser() 拉【服务端最新】user_metadata——session 里的 JWT 可能是本设备早先登录时的旧缓存，
     // 缺后来在另一台设备绑定的 key，只读 JWT 会导致「新设备登录仍未连接」。getUser 失败时回退 JWT 值。

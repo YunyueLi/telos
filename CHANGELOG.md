@@ -23,11 +23,11 @@ First public release. Telos reverse-derives any goal into a prerequisite skill m
 - Self-built **i18n in 9 languages** (zh-CN/zh-TW/en/fr/ja/ko/es/ru/de).
 - Black-and-white editorial **design system** (Fraunces + Inter + JetBrains Mono, hand-drawn icons, monochrome mascot) — codified in `docs/DESIGN.md`.
 
-### Online & deploy
-- Hosted app on **Cloudflare Pages** with online derivation via a **Cloudflare Worker** (LLM key server-side, CORS-locked).
-- **One-click "Deploy to Cloudflare"** button; committed `.env.example` templates; every optional integration (search / accounts / OAuth) degrades gracefully.
+### Runtime & deploy
+- Local-first Community Edition with `core/serve.py` as the reference runtime.
+- Static export for `landing/` and `/app/`; every optional integration (search / accounts / OAuth) degrades gracefully.
 
 ### Docs
-- `README` (English) + `README.zh-CN`, `DERIVE.md`, `SUPABASE.md`, `docs/DESIGN.md`, `docs/STRATEGY.md`, `docs/HANDOFF.md`.
+- `README` (English) + `README.zh-CN`, `DERIVE.md`, `DEPLOYMENT.md`, `docs/DESIGN.md`, `docs/STRATEGY.md`, `docs/ROADMAP.md`.
 
 [0.1.0]: https://github.com/YunyueLi/telos/releases/tag/v0.1.0

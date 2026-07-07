@@ -1,16 +1,37 @@
 # Contributing
 
-Telos accepts public contributions only in the Telos Core / Community Edition
-scope:
+Telos is developed as a canonical public Community Edition. Contributions should keep the app runnable, understandable, and useful for people who want to learn, self-host, or build on the engine.
 
-- learning engine correctness and tests
-- data contracts and reference implementation behavior
-- local reference server/CLI
-- examples, documentation, and reusable skill material
+## Good First Areas
 
-Do not submit product-layer changes here: official UI/UX, billing, hosted-AI
-metering, Supabase service logic, official templates, brand assets, private
-prompts, or growth surfaces belong to the private Telos Product repository.
+- Core learning engine correctness and tests.
+- Knowledge graph and learner-state data contracts.
+- Local runtime reliability.
+- Web app accessibility, responsiveness, and empty/error states.
+- Examples, docs, and self-hosting guides.
+- Agent skill improvements that reuse the public engine.
 
-By submitting a contribution, you agree that it can be distributed under the
-Apache-2.0 license used by Telos Core.
+## Development
+
+```bash
+./start.sh
+make test
+bash scripts/build-pages.sh
+```
+
+Before opening a pull request, make sure the app still starts locally and the engine tests pass.
+
+## Pull Request Standard
+
+- Keep changes focused and easy to review.
+- Include tests for algorithmic changes in `core/`.
+- Do not commit `.env`, keys, tokens, real user data, or private deployment config.
+- Do not add official hosted-service secrets, payment-provider product IDs, internal metrics, or private template payloads.
+- Use plain public examples when documentation needs sample IDs or credentials.
+
+## License
+
+By contributing, you agree that your contribution can be distributed under the repository licenses:
+
+- Telos Community Edition: AGPL-3.0
+- `core/`: Apache-2.0 for standalone SDK/protocol reuse

@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sb.auth.getSession().then(({ data }) => {
       if (!alive) return;
       setSession(data.session);
-      setHostedToken(data.session?.access_token ?? null); // 托管模式身份（无 BYOK 时随请求发 Worker）
+      setHostedToken(data.session?.access_token ?? null); // 托管模式身份（无 BYOK 时随请求发配置的后端）
       setReady(true);
     });
     const { data: sub } = sb.auth.onAuthStateChange((_e, s) => {

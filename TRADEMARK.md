@@ -1,13 +1,17 @@
-# Telos Trademark and Brand Policy
+# Trademark Policy
 
-The Telos name, logo, domain names, official mascot/portrait system, product UI,
-visual identity, and official template catalog are proprietary assets of the
-Telos product.
+The Telos name, wordmark, domain names, logo, and official visual identity identify the official Telos project and hosted product.
 
-The Apache-2.0 license for Telos Core does not grant rights to use Telos marks in
-a way that suggests official endorsement, hosted-service affiliation, or product
-equivalence.
+You may:
 
-You may use "Telos Core" or "built with Telos Core" to truthfully describe
-compatibility. Forks and third-party deployments should use their own product
-names, logos, domains, and visual assets.
+- Say that your project is built with Telos or Telos Core.
+- Link to `https://github.com/YunyueLi/telos`.
+- Use screenshots of the unmodified Community Edition when writing about Telos.
+
+You may not:
+
+- Present a fork or hosted service as the official Telos product.
+- Use Telos marks in a way that implies endorsement, partnership, or ownership.
+- Repackage official brand assets as a separate brand kit.
+
+Forks and third-party hosted services should use their own product names, domains, and visual identity.

@@ -1,7 +1,7 @@
 "use client";
 
 // 完课证书公开验真页：/cert?no=TL-XXXX —— 任何人凭编号核验真伪 + 看证书信息（社交传播落地页）。
-// 公开（无需登录），向 Worker GET /cert/verify 查询；找到则展示纸感证书卡 + 已验证徽章，否则提示未找到。
+// 公开（无需登录），向配置的后端 GET /cert/verify 查询；找到则展示纸感证书卡 + 已验证徽章，否则提示未找到。
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";

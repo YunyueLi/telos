@@ -1,0 +1,9 @@
+Telos Licensing Notice
+
+Copyright (c) 2026 Telos / ungetsu.
+
+Unless a file says otherwise, Telos Community Edition is licensed under AGPL-3.0.
+
+The standalone learning-engine package in `core/` is additionally provided under Apache-2.0. This is intended for SDK, protocol, research, and agent-runtime reuse where the product application is not redistributed.
+
+The Telos name, domains, logo, wordmark, and official hosted-service identity are governed by `TRADEMARK.md` and `BRAND.md`.

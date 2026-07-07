@@ -1,6 +1,6 @@
 # Telos skill
 
-A [Claude Agent Skill](https://agentskills.io) wrapper around **telos-core**, the
+A [Claude Agent Skill](https://agentskills.io) wrapper around **Telos Core**, the
 portable backward-design learning engine. It lets any Skill-supporting agent
 (agentskills.io / openclaw / Claude Code) run the full learning loop:
 
@@ -67,7 +67,7 @@ python3 scripts/telos.py next   --state state.json          # repeat until goals
 
 | Component | Role |
 | --------- | ---- |
-| **`core/` (telos-core)** | The engine this skill wraps — pure-Python, zero-dependency: KST, diagnosis, FIRe, FSRS, frontier, `TelosEngine`. The CLI is a thin adapter over its public API. |
+| **`core/` (Telos Core)** | The engine this skill wraps — pure-Python, zero-dependency: KST, diagnosis, FIRe, FSRS, frontier, `TelosEngine`. The CLI is a thin adapter over its public API. |
 | **`skill/` (this)** | Makes the engine runnable from any agent via `SKILL.md` + a JSON CLI. No engine logic of its own. |
 | **`web/`** | The product UI. Its graph (`web/lib/graph.ts`) is the same FastAPI/JWT seed, so the skill, the engine, and the web demo all speak the same shapes. |
 
@@ -76,4 +76,4 @@ Learner State — so state produced here is consumable by the engine and the app
 
 ## License
 
-Apache-2.0 (inherits the repo license).
+Apache-2.0 for the standalone skill/core package; see the repository `NOTICE`.

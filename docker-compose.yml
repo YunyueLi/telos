@@ -1,0 +1,13 @@
+services:
+  telos:
+    build: .
+    ports:
+      - "3000:3000"
+      - "8787:8787"
+    env_file:
+      - path: ./core/.env
+        required: false
+    environment:
+      TELOS_HOST: 0.0.0.0
+      TELOS_PORT: 8787
+      NEXT_PUBLIC_TELOS_DERIVE_URL: http://127.0.0.1:8787/derive
