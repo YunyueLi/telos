@@ -35,6 +35,53 @@ const CATS: { domain: string; egKey: string }[] = [
   { domain: "F", egKey: "ob.catHabit" },
 ];
 
+type VoiceResult = { isFinal?: boolean; 0?: { transcript?: string } };
+type VoiceResultEvent = Event & { resultIndex?: number; results?: ArrayLike<VoiceResult> };
+type VoiceErrorEvent = Event & { error?: string };
+interface VoiceRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onend: (() => void) | null;
+  onerror: ((event: VoiceErrorEvent) => void) | null;
+  onresult: ((event: VoiceResultEvent) => void) | null;
+  onstart: (() => void) | null;
+  abort: () => void;
+  start: () => void;
+  stop: () => void;
+}
+type VoiceWindow = Window & {
+  SpeechRecognition?: new () => VoiceRecognition;
+  webkitSpeechRecognition?: new () => VoiceRecognition;
+};
+
+function speechLang(lang: string): string {
+  return (
+    {
+      "zh-CN": "zh-CN",
+      "zh-TW": "zh-TW",
+      en: "en-US",
+      fr: "fr-FR",
+      ja: "ja-JP",
+      ko: "ko-KR",
+      es: "es-ES",
+      ru: "ru-RU",
+      de: "de-DE",
+    }[lang] ?? "zh-CN"
+  );
+}
+
+function refineSpokenGoal(raw: string): string {
+  let s = raw
+    .replace(/[，。！？、；：,.!?;:]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const fillers = /^(嗯|呃|额|啊|那个|就是|然后|请问|请你|麻烦你)\s*/;
+  const prefixes = /^(我现在|我其实|我大概|我)?(想要|想|希望|需要|打算|准备|计划)\s*/;
+  for (let i = 0; i < 4; i += 1) s = s.replace(fillers, "").replace(prefixes, "").replace(/^(请)?帮我\s*/, "").trim();
+  return s.slice(0, 140);
+}
 
 export default function HubPage() {
   const {
@@ -139,7 +186,7 @@ function Onboarding({
   progress: DeriveProgress | null;
   projectCount: number;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { user } = useAuth();
   const [goal, setGoal] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -147,13 +194,19 @@ function Onboarding({
   const [pro, setPro] = useState(false);
   const [ms, setMs] = useState(0); // 倒推已用毫秒——驱动进度条 + 实时秒数
   const [coachNudge, setCoachNudge] = useState(0);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef<VoiceRecognition | null>(null);
+  const voiceFinalRef = useRef("");
+  const voiceDraftRef = useRef("");
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const manualFace = useCurrentPortraitFile(); // 形象集里手动选的陪伴形象
   // 情境神态：无项目→迎新；有项目→用手动选的（她还会随场景说话——"活的"陪伴，不只一张死图）
   const heroMood: Mood = projectCount > 0 ? "idle" : "welcome";
   const returning = projectCount > 0; // 回头客（已有项目）→ 压缩头、直奔输入；新人 → 完整 hero 讲清楚
   const mood = moodFace(heroMood);
-  const heroFace = heroMood === "welcome" ? "teach" : mood?.file ?? manualFace;
+  const heroFace = heroMood === "welcome" ? "face-ink" : mood?.file ?? manualFace;
   const heroBubbleKey = heroMood === "welcome" ? "mood.welcome" : "mood.idle";
   // 免费版项目数上限：超限时在输入框下方给事前提示（derive 内还有硬校验兜底）
   const limitReached = mounted && !pro && projectCount >= BILLING.freeProjectLimit;
@@ -164,9 +217,12 @@ function Onboarding({
     sync();
     const syncPro = () => setPro(isPro());
     syncPro();
+    const w = window as VoiceWindow;
+    setVoiceSupported(Boolean(w.SpeechRecognition || w.webkitSpeechRecognition));
     window.addEventListener(LLM_EVENT, sync); // 配好 key/端点后即时收起「需配置」提示
     window.addEventListener(BILLING_EVENT, syncPro);
     return () => {
+      recognitionRef.current?.abort();
       window.removeEventListener(LLM_EVENT, sync);
       window.removeEventListener(BILLING_EVENT, syncPro);
     };
@@ -203,6 +259,63 @@ function Onboarding({
     const pick = CATS[coachNudge % CATS.length];
     setCoachNudge((n) => n + 1);
     fill(t(pick.egKey));
+  };
+  const toggleVoice = () => {
+    if (deriving) return;
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const w = window as VoiceWindow;
+    const Recognition = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Recognition) {
+      setVoiceError(t("ob.voiceUnsupported"));
+      return;
+    }
+    const recognition = new Recognition();
+    recognitionRef.current = recognition;
+    voiceFinalRef.current = "";
+    voiceDraftRef.current = "";
+    recognition.lang = speechLang(lang);
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => {
+      setListening(true);
+      setVoiceError("");
+    };
+    recognition.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex ?? 0; i < (event.results?.length ?? 0); i += 1) {
+        const result = event.results?.[i];
+        const transcript = result?.[0]?.transcript?.trim() ?? "";
+        if (!transcript) continue;
+        if (result?.isFinal) voiceFinalRef.current = `${voiceFinalRef.current} ${transcript}`.trim();
+        else interim = `${interim} ${transcript}`.trim();
+      }
+      const refined = refineSpokenGoal(`${voiceFinalRef.current} ${interim}`);
+      if (refined) {
+        voiceDraftRef.current = refined;
+        setGoal(refined);
+      }
+    };
+    recognition.onerror = (event) => {
+      setListening(false);
+      recognitionRef.current = null;
+      setVoiceError(event.error === "not-allowed" || event.error === "service-not-allowed" ? t("ob.voiceDenied") : t("ob.voiceFailed"));
+    };
+    recognition.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+      if (!voiceDraftRef.current) setVoiceError(t("ob.voiceEmpty"));
+    };
+    try {
+      recognition.start();
+    } catch {
+      setListening(false);
+      recognitionRef.current = null;
+      setVoiceError(t("ob.voiceFailed"));
+    }
   };
 
   // 倒推进度：缓动逼近 92%（永不假装完成，成功即切到地图），阶段=流水线真实步骤、按经验时间推进。
@@ -245,6 +358,16 @@ function Onboarding({
               }}
             />
             <div className="ob-bar">
+              <button
+                type="button"
+                className={`ob-voice ${listening ? "on" : ""}`}
+                onClick={toggleVoice}
+                disabled={deriving}
+                aria-pressed={listening}
+                title={voiceSupported ? t("ob.voiceTitle") : t("ob.voiceUnsupported")}
+              >
+                <Icon name="mic" /> <span>{listening ? t("ob.voiceListening") : t("ob.voice")}</span>
+              </button>
               <span className="ob-hint">{t("ob.hintKbd")}</span>
               <button
                 className="btn btn-ink"
@@ -256,6 +379,7 @@ function Onboarding({
               </button>
             </div>
           </div>
+          {voiceError && <div className="ob-voice-msg">{voiceError}</div>}
 
           {limitReached && (
             <div className="ob-limit" role="note">
