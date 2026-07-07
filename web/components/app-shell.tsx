@@ -14,6 +14,7 @@ import { AccountMenu } from "@/components/account-menu";
 import { GoalCelebrate } from "@/components/goal-celebrate";
 
 type Tab = "map" | "review" | "streak" | "studio" | "me" | "settings";
+type ShellActive = Tab | "new" | null;
 
 const TABS: { key: Tab; href: string; icon: IconName; labelKey: string }[] = [
   { key: "map", href: "/", icon: "map", labelKey: "nav.map" },
@@ -28,7 +29,7 @@ export function AppShell({
   active,
 }: {
   children: React.ReactNode;
-  active?: Tab;
+  active?: ShellActive;
 }) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
@@ -40,8 +41,9 @@ export function AppShell({
   };
   // 点导航 Tab：退出「新学习」编辑态，让「地图」直达当前项目地图（取代旧的「返回学习」按钮）。
   const leaveCompose = () => cancelNew();
-  const tab: Tab =
-    active ??
+  const tab: Tab | null =
+    active === "new" ? null :
+    (active ??
     (pathname.startsWith("/settings")
       ? "settings"
       : pathname.startsWith("/review")
@@ -52,7 +54,7 @@ export function AppShell({
             ? "studio"
             : pathname.startsWith("/me")
               ? "me"
-              : "map");
+              : "map"));
   const due = view?.due.length ?? 0;
 
   return (
@@ -93,7 +95,7 @@ export function AppShell({
             </div>
 
             {/* 主行动 */}
-            <button className="appnew" onClick={newLearning} title={t("shell.newTitle")}>
+            <button className={`appnew ${active === "new" ? "on" : ""}`} onClick={newLearning} title={t("shell.newTitle")}>
               <Icon name="plus" /> <span className="appnew-t">{t("shell.new")}</span>
             </button>
 
