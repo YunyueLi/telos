@@ -279,7 +279,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .ob-dots > i:nth-child(3){animation-delay:.36s}
 @keyframes obDot{0%,70%,100%{opacity:.22;transform:translateY(0)}35%{opacity:1;transform:translateY(-1px)}}
 /* 欢迎页：引擎未就绪时的入口行——主推「登录免费试用」（托管），次选「自带 key」 */
-.ob-cfgrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;max-width:1100px;margin-left:auto;margin-right:auto}
+.ob-cfgrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
 .ob-cfglink{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;text-decoration:none;background:var(--card)}
 .ob-cfglink:hover{border-color:var(--ink);color:var(--ink)}
 .ob-cfglink .ic{width:12px;height:12px}
@@ -335,24 +335,25 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 }
 
 /* —— 引导 / 目标输入：先让目标输入成为首屏主任务，老师退为陪伴信号 —— */
-.ob{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.8vh,30px);max-width:1220px;width:100%;margin:0 auto;padding:clamp(24px,4.5vh,52px) 32px}
-.ob-hero{display:grid;grid-template-columns:minmax(0,600px) minmax(360px,500px);gap:clamp(38px,5.8vw,84px);align-items:center;justify-content:center;width:100%;max-width:1160px;margin:0 auto}
+.ob{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;gap:clamp(18px,2.8vh,30px);max-width:1220px;width:100%;margin:0 auto;padding:clamp(48px,9vh,124px) 32px clamp(28px,4vh,52px)}
+.ob-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,452px);align-items:start;column-gap:clamp(36px,5vw,76px);justify-content:center;width:100%;max-width:1120px;margin:0 auto}
 .ob-hero-main{min-width:0;width:100%}
+.ob-paths{margin-top:clamp(15px,2vh,22px);display:flex;flex-direction:column;gap:11px;width:100%;min-width:0}
 .ob h1{font-family:var(--serif);font-weight:520;font-size:clamp(34px,3.55vw,54px);letter-spacing:0;line-height:1.03;margin:10px 0 14px;max-width:12.5em}
 .ob-compact h1{font-size:clamp(25px,2.6vw,32px);margin:2px 0 14px}
 .ob-lead{color:var(--ink-2);font-size:15.5px;line-height:1.62;max-width:620px;margin:0 0 22px}
-.ob-art{justify-self:stretch;align-self:stretch;position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:560px;width:100%;max-width:500px;margin:0 auto;padding:26px 30px 24px;border:1px solid color-mix(in srgb,var(--ink) 11%,var(--line-soft));border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--card) 92%,transparent),color-mix(in srgb,var(--paper) 70%,var(--card)));box-shadow:0 1px 0 rgba(255,255,255,.72) inset,0 22px 54px rgba(20,19,16,.07);overflow:hidden}
-.ob-art:before{content:"";position:absolute;left:50%;top:78px;width:430px;height:430px;transform:translateX(-50%);border:1px solid color-mix(in srgb,var(--ink) 7%,transparent);border-radius:50%;background:radial-gradient(circle at 50% 44%,color-mix(in srgb,var(--card) 72%,transparent),transparent 70%);pointer-events:none}
-.ob-art:after{content:"";position:absolute;left:50%;bottom:104px;width:360px;height:34px;transform:translateX(-50%);border-bottom:1px solid color-mix(in srgb,var(--ink) 18%,transparent);border-radius:50%;pointer-events:none}
-.ob-art .deco{position:absolute;left:50%;top:70px;width:380px;height:auto;transform:translateX(-50%);stroke:var(--ink);fill:none;opacity:.16;pointer-events:none}
-.ob-portrait{position:relative;z-index:1;display:grid;place-items:end center;width:100%;min-height:428px;margin:0 0 12px;padding:22px 0 0;border:0;background:transparent;color:inherit;cursor:pointer}
+.ob-art{justify-self:stretch;align-self:start;position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(384px,45vh,446px);width:100%;max-width:452px;margin:0 auto;padding:22px 28px 20px;border:1px solid color-mix(in srgb,var(--ink) 11%,var(--line-soft));border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--card) 92%,transparent),color-mix(in srgb,var(--paper) 70%,var(--card)));box-shadow:0 1px 0 rgba(255,255,255,.72) inset,0 22px 54px rgba(20,19,16,.07);overflow:hidden}
+.ob-art:before{content:"";position:absolute;left:50%;top:60px;width:384px;height:384px;transform:translateX(-50%);border:1px solid color-mix(in srgb,var(--ink) 7%,transparent);border-radius:50%;background:radial-gradient(circle at 50% 44%,color-mix(in srgb,var(--card) 72%,transparent),transparent 70%);pointer-events:none}
+.ob-art:after{content:"";position:absolute;left:50%;bottom:80px;width:320px;height:34px;transform:translateX(-50%);border-bottom:1px solid color-mix(in srgb,var(--ink) 18%,transparent);border-radius:50%;pointer-events:none}
+.ob-art .deco{position:absolute;left:50%;top:52px;width:344px;height:auto;transform:translateX(-50%);stroke:var(--ink);fill:none;opacity:.16;pointer-events:none}
+.ob-portrait{position:relative;z-index:1;display:grid;place-items:end center;width:100%;min-height:326px;margin:0 0 8px;padding:10px 0 0;border:0;background:transparent;color:inherit;cursor:pointer}
 .ob-portrait:disabled{cursor:default}
-.ob-art .pcirc.ob-face{position:relative;left:auto;top:auto;width:min(456px,108%);height:446px;border:0;border-radius:0;flex:none;background:transparent;box-shadow:none;overflow:visible;transition:transform .22s ease,filter .22s ease}
+.ob-art .pcirc.ob-face{position:relative;left:auto;top:auto;width:min(404px,104%);height:356px;border:0;border-radius:0;flex:none;background:transparent;box-shadow:none;overflow:visible;transition:transform .22s ease,filter .22s ease}
 .ob-art .ob-face img{width:100%;height:100%;object-fit:contain;object-position:50% 50%;filter:contrast(1.05);mix-blend-mode:multiply}
 .ob-portrait:hover .ob-face{transform:translateY(-5px);filter:drop-shadow(0 24px 34px rgba(20,19,16,.11))}
 .ob-box{width:100%;max-width:640px;border:1px solid color-mix(in srgb,var(--ink) 13%,var(--line-soft));border-radius:22px;padding:14px 15px 0;background:color-mix(in srgb,var(--card) 86%,var(--paper));box-shadow:0 1px 0 rgba(255,255,255,.74) inset,0 18px 42px rgba(20,19,16,.055);transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
 .ob-box:focus-within{border-color:color-mix(in srgb,var(--ink) 42%,var(--line-soft));background:var(--card);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 22px 56px rgba(20,19,16,.08),0 0 0 4px color-mix(in srgb,var(--ink) 4%,transparent)}
-.ob-box textarea{font-size:18px;min-height:88px;padding:0 2px 15px;width:100%;border:0;background:transparent;resize:none;font-family:var(--sans);color:var(--ink);line-height:1.55}
+.ob-box textarea{font-size:18px;min-height:132px;padding:2px 2px 16px;width:100%;border:0;background:transparent;resize:none;font-family:var(--sans);color:var(--ink);line-height:1.55}
 .ob-box textarea:focus{outline:none}
 .ob-box textarea::placeholder{color:var(--ink-3)}
 .ob-bar{display:flex;align-items:center;gap:10px;border-top:1px solid color-mix(in srgb,var(--ink) 10%,transparent);padding:11px 0 13px}
@@ -634,6 +635,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .set-pro .sp-go{flex:none;color:var(--ink-3)}
 /* 项目数上限提示卡（onboarding） */
 .ob-limit{display:flex;align-items:flex-start;gap:12px;border:1.5px solid var(--ink);border-radius:16px;background:var(--card);padding:15px 17px;margin-top:16px;max-width:560px}
+.ob .ob-limit{gap:11px;border:1px solid color-mix(in srgb,var(--ink) 16%,var(--line-soft));border-radius:14px;background:color-mix(in srgb,var(--card) 82%,var(--paper));padding:13px 15px;margin-top:14px;max-width:none;width:100%}
 .ob-limit .ic{flex:none;color:var(--ink);margin-top:2px}
 .ob-limit .lt{display:flex;flex-direction:column;gap:3px}
 .ob-limit .lt b{font:600 14px var(--sans);color:var(--ink)}
@@ -663,7 +665,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 .store-soon{font:500 11.5px var(--mono);color:var(--ink-3)}
 .store-soon-link{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
 /* 引导页模板店入口 */
-.ob-store{display:flex;align-items:center;gap:12px;max-width:520px;margin:8px auto 0;border:1px solid color-mix(in srgb,var(--ink) 10%,var(--line-soft));border-radius:16px;background:color-mix(in srgb,var(--card) 72%,var(--paper));padding:13px 14px;text-decoration:none;color:inherit;box-shadow:0 1px 0 rgba(255,255,255,.62) inset;transition:border-color .15s,transform .15s,background .15s,box-shadow .15s}
+.ob-store{display:flex;align-items:center;gap:12px;width:100%;margin:0;border:1px solid color-mix(in srgb,var(--ink) 10%,var(--line-soft));border-radius:16px;background:color-mix(in srgb,var(--card) 72%,var(--paper));padding:13px 14px;text-decoration:none;color:inherit;box-shadow:0 1px 0 rgba(255,255,255,.62) inset;transition:border-color .15s,transform .15s,background .15s,box-shadow .15s}
 .ob-store:hover{border-color:color-mix(in srgb,var(--ink) 34%,var(--line-soft));background:var(--card);box-shadow:0 10px 24px rgba(20,19,16,.055);transform:translateY(-1px)}
 .ob-store .os-ic{flex:none;width:28px;height:28px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--ink) 10%,var(--line-soft));border-radius:9px;background:color-mix(in srgb,var(--paper) 82%,var(--card));color:var(--ink)}
 .ob-store .os-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
@@ -960,7 +962,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
 @media(prefers-reduced-motion:no-preference){.ob-art .pcirc.ob-face{animation:coachFloat 5.2s ease-in-out infinite}@keyframes coachFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}.ob-portrait:hover .ob-face{animation-play-state:paused}}
 @media(max-width:900px){
   .ob{justify-content:flex-start;gap:17px;max-width:560px;padding:18px 22px 96px}
-  .ob-hero{grid-template-columns:1fr;gap:16px;max-width:520px}
+  .ob-hero{grid-template-columns:1fr;gap:18px;max-width:520px}
   .ob .eyebrow{font-size:10px}
   .ob h1{font-size:34px;line-height:1.07;margin:8px 0 12px;max-width:11.5em}
   .ob-compact h1{font-size:27px}
@@ -969,7 +971,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .ob-box textarea{min-height:58px;font-size:15px;line-height:1.48;padding-bottom:11px}
   .ob-bar{padding:10px 2px 11px}
   .ob-bar .btn{min-width:102px;justify-content:center;padding:12px 18px}
-  .ob-art{min-height:372px;max-width:none;padding:18px 16px 16px;border-radius:24px}
+  .ob-art{min-height:336px;max-width:none;padding:18px 16px 16px;border-radius:24px}
   .ob-art:before{top:58px;width:270px;height:270px}
   .ob-art:after{bottom:78px;width:238px}
   .ob-art .deco{top:48px;width:238px;opacity:.16}
@@ -980,7 +982,7 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .ob-teacher-act{height:36px;font-size:12px;padding:0 13px}
   .ob-teacher-chips{gap:6px;margin-top:6px}
   .ob-teacher-chips button{font-size:10.5px;padding:6px 10px}
-  .ob-store{margin-top:12px}
+  .ob-paths{gap:9px}
   .ob-cfgrow{gap:8px}
   .ob-cfglink{font-size:10.5px;padding:7px 11px}
 }

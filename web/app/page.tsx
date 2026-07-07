@@ -413,6 +413,36 @@ function Onboarding({
             </div>
           )}
           {deriveError && <div className="errbox">{deriveError}</div>}
+
+          <div className="ob-paths">
+            {/* 官方模板店入口：现成的精修图谱，一键导入（知识付费） */}
+            <Link href="/store" className="ob-store">
+              <span className="os-ic">
+                <Icon name="map" style={{ width: 17, height: 17 }} />
+              </span>
+              <span className="os-t">
+                <b>{t("ob.storeTitle")}</b>
+                <span>{t("ob.storeDesc")}</span>
+              </span>
+              <Icon name="chevron" className="os-go" style={{ width: 15, height: 15, transform: "rotate(-90deg)" }} />
+            </Link>
+
+            {mounted && !cfgUrl && (
+              <div className="ob-cfgrow">
+                {cloudConfigured() && !user && (
+                  // 引擎未就绪且未登录：主推「登录免费试用」（托管 AI，无需配 key——商业化主入口）
+                  <Link href="/account" className="ob-cfglink ob-cfglink-primary">
+                    <Icon name="spark" style={{ width: 12, height: 12 }} /> {t("ob.tryHosted")}
+                    <Icon name="arrow" style={{ width: 12, height: 12 }} />
+                  </Link>
+                )}
+                <Link href="/settings" className="ob-cfglink">
+                  <span className="dot dot-off" /> {t("ob.cfgNeed")}
+                  <Icon name="arrow" style={{ width: 12, height: 12 }} />
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
         <aside className="ob-art" aria-label="Telos 老师">
@@ -456,34 +486,6 @@ function Onboarding({
           </div>
         </aside>
       </div>
-
-      {/* 官方模板店入口：现成的精修图谱，一键导入（知识付费） */}
-      <Link href="/store" className="ob-store">
-        <span className="os-ic">
-          <Icon name="map" style={{ width: 17, height: 17 }} />
-        </span>
-        <span className="os-t">
-          <b>{t("ob.storeTitle")}</b>
-          <span>{t("ob.storeDesc")}</span>
-        </span>
-        <Icon name="chevron" className="os-go" style={{ width: 15, height: 15, transform: "rotate(-90deg)" }} />
-      </Link>
-
-      {mounted && !cfgUrl && (
-        <div className="ob-cfgrow">
-          {cloudConfigured() && !user && (
-            // 引擎未就绪且未登录：主推「登录免费试用」（托管 AI，无需配 key——商业化主入口）
-            <Link href="/account" className="ob-cfglink ob-cfglink-primary">
-              <Icon name="spark" style={{ width: 12, height: 12 }} /> {t("ob.tryHosted")}
-              <Icon name="arrow" style={{ width: 12, height: 12 }} />
-            </Link>
-          )}
-          <Link href="/settings" className="ob-cfglink">
-            <span className="dot dot-off" /> {t("ob.cfgNeed")}
-            <Icon name="arrow" style={{ width: 12, height: 12 }} />
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
