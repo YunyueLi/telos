@@ -10,7 +10,7 @@ export function PWARegister() {
     if (process.env.NODE_ENV !== "production") return;
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     const onLoad = () => {
-      navigator.serviceWorker.register(`${BASE}/sw-v4.js`, { scope: `${BASE}/` }).catch(() => {
+      navigator.serviceWorker.register(`${BASE}/sw-v5.js`, { scope: `${BASE}/` }).catch(() => {
         /* SW 注册失败不影响使用（如无 HTTPS / 不支持） */
       });
     };

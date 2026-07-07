@@ -26,9 +26,8 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return; // 跨源（API/provider）不拦，保持实时
+  if (url.origin !== self.location.origin) return;
 
-  // 导航：network-first（拿最新外壳），失败回退缓存外壳
   if (req.mode === "navigate") {
     event.respondWith(
       (async () => {
@@ -68,7 +67,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 其他同源静态资源：cache-first（命中即返回，未命中走网络并缓存）
   event.respondWith(
     (async () => {
       const cached = await caches.match(req);

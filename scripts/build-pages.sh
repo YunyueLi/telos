@@ -37,6 +37,13 @@ done
 
 find deploy -name '.DS_Store' -delete
 
+# Turbopack can keep a chunk filename stable across text-only changes. Add the
+# current commit to JS/CSS chunk URLs so browsers cannot keep stale app code.
+TELOS_ASSET_VERSION="${TELOS_ASSET_VERSION:-$(git rev-parse --short HEAD 2>/dev/null || date +%s)}"
+export TELOS_ASSET_VERSION
+find deploy -type f \( -name '*.html' -o -name '*.txt' \) -print0 \
+  | xargs -0 perl -0pi -e 's#(/app/_next/static/chunks/[^"\\\]\),]+?\.(?:js|css))(?!\?v=)#$1?v=$ENV{TELOS_ASSET_VERSION}#g'
+
 cat > deploy/_redirects <<'EOF'
 /app /app/ 301
 /account /account/index.html 200
@@ -88,6 +95,9 @@ cat > deploy/_headers <<'EOF'
   Cache-Control: no-cache
 
 /app/sw-v4.js
+  Cache-Control: no-cache
+
+/app/sw-v5.js
   Cache-Control: no-cache
 
 /app/_next/static/chunks/*.css
