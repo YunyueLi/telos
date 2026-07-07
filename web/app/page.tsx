@@ -469,12 +469,14 @@ function Onboarding({
             const eg = t(c.egKey);
             return (
               <button key={c.domain} className="ob-cat" onClick={() => fill(eg)} disabled={deriving} title={eg}>
-                <span className="ob-cat-top">
-                  <span className="ob-cat-code">{c.domain}</span>
-                  <span className="ob-cat-name">{domainLabel(c.domain, t)}</span>
+                <span className="ob-cat-code">{c.domain}</span>
+                <span className="ob-cat-body">
+                  <span className="ob-cat-top">
+                    <span className="ob-cat-name">{domainLabel(c.domain, t)}</span>
+                    <span className="ob-cat-d">{t(c.descKey)}</span>
+                  </span>
+                  <span className="ob-cat-g">{eg}</span>
                 </span>
-                <span className="ob-cat-d">{t(c.descKey)}</span>
-                <span className="ob-cat-g">{eg}</span>
               </button>
             );
           })}
