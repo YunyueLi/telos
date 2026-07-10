@@ -971,7 +971,8 @@ svg.ic{width:1.18em;height:1.18em;vertical-align:-.2em;fill:none;stroke:currentC
   .ob-box textarea{min-height:58px;font-size:15px;line-height:1.48;padding-bottom:11px}
   .ob-bar{padding:10px 2px 11px}
   .ob-bar .btn{min-width:102px;justify-content:center;padding:12px 18px}
-  .ob-art{min-height:336px;max-width:none;padding:18px 16px 16px;border-radius:24px}
+  /* 移动端：老师（角色）排到最前 → 框 → 其余（上限/模板店/登录），桌面两栏不受影响 */
+  .ob-art{order:-1;min-height:300px;max-width:none;padding:16px 16px 14px;border-radius:24px}
   .ob-art:before{top:58px;width:270px;height:270px}
   .ob-art:after{bottom:78px;width:238px}
   .ob-art .deco{top:48px;width:238px;opacity:.16}
